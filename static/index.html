@@ -70,9 +70,7 @@ input:focus, select:focus { border-color: #2563eb; }
 /* ============================================================ */
 .main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 20px; }
 
-/* ============================================================ */
-/* Tab Panels                                                    */
-/* ============================================================ */
+/* Tab Panels */
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
@@ -84,7 +82,8 @@ input:focus, select:focus { border-color: #2563eb; }
   margin-bottom: 16px;
   justify-content: center;
 }
-.practice-controls select { min-width: 200px; }
+.practice-controls select { min-width: 120px; }
+.practice-controls #textSelect { min-width: 200px; }
 .btn-start { background: #2563eb; color: #fff; }
 .btn-reset { background: #64748b; color: #fff; }
 .btn-stop { background: #dc2626; color: #fff; }
@@ -100,51 +99,79 @@ input:focus, select:focus { border-color: #2563eb; }
 .stat-label { color: #64748b; font-weight: 500; }
 .stat-value { color: #1e293b; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-/* Line-by-line practice area */
-.line-practice-area {
-  margin-bottom: 16px;
+/* Pause overlay */
+.pause-overlay {
+  display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.85); z-index: 10;
+  justify-content: center; align-items: center;
+  border-radius: 8px; font-size: 1.2rem; color: #2563eb; font-weight: 700;
 }
-.line-block {
-  margin-bottom: 4px;
-}
-.line-original {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 6px 6px 0 0;
-  padding: 10px 16px;
-  font-size: 1.15rem; line-height: 1.8; letter-spacing: 0.5px;
-  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
-  word-break: break-all; white-space: pre-wrap;
-  min-height: 32px;
-}
-.line-original .ch { color: #9ca3af; transition: color .08s; }
-.line-original .ch.correct { color: #16a34a; }
-.line-original .ch.incorrect { color: #fff; background: #ef4444; border-radius: 2px; }
-.line-original .ch.current { border-bottom: 2px solid #2563eb; }
-.line-original .ch.space-incorrect { background: #fca5a5; border-radius: 2px; }
-/* Completed line - subtle green left border */
-.line-block.completed .line-original {
-  border-left: 3px solid #16a34a;
-}
+.pause-overlay.active { display: flex; }
 
-.line-input {
-  width: 100%;
-  border: 2px solid #d1d5db; border-top: 1px solid #e2e8f0;
-  border-radius: 0 0 6px 6px;
-  padding: 8px 16px;
+/* Preparation area */
+.prep-area {
+  background: #fef9c3; border: 2px dashed #d97706;
+  border-radius: 8px; padding: 10px 16px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+}
+.prep-area .prep-label {
+  color: #92400e; font-size: 0.9rem; font-weight: 600; white-space: nowrap;
+}
+.prep-area .prep-input {
+  flex: 1; border: 1px dashed #d97706; background: #fffef5;
+  border-radius: 4px; padding: 8px 12px;
   font-size: 1.05rem;
   font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
-  outline: none; transition: border-color .2s;
-  line-height: 1.8;
-  margin-bottom: 8px;
 }
-.line-input:focus { border-color: #2563eb; }
-.line-input:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
-.line-input.active-line { border-color: #2563eb; background: #f0f7ff; }
+.prep-area .prep-input:focus { border-color: #b45309; outline: none; }
+
+/* Line-by-line practice area */
+.line-practice-wrapper { position: relative; }
+.line-practice-area { margin-bottom: 16px; }
+
+.line-block { margin-bottom: 2px; }
+
+.line-original {
+  background: #fffbeb; border: 1px solid #e5e7eb;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  padding: 8px 14px;
+  font-size: 1.15rem; line-height: 1.8; letter-spacing: 0.3px;
+  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
+  word-break: break-all; white-space: pre-wrap;
+  min-height: 28px;
+  color: #6b21a8;
+}
+.line-original .ch { color: #6b21a8; transition: color .05s; }
+.line-original .ch.correct { color: #16a34a; }
+.line-original .ch.incorrect { color: #fff; background: #ef4444; border-radius: 2px; }
+.line-original .ch.current { border-bottom: 2px solid #2563eb; color: #6b21a8; }
+.line-original .ch.space-incorrect { background: #fca5a5; border-radius: 2px; }
+
+/* Completed line */
+.line-block.completed .line-original { background: #d9f99d; border-color: #84cc16; }
+.line-block.completed .line-input { background: #f0fdf4; border-color: #84cc16; color: #166534; }
+
+.line-input {
+  width: 100%; display: block;
+  border: 2px dashed #d1d5db;
+  border-radius: 0 0 6px 6px;
+  padding: 8px 14px;
+  font-size: 1.05rem;
+  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
+  outline: none; transition: border-color .2s, background .2s;
+  line-height: 1.8;
+  margin-bottom: 6px;
+  background: #fff;
+}
+.line-input:focus { border-color: #2563eb; border-style: solid; background: #eff6ff; }
+.line-input:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; border-style: dashed; }
+.line-input.active-line { border-color: #2563eb; border-style: solid; background: #eff6ff; }
 
 .practice-msg {
   text-align: center; color: #64748b; padding: 40px 0; font-size: 1rem;
 }
 
-/* Hotkeys hint */
 .hotkey-hint {
   text-align: center; color: #94a3b8; font-size: 0.8rem; margin-top: 8px;
 }
@@ -160,18 +187,13 @@ input:focus, select:focus { border-color: #2563eb; }
   background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
   overflow-x: auto;
 }
-.ranking-table {
-  width: 100%; border-collapse: collapse; font-size: 0.85rem;
-}
+.ranking-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .ranking-table th {
   background: #f1f5f9; color: #475569; font-weight: 600;
   padding: 10px 12px; text-align: left; border-bottom: 2px solid #e2e8f0;
   white-space: nowrap;
 }
-.ranking-table td {
-  padding: 8px 12px; border-bottom: 1px solid #f1f5f9;
-  white-space: nowrap;
-}
+.ranking-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
 .ranking-table tbody tr:hover { background: #f8fafc; }
 .rank-num { color: #2563eb; font-weight: 700; }
 
@@ -202,42 +224,33 @@ input:focus, select:focus { border-color: #2563eb; }
 .modal-msg.success { color: #16a34a; }
 
 /* Results modal */
-.results-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;
-}
-.result-card {
-  background: #f8fafc; border-radius: 8px; padding: 14px; text-align: center;
-}
+.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.result-card { background: #f8fafc; border-radius: 8px; padding: 14px; text-align: center; }
 .result-card .r-label { font-size: 0.8rem; color: #64748b; margin-bottom: 4px; }
 .result-card .r-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
 .result-card .r-value.highlight { color: #2563eb; }
 
-/* ============================================================ */
-/* Footer                                                        */
-/* ============================================================ */
+/* Footer */
 .footer {
   text-align: center; padding: 16px; color: #94a3b8; font-size: 0.8rem;
   border-top: 1px solid #e2e8f0;
 }
 
-/* ============================================================ */
-/* Responsive                                                    */
-/* ============================================================ */
+/* Responsive */
 @media (max-width: 600px) {
   .header { padding: 10px 14px; }
   .main { padding: 12px; }
-  .line-original { font-size: 1rem; padding: 8px 12px; }
-  .line-input { font-size: 0.95rem; padding: 6px 12px; }
+  .line-original { font-size: 1rem; padding: 6px 10px; }
+  .line-input { font-size: 0.95rem; padding: 6px 10px; }
   .stats-bar { gap: 12px; padding: 10px 14px; }
   .tab-btn { padding: 8px 14px; font-size: 0.8rem; }
+  .prep-area { flex-direction: column; gap: 6px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ============================================================ -->
-<!-- Header                                                        -->
-<!-- ============================================================ -->
+<!-- Header -->
 <div class="header">
   <h1 onclick="location.reload()"><span>禧禧</span>打字網</h1>
   <div class="header-right">
@@ -248,23 +261,20 @@ input:focus, select:focus { border-color: #2563eb; }
   </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- Tabs                                                          -->
-<!-- ============================================================ -->
+<!-- Tabs -->
 <div class="tabs">
   <button class="tab-btn active" data-tab="practice">연습</button>
   <button class="tab-btn" data-tab="ranking">랭킹</button>
   <button class="tab-btn" data-tab="account">계정</button>
 </div>
 
-<!-- ============================================================ -->
-<!-- Main Content                                                  -->
-<!-- ============================================================ -->
+<!-- Main Content -->
 <div class="main">
 
   <!-- Practice Tab -->
   <div class="tab-panel active" id="panel-practice">
     <div class="practice-controls">
+      <select id="langSelect"><option value="">전체</option></select>
       <select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
       <button class="btn-start" id="btnStart" onclick="startPractice()">시작 (F10)</button>
       <button class="btn-reset" onclick="resetPractice()">초기화 (F11)</button>
@@ -276,11 +286,21 @@ input:focus, select:focus { border-color: #2563eb; }
       <div class="stat-item"><span class="stat-label">타수(KPM)</span><span class="stat-value" id="statKpm">0</span></div>
       <div class="stat-item"><span class="stat-label">정확도</span><span class="stat-value" id="statAcc">0%</span></div>
       <div class="stat-item"><span class="stat-label">진행률</span><span class="stat-value" id="statProgress">0%</span></div>
+      <div class="stat-item" id="pauseStatus" style="display:none;"><span class="stat-value" style="color:#dc2626;">⏸ 일시정지</span></div>
     </div>
 
     <div id="practiceArea" style="display:none;">
-      <div class="line-practice-area" id="linePracticeArea"></div>
-      <div class="hotkey-hint">F10: 시작 | F11: 초기화 | F12: 종료</div>
+      <!-- Preparation area -->
+      <div class="prep-area" id="prepArea">
+        <span class="prep-label">準備區：</span>
+        <input class="prep-input" id="prepInput" placeholder="在這裡調整輸入法，按 Enter 開始計時">
+      </div>
+
+      <div class="line-practice-wrapper">
+        <div class="line-practice-area" id="linePracticeArea"></div>
+        <div class="pause-overlay" id="pauseOverlay">⏸ 일시정지 — 아무 키를 누르면 재개</div>
+      </div>
+      <div class="hotkey-hint">Enter: 다음 행 | Tab: 다음 행 | Shift+Tab: 이전 행 | ESC: 일시정지 | F10: 시작 | F11: 초기화 | F12: 종료</div>
     </div>
 
     <div class="practice-msg" id="practiceMsg">
@@ -296,12 +316,10 @@ input:focus, select:focus { border-color: #2563eb; }
     </div>
     <div class="ranking-table-wrap">
       <table class="ranking-table">
-        <thead>
-          <tr>
-            <th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th>
-            <th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th>
+          <th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th>
+        </tr></thead>
         <tbody id="rankBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">랭킹 데이터를 불러오는 중...</td></tr></tbody>
       </table>
     </div>
@@ -331,132 +349,140 @@ input:focus, select:focus { border-color: #2563eb; }
       </div>
     </div>
   </div>
-
 </div>
 
 <div class="footer">禧禧打字網 (XixiTyping) — 웹 버전</div>
 
-<!-- ============================================================ -->
-<!-- Modals                                                        -->
-<!-- ============================================================ -->
-
-<!-- Login Modal -->
-<div class="modal-overlay" id="loginModal">
-  <div class="modal">
-    <h2>로그인</h2>
-    <div class="modal-field"><label>ID</label><input id="loginId" autocomplete="username"></div>
-    <div class="modal-field"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
-    <div class="modal-msg" id="loginMsg"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('loginModal')">취소</button>
-      <button class="btn-primary" onclick="doLogin()">로그인</button>
-    </div>
+<!-- Modals -->
+<!-- Login -->
+<div class="modal-overlay" id="loginModal"><div class="modal">
+  <h2>로그인</h2>
+  <div class="modal-field"><label>ID</label><input id="loginId" autocomplete="username"></div>
+  <div class="modal-field"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
+  <div class="modal-msg" id="loginMsg"></div>
+  <div class="modal-actions">
+    <button class="btn-secondary" onclick="closeModal('loginModal')">취소</button>
+    <button class="btn-primary" onclick="doLogin()">로그인</button>
   </div>
-</div>
+</div></div>
 
-<!-- Signup Modal -->
-<div class="modal-overlay" id="signupModal">
-  <div class="modal">
-    <h2>회원가입</h2>
-    <div class="modal-field"><label>ID (3자 이상)</label><input id="signupId" autocomplete="username"></div>
-    <div class="modal-field"><label>비밀번호 (4자 이상)</label><input id="signupPw" type="password" autocomplete="new-password"></div>
-    <div class="modal-field"><label>닉네임 (10자 이하)</label><input id="signupNick"></div>
-    <div class="modal-field"><label>이메일</label><input id="signupEmail" type="email"></div>
-    <div class="modal-msg" id="signupMsg"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('signupModal')">취소</button>
-      <button class="btn-primary" onclick="doSignup()">가입</button>
-    </div>
+<!-- Signup -->
+<div class="modal-overlay" id="signupModal"><div class="modal">
+  <h2>회원가입</h2>
+  <div class="modal-field"><label>ID (3자 이상)</label><input id="signupId" autocomplete="username"></div>
+  <div class="modal-field"><label>비밀번호 (4자 이상)</label><input id="signupPw" type="password" autocomplete="new-password"></div>
+  <div class="modal-field"><label>닉네임 (10자 이하)</label><input id="signupNick"></div>
+  <div class="modal-field"><label>이메일</label><input id="signupEmail" type="email"></div>
+  <div class="modal-msg" id="signupMsg"></div>
+  <div class="modal-actions">
+    <button class="btn-secondary" onclick="closeModal('signupModal')">취소</button>
+    <button class="btn-primary" onclick="doSignup()">가입</button>
   </div>
-</div>
+</div></div>
 
-<!-- Results Modal -->
-<div class="modal-overlay" id="resultsModal">
-  <div class="modal">
-    <h2>연습 결과</h2>
-    <div class="results-grid">
-      <div class="result-card"><div class="r-label">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
-      <div class="result-card"><div class="r-label">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
-      <div class="result-card"><div class="r-label">정확도</div><div class="r-value" id="resAcc">0%</div></div>
-      <div class="result-card"><div class="r-label">진행률</div><div class="r-value" id="resProgress">0%</div></div>
-      <div class="result-card"><div class="r-label">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
-      <div class="result-card"><div class="r-label">총 글자</div><div class="r-value" id="resChars">0</div></div>
-    </div>
-    <div id="rankSubmitArea" style="display:none;">
-      <div class="modal-field"><label>타자기 구분 (예: 한글 두벌식, 倉頡, 嘸蝦米 등)</label><input id="resTypewriter" placeholder="예) 한글 두벌식"></div>
-      <button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%;">랭킹에 등록</button>
-      <div class="modal-msg" id="rankSubmitMsg"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('resultsModal')">닫기 (Enter)</button>
-    </div>
+<!-- Results -->
+<div class="modal-overlay" id="resultsModal"><div class="modal">
+  <h2>연습 결과</h2>
+  <div class="results-grid">
+    <div class="result-card"><div class="r-label">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
+    <div class="result-card"><div class="r-label">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
+    <div class="result-card"><div class="r-label">정확도</div><div class="r-value" id="resAcc">0%</div></div>
+    <div class="result-card"><div class="r-label">진행률</div><div class="r-value" id="resProgress">0%</div></div>
+    <div class="result-card"><div class="r-label">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
+    <div class="result-card"><div class="r-label">총 글자</div><div class="r-value" id="resChars">0</div></div>
   </div>
-</div>
+  <div id="rankSubmitArea" style="display:none;">
+    <div class="modal-field"><label>타자기 구분 (예: 한글 두벌식, 倉頡, 嘸蝦米 등)</label><input id="resTypewriter" placeholder="예) 한글 두벌식"></div>
+    <button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%;">랭킹에 등록</button>
+    <div class="modal-msg" id="rankSubmitMsg"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn-secondary" onclick="closeModal('resultsModal')">닫기 (Enter)</button>
+  </div>
+</div></div>
 
-<!-- Find ID Modal -->
-<div class="modal-overlay" id="findIdModal">
-  <div class="modal">
-    <h2>아이디 찾기</h2>
-    <div class="modal-field"><label>이메일</label><input id="findIdEmail" type="email"></div>
-    <div class="modal-msg" id="findIdMsg"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('findIdModal')">닫기</button>
-      <button class="btn-primary" onclick="doFindId()">찾기</button>
-    </div>
+<!-- Find ID -->
+<div class="modal-overlay" id="findIdModal"><div class="modal">
+  <h2>아이디 찾기</h2>
+  <div class="modal-field"><label>이메일</label><input id="findIdEmail" type="email"></div>
+  <div class="modal-msg" id="findIdMsg"></div>
+  <div class="modal-actions">
+    <button class="btn-secondary" onclick="closeModal('findIdModal')">닫기</button>
+    <button class="btn-primary" onclick="doFindId()">찾기</button>
   </div>
-</div>
+</div></div>
 
-<!-- Reset Password Modal -->
-<div class="modal-overlay" id="resetPwModal">
-  <div class="modal">
-    <h2>비밀번호 재설정</h2>
-    <div class="modal-field"><label>ID</label><input id="resetPwId"></div>
-    <div class="modal-field"><label>이메일</label><input id="resetPwEmail" type="email"></div>
-    <div class="modal-field"><label>새 비밀번호</label><input id="resetPwNew" type="password"></div>
-    <div class="modal-field"><label>새 비밀번호 확인</label><input id="resetPwConfirm" type="password"></div>
-    <div class="modal-msg" id="resetPwMsg"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('resetPwModal')">닫기</button>
-      <button class="btn-primary" onclick="doResetPw()">재설정</button>
-    </div>
+<!-- Reset Password -->
+<div class="modal-overlay" id="resetPwModal"><div class="modal">
+  <h2>비밀번호 재설정</h2>
+  <div class="modal-field"><label>ID</label><input id="resetPwId"></div>
+  <div class="modal-field"><label>이메일</label><input id="resetPwEmail" type="email"></div>
+  <div class="modal-field"><label>새 비밀번호</label><input id="resetPwNew" type="password"></div>
+  <div class="modal-field"><label>새 비밀번호 확인</label><input id="resetPwConfirm" type="password"></div>
+  <div class="modal-msg" id="resetPwMsg"></div>
+  <div class="modal-actions">
+    <button class="btn-secondary" onclick="closeModal('resetPwModal')">닫기</button>
+    <button class="btn-primary" onclick="doResetPw()">재설정</button>
   </div>
-</div>
+</div></div>
 
-<!-- Delete Account Modal -->
-<div class="modal-overlay" id="deleteAccountModal">
-  <div class="modal">
-    <h2>회원탈퇴</h2>
-    <p style="color:#dc2626;font-weight:600;margin-bottom:16px;">회원탈퇴를 진행하면 계정 정보와 랭킹 기록이 모두 삭제됩니다.</p>
-    <div class="modal-field"><label>비밀번호 확인</label><input id="delAcctPw" type="password"></div>
-    <div class="modal-field"><label>확인 문구 ('탈퇴' 입력)</label><input id="delAcctConfirm"></div>
-    <div class="modal-msg" id="delAcctMsg"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('deleteAccountModal')">취소</button>
-      <button class="btn-danger" onclick="doDeleteAccount()">탈퇴</button>
-    </div>
+<!-- Delete Account -->
+<div class="modal-overlay" id="deleteAccountModal"><div class="modal">
+  <h2>회원탈퇴</h2>
+  <p style="color:#dc2626;font-weight:600;margin-bottom:16px;">회원탈퇴를 진행하면 계정 정보와 랭킹 기록이 모두 삭제됩니다.</p>
+  <div class="modal-field"><label>비밀번호 확인</label><input id="delAcctPw" type="password"></div>
+  <div class="modal-field"><label>확인 문구 ('탈퇴' 입력)</label><input id="delAcctConfirm"></div>
+  <div class="modal-msg" id="delAcctMsg"></div>
+  <div class="modal-actions">
+    <button class="btn-secondary" onclick="closeModal('deleteAccountModal')">취소</button>
+    <button class="btn-danger" onclick="doDeleteAccount()">탈퇴</button>
   </div>
-</div>
+</div></div>
 
 
 <script>
 /* ============================================================ */
 /* Global State                                                   */
 /* ============================================================ */
-const API = '';  // same origin
-let currentUser = null;  // {user_id, nickname, token}
-let texts = [];
-let currentText = null;  // {id, title, content}
+const API = '';
+let currentUser = null;
+let allTexts = [];       // all texts from server
+let texts = [];          // filtered by language
+let languages = [];
+let currentText = null;
 let practicing = false;
+let started = false;     // timer started (after Enter in prep)
+let paused = false;
 let startTime = null;
 let timerInterval = null;
 let keystrokes = 0;
+let totalPausedMs = 0;
+let pauseStartTime = null;
 
 // Line-by-line state
-let lines = [];          // array of line strings
-let currentLineIdx = 0;  // which line is active
-let lineInputs = [];     // references to input elements
-let lineDisplays = [];   // references to line-original divs
-let lineBlocks = [];     // references to line-block divs
+let lines = [];
+let currentLineIdx = 0;
+let lineInputs = [];
+let lineDisplays = [];
+let lineBlocks = [];
+
+/* ============================================================ */
+/* Fullwidth → halfwidth normalization (match desktop)            */
+/* ============================================================ */
+function normalizeFullwidth(s) {
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    // FF10-FF19 → 0030-0039 (digits)
+    // FF21-FF3A → 0041-005A (uppercase)
+    // FF41-FF5A → 0061-007A (lowercase)
+    if (c >= 0xFF10 && c <= 0xFF19) out += String.fromCharCode(c - 0xFEE0);
+    else if (c >= 0xFF21 && c <= 0xFF3A) out += String.fromCharCode(c - 0xFEE0);
+    else if (c >= 0xFF41 && c <= 0xFF5A) out += String.fromCharCode(c - 0xFEE0);
+    else out += s[i];
+  }
+  return out;
+}
 
 /* ============================================================ */
 /* API Helper                                                     */
@@ -485,33 +511,27 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 /* ============================================================ */
-/* Auth                                                           */
+/* Auth (same as before)                                          */
 /* ============================================================ */
 function updateAuthUI() {
   const info = document.getElementById('userInfo');
-  const btnLogin = document.getElementById('btnLogin');
-  const btnSignup = document.getElementById('btnSignup');
-  const btnLogout = document.getElementById('btnLogout');
-  const loggedOut = document.getElementById('accountLoggedOut');
-  const loggedIn = document.getElementById('accountLoggedIn');
-
   if (currentUser) {
     info.textContent = currentUser.nickname + ' 님';
-    btnLogin.style.display = 'none';
-    btnSignup.style.display = 'none';
-    btnLogout.style.display = '';
-    loggedOut.style.display = 'none';
-    loggedIn.style.display = '';
+    document.getElementById('btnLogin').style.display = 'none';
+    document.getElementById('btnSignup').style.display = 'none';
+    document.getElementById('btnLogout').style.display = '';
+    document.getElementById('accountLoggedOut').style.display = 'none';
+    document.getElementById('accountLoggedIn').style.display = '';
     document.getElementById('acctId').textContent = currentUser.user_id;
     document.getElementById('acctNick').textContent = currentUser.nickname;
     document.getElementById('rankSubmitArea').style.display = '';
   } else {
     info.textContent = '로그인하지 않음';
-    btnLogin.style.display = '';
-    btnSignup.style.display = '';
-    btnLogout.style.display = 'none';
-    loggedOut.style.display = '';
-    loggedIn.style.display = 'none';
+    document.getElementById('btnLogin').style.display = '';
+    document.getElementById('btnSignup').style.display = '';
+    document.getElementById('btnLogout').style.display = 'none';
+    document.getElementById('accountLoggedOut').style.display = '';
+    document.getElementById('accountLoggedIn').style.display = 'none';
     document.getElementById('rankSubmitArea').style.display = 'none';
   }
 }
@@ -530,13 +550,9 @@ async function doLogin() {
   if (r?.ok) {
     currentUser = { user_id: r.user_id, nickname: r.nickname, token: r.token };
     localStorage.setItem('auth', JSON.stringify(currentUser));
-    closeModal('loginModal');
-    updateAuthUI();
-  } else {
-    document.getElementById('loginMsg').textContent = r?.msg || '로그인에 실패했습니다.';
-  }
+    closeModal('loginModal'); updateAuthUI();
+  } else { document.getElementById('loginMsg').textContent = r?.msg || '로그인에 실패했습니다.'; }
 }
-
 async function doSignup() {
   const id = document.getElementById('signupId').value.trim();
   const pw = document.getElementById('signupPw').value;
@@ -547,20 +563,10 @@ async function doSignup() {
   if (r?.ok) {
     currentUser = { user_id: r.user_id, nickname: r.nickname, token: r.token };
     localStorage.setItem('auth', JSON.stringify(currentUser));
-    closeModal('signupModal');
-    updateAuthUI();
-  } else {
-    document.getElementById('signupMsg').textContent = r?.msg || '회원가입에 실패했습니다.';
-  }
+    closeModal('signupModal'); updateAuthUI();
+  } else { document.getElementById('signupMsg').textContent = r?.msg || '회원가입에 실패했습니다.'; }
 }
-
-async function doLogout() {
-  await api('/api/logout', 'POST');
-  currentUser = null;
-  localStorage.removeItem('auth');
-  updateAuthUI();
-}
-
+async function doLogout() { await api('/api/logout', 'POST'); currentUser = null; localStorage.removeItem('auth'); updateAuthUI(); }
 async function doFindId() {
   const email = document.getElementById('findIdEmail').value.trim();
   if (!email) { document.getElementById('findIdMsg').textContent = '이메일을 입력해 주세요.'; return; }
@@ -569,7 +575,6 @@ async function doFindId() {
   if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '가입된 ID: ' + r.user_id; }
   else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '찾을 수 없습니다.'; }
 }
-
 async function doResetPw() {
   const id = document.getElementById('resetPwId').value.trim();
   const email = document.getElementById('resetPwEmail').value.trim();
@@ -582,19 +587,15 @@ async function doResetPw() {
   if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '비밀번호가 재설정되었습니다.'; }
   else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '재설정에 실패했습니다.'; }
 }
-
 async function doDeleteAccount() {
   const pw = document.getElementById('delAcctPw').value;
-  const confirm = document.getElementById('delAcctConfirm').value.trim();
-  if (confirm !== '탈퇴') { document.getElementById('delAcctMsg').textContent = "'탈퇴'라고 입력해 주세요."; return; }
+  const conf = document.getElementById('delAcctConfirm').value.trim();
+  if (conf !== '탈퇴') { document.getElementById('delAcctMsg').textContent = "'탈퇴'라고 입력해 주세요."; return; }
   const r = await api('/api/delete-account', 'POST', { password: pw });
   if (r?.ok) {
     currentUser = null; localStorage.removeItem('auth');
-    closeModal('deleteAccountModal'); updateAuthUI();
-    alert('회원탈퇴가 완료되었습니다.');
-  } else {
-    document.getElementById('delAcctMsg').textContent = r?.msg || '탈퇴에 실패했습니다.';
-  }
+    closeModal('deleteAccountModal'); updateAuthUI(); alert('회원탈퇴가 완료되었습니다.');
+  } else { document.getElementById('delAcctMsg').textContent = r?.msg || '탈퇴에 실패했습니다.'; }
 }
 
 /* ============================================================ */
@@ -605,21 +606,40 @@ function openModal(id) {
   document.getElementById(id).classList.add('active');
 }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
+  if (e.key === 'Escape' && document.querySelector('.modal-overlay.active')) {
     document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+    e.preventDefault(); return;
   }
 });
-
 document.getElementById('loginPw')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('signupEmail')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
 
 /* ============================================================ */
-/* Texts — Fast loading with localStorage cache                   */
+/* Texts — Fast loading + Language filter                         */
 /* ============================================================ */
-function populateTextSelect(textList) {
-  texts = textList;
+function populateTextSelect(textList, langList) {
+  allTexts = textList;
+  languages = langList || [];
+
+  // Populate language dropdown
+  const langSel = document.getElementById('langSelect');
+  const prevLang = langSel.value;
+  langSel.innerHTML = '<option value="">전체</option>';
+  languages.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l; opt.textContent = l;
+    langSel.appendChild(opt);
+  });
+  langSel.value = prevLang;
+
+  filterTexts();
+}
+
+function filterTexts() {
+  const lang = document.getElementById('langSelect').value;
+  texts = lang ? allTexts.filter(t => (t.language || '') === lang) : [...allTexts];
+
   const sel = document.getElementById('textSelect');
   const prevVal = sel.value;
   sel.innerHTML = '<option value="">텍스트를 선택해 주세요</option>';
@@ -632,11 +652,40 @@ function populateTextSelect(textList) {
   if (prevVal) sel.value = prevVal;
 }
 
+document.getElementById('langSelect').addEventListener('change', filterTexts);
+
 async function loadTexts() {
   const r = await api('/api/texts');
   if (r?.ok) {
-    populateTextSelect(r.texts);
-    try { localStorage.setItem('cachedTexts', JSON.stringify(r.texts)); } catch (e) {}
+    populateTextSelect(r.texts, r.languages);
+    try { localStorage.setItem('cachedTexts', JSON.stringify({ texts: r.texts, languages: r.languages })); } catch (e) {}
+  }
+}
+
+/* ============================================================ */
+/* Pause system                                                   */
+/* ============================================================ */
+function doPause() {
+  if (!started || paused) return;
+  paused = true;
+  pauseStartTime = Date.now();
+  document.getElementById('pauseOverlay').classList.add('active');
+  document.getElementById('pauseStatus').style.display = '';
+  // Disable current input
+  if (lineInputs[currentLineIdx]) lineInputs[currentLineIdx].blur();
+}
+
+function doResume() {
+  if (!paused) return;
+  paused = false;
+  if (pauseStartTime) {
+    totalPausedMs += (Date.now() - pauseStartTime);
+    pauseStartTime = null;
+  }
+  document.getElementById('pauseOverlay').classList.remove('active');
+  document.getElementById('pauseStatus').style.display = 'none';
+  if (lineInputs[currentLineIdx]) {
+    lineInputs[currentLineIdx].focus();
   }
 }
 
@@ -653,12 +702,15 @@ function startPractice() {
 
   resetPractice();
   practicing = true;
+  started = false;  // timer not started yet — wait for Enter in prep
+  paused = false;
   keystrokes = 0;
   startTime = null;
+  totalPausedMs = 0;
 
   // Split content into lines
   lines = currentText.content.split('\n').filter(l => l.length > 0);
-  if (lines.length === 0) { lines = [currentText.content]; }
+  if (lines.length === 0) lines = [currentText.content];
   currentLineIdx = 0;
 
   // Build line-by-line UI
@@ -672,7 +724,6 @@ function startPractice() {
     const block = document.createElement('div');
     block.className = 'line-block';
 
-    // Original text display
     const origDiv = document.createElement('div');
     origDiv.className = 'line-original';
     for (let i = 0; i < line.length; i++) {
@@ -682,7 +733,6 @@ function startPractice() {
       origDiv.appendChild(span);
     }
 
-    // Input field
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'line-input';
@@ -690,7 +740,6 @@ function startPractice() {
     input.spellcheck = false;
     input.disabled = (idx !== 0);
     if (idx === 0) input.classList.add('active-line');
-    input.placeholder = idx === 0 ? '여기에 입력하세요...' : '';
 
     block.appendChild(origDiv);
     block.appendChild(input);
@@ -700,32 +749,83 @@ function startPractice() {
     lineDisplays.push(origDiv);
     lineBlocks.push(block);
 
-    // Event handlers
-    input.addEventListener('input', () => {
-      if (!input._composing) handleLineInput(idx);
-    });
+    // Events
+    input.addEventListener('input', () => { if (!input._composing) handleLineInput(idx); });
     input.addEventListener('compositionstart', () => { input._composing = true; });
-    input.addEventListener('compositionend', () => {
-      input._composing = false;
-      handleLineInput(idx);
-    });
+    input.addEventListener('compositionend', () => { input._composing = false; handleLineInput(idx); });
     input.addEventListener('keydown', (e) => handleLineKeydown(e, idx));
+    // Focus out → auto pause
+    input.addEventListener('blur', () => {
+      if (started && !paused && practicing) {
+        // Only pause if focus left the practice area entirely
+        setTimeout(() => {
+          if (started && !paused && practicing) {
+            const active = document.activeElement;
+            const isInPractice = lineInputs.includes(active) || active === document.getElementById('prepInput');
+            if (!isInPractice) doPause();
+          }
+        }, 100);
+      }
+    });
   });
 
   document.getElementById('practiceArea').style.display = '';
   document.getElementById('practiceMsg').style.display = 'none';
   document.getElementById('statsBar').style.display = '';
-  lineInputs[0].focus();
+
+  // Show prep area, focus it
+  document.getElementById('prepArea').style.display = '';
+  const prepInput = document.getElementById('prepInput');
+  prepInput.value = '';
+  prepInput.focus();
 }
+
+// Preparation area: Enter → start timer and focus first line
+document.getElementById('prepInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (!practicing) return;
+    // Start timer
+    started = true;
+    startTime = Date.now();
+    timerInterval = setInterval(updateStats, 200);
+    // Hide prep area
+    document.getElementById('prepArea').style.display = 'none';
+    // Focus first line input
+    if (lineInputs[0]) {
+      lineInputs[0].focus();
+    }
+  }
+});
 
 function handleLineKeydown(e, idx) {
   if (!practicing) return;
 
-  // Start timer on first keystroke
-  if (!startTime && !e.ctrlKey && !e.altKey && !e.metaKey &&
-      e.key !== 'F10' && e.key !== 'F11' && e.key !== 'F12') {
+  // ESC → toggle pause
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (paused) doResume();
+    else doPause();
+    return;
+  }
+
+  // If paused, any non-modifier key resumes
+  if (paused) {
+    const ignoreKeys = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'NumLock'];
+    if (!ignoreKeys.includes(e.key)) {
+      e.preventDefault();
+      doResume();
+    }
+    return;
+  }
+
+  // Start timer on first keystroke if not started (fallback)
+  if (!started && !e.ctrlKey && !e.altKey && !e.metaKey &&
+      !['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)) {
+    started = true;
     startTime = Date.now();
     timerInterval = setInterval(updateStats, 200);
+    document.getElementById('prepArea').style.display = 'none';
   }
 
   // Count physical keystrokes
@@ -733,44 +833,68 @@ function handleLineKeydown(e, idx) {
     keystrokes++;
   }
 
-  // Enter → move to next line
-  if (e.key === 'Enter') {
+  // Tab → next line
+  if (e.key === 'Tab' && !e.shiftKey) {
     e.preventDefault();
-    if (idx < lines.length - 1) {
-      moveToNextLine(idx);
-    } else {
-      stopPractice();
-    }
-  }
-}
-
-function moveToNextLine(fromIdx) {
-  lineBlocks[fromIdx].classList.add('completed');
-  lineInputs[fromIdx].disabled = true;
-  lineInputs[fromIdx].classList.remove('active-line');
-
-  const nextIdx = fromIdx + 1;
-  if (nextIdx >= lines.length) {
-    stopPractice();
+    keystrokes++;
+    if (idx < lines.length - 1) moveToLine(idx + 1, idx);
     return;
   }
 
-  currentLineIdx = nextIdx;
-  lineInputs[nextIdx].disabled = false;
-  lineInputs[nextIdx].classList.add('active-line');
-  lineInputs[nextIdx].placeholder = '여기에 입력하세요...';
-  lineInputs[nextIdx].focus();
+  // Shift+Tab → previous line
+  if (e.key === 'Tab' && e.shiftKey) {
+    e.preventDefault();
+    keystrokes++;
+    if (idx > 0) moveToLine(idx - 1, idx);
+    return;
+  }
 
-  // Set cursor indicator on first char of next line
-  const spans = lineDisplays[nextIdx].children;
-  if (spans.length > 0) spans[0].classList.add('current');
+  // BackSpace at beginning → previous line (match desktop)
+  if (e.key === 'Backspace' && lineInputs[idx].selectionStart === 0 && lineInputs[idx].selectionEnd === 0) {
+    if (idx > 0) {
+      e.preventDefault();
+      moveToLine(idx - 1, idx);
+      return;
+    }
+  }
 
-  // Scroll into view
-  lineBlocks[nextIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Enter → submit line, move to next
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (idx < lines.length - 1) {
+      moveToLine(idx + 1, idx, true);
+    } else {
+      // Last line — finish
+      stopPractice();
+    }
+    return;
+  }
+}
+
+function moveToLine(toIdx, fromIdx, markComplete = false) {
+  if (markComplete) {
+    lineBlocks[fromIdx].classList.add('completed');
+  }
+  lineInputs[fromIdx].disabled = true;
+  lineInputs[fromIdx].classList.remove('active-line');
+
+  currentLineIdx = toIdx;
+  lineInputs[toIdx].disabled = false;
+  lineInputs[toIdx].classList.add('active-line');
+  lineInputs[toIdx].focus();
+
+  // Set cursor indicator
+  const spans = lineDisplays[toIdx].children;
+  const typed = lineInputs[toIdx].value;
+  for (let i = 0; i < spans.length; i++) {
+    if (i === typed.length) { spans[i].classList.add('current'); break; }
+  }
+
+  lineBlocks[toIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function handleLineInput(idx) {
-  if (!practicing) return;
+  if (!practicing || paused) return;
   const input = lineInputs[idx];
   if (input._composing) return;
 
@@ -778,13 +902,16 @@ function handleLineInput(idx) {
   const target = lines[idx];
   const spans = lineDisplays[idx].children;
 
+  // Update character highlights
   for (let i = 0; i < target.length; i++) {
     const span = spans[i];
     if (!span) continue;
     span.className = 'ch';
-
     if (i < typed.length) {
-      if (typed[i] === target[i]) {
+      // Use normalized comparison (match desktop)
+      const tn = normalizeFullwidth(target[i]);
+      const un = normalizeFullwidth(typed[i]);
+      if (un === tn) {
         span.className = 'ch correct';
       } else {
         span.className = target[i] === ' ' ? 'ch space-incorrect' : 'ch incorrect';
@@ -795,11 +922,29 @@ function handleLineInput(idx) {
   }
 
   updateStats();
+
+  // Auto-advance on match (match desktop: 일치時 자동 PgDn)
+  if (typed.length > 0) {
+    const typedN = normalizeFullwidth(typed);
+    const targetN = normalizeFullwidth(target);
+    if (typedN === targetN) {
+      if (idx < lines.length - 1) {
+        // Auto-advance to next line
+        lineBlocks[idx].classList.add('completed');
+        moveToLine(idx + 1, idx, false);
+      }
+      // Last line: don't auto-finish, wait for Enter (match desktop behavior)
+    }
+  }
 }
 
 function resetPractice() {
   practicing = false;
+  started = false;
+  paused = false;
   startTime = null;
+  totalPausedMs = 0;
+  pauseStartTime = null;
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   keystrokes = 0;
   currentLineIdx = 0;
@@ -814,19 +959,31 @@ function resetPractice() {
   document.getElementById('statKpm').textContent = '0';
   document.getElementById('statAcc').textContent = '0%';
   document.getElementById('statProgress').textContent = '0%';
+  document.getElementById('pauseOverlay').classList.remove('active');
+  document.getElementById('pauseStatus').style.display = 'none';
 }
 
 function stopPractice() {
   if (!practicing) return;
   practicing = false;
+  started = false;
+  if (paused && pauseStartTime) {
+    totalPausedMs += (Date.now() - pauseStartTime);
+    pauseStartTime = null;
+  }
+  paused = false;
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   lineInputs.forEach(inp => { inp.disabled = true; inp.classList.remove('active-line'); });
+  document.getElementById('pauseOverlay').classList.remove('active');
+  document.getElementById('pauseStatus').style.display = 'none';
   showResults();
 }
 
 function getElapsed() {
   if (!startTime) return 0;
-  return (Date.now() - startTime) / 1000;
+  let pauseExtra = totalPausedMs;
+  if (paused && pauseStartTime) pauseExtra += (Date.now() - pauseStartTime);
+  return Math.max(0, (Date.now() - startTime - pauseExtra)) / 1000;
 }
 
 function updateStats() {
@@ -837,19 +994,16 @@ function updateStats() {
 
   if (elapsed <= 0) return;
 
-  let totalCorrect = 0;
-  let totalCompared = 0;
-  let totalTypedLen = 0;
-
+  let totalCorrect = 0, totalCompared = 0, totalTypedLen = 0;
   for (let li = 0; li < lines.length; li++) {
-    const typed = lineInputs[li] ? lineInputs[li].value : '';
-    const target = lines[li];
+    const typed = lineInputs[li] ? normalizeFullwidth(lineInputs[li].value) : '';
+    const target = normalizeFullwidth(lines[li]);
     const compared = Math.min(typed.length, target.length);
     for (let i = 0; i < compared; i++) {
       if (typed[i] === target[i]) totalCorrect++;
     }
     totalCompared += compared;
-    totalTypedLen += typed.length;
+    totalTypedLen += (lineInputs[li] ? lineInputs[li].value.length : 0);
   }
 
   const totalTargetLen = lines.reduce((sum, l) => sum + l.length, 0);
@@ -869,22 +1023,17 @@ function updateStats() {
 /* ============================================================ */
 function showResults() {
   const elapsed = getElapsed();
-
-  let totalCorrect = 0;
-  let totalCompared = 0;
-  let totalTypedLen = 0;
-
+  let totalCorrect = 0, totalCompared = 0, totalTypedLen = 0;
   for (let li = 0; li < lines.length; li++) {
-    const typed = lineInputs[li] ? lineInputs[li].value : '';
-    const target = lines[li];
+    const typed = lineInputs[li] ? normalizeFullwidth(lineInputs[li].value) : '';
+    const target = normalizeFullwidth(lines[li]);
     const compared = Math.min(typed.length, target.length);
     for (let i = 0; i < compared; i++) {
       if (typed[i] === target[i]) totalCorrect++;
     }
     totalCompared += compared;
-    totalTypedLen += typed.length;
+    totalTypedLen += (lineInputs[li] ? lineInputs[li].value.length : 0);
   }
-
   const totalTargetLen = lines.reduce((sum, l) => sum + l.length, 0);
 
   const cpm = elapsed > 0 ? Math.round(totalCorrect / (elapsed / 60)) : 0;
@@ -900,12 +1049,8 @@ function showResults() {
   document.getElementById('resChars').textContent = totalTypedLen;
 
   window._lastResult = { cpm, kpm, acc, progress: Math.min(progress, 100), elapsed, chars: totalTypedLen, input_chars: totalTypedLen };
-
   document.getElementById('rankSubmitMsg').textContent = '';
-  if (currentUser) {
-    document.getElementById('rankSubmitArea').style.display = '';
-  }
-
+  if (currentUser) document.getElementById('rankSubmitArea').style.display = '';
   openModal('resultsModal');
 }
 
@@ -913,23 +1058,15 @@ async function submitRanking() {
   if (!currentUser || !window._lastResult || !currentText) return;
   const tw = document.getElementById('resTypewriter').value.trim();
   if (!tw) { document.getElementById('rankSubmitMsg').textContent = "'타자기 구분'을 입력해 주세요."; return; }
-
   const boardKey = await sha1(currentText.content);
   const r = await api('/api/rankings', 'POST', {
-    board_key: boardKey,
-    board_name: currentText.title,
-    typewriter: tw,
-    cpm: window._lastResult.cpm,
-    kpm: window._lastResult.kpm,
-    acc: window._lastResult.acc,
-    completion: window._lastResult.progress,
-    chars: window._lastResult.chars,
-    input_chars: window._lastResult.input_chars,
-    elapsed: window._lastResult.elapsed,
+    board_key: boardKey, board_name: currentText.title, typewriter: tw,
+    cpm: window._lastResult.cpm, kpm: window._lastResult.kpm, acc: window._lastResult.acc,
+    completion: window._lastResult.progress, chars: window._lastResult.chars,
+    input_chars: window._lastResult.input_chars, elapsed: window._lastResult.elapsed,
     created_at: new Date().toLocaleString('sv-SE').replace('T', ' '),
     created_ts: Math.floor(Date.now() / 1000),
   });
-
   const msg = document.getElementById('rankSubmitMsg');
   if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '랭킹에 등록되었습니다!'; }
   else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '등록에 실패했습니다.'; }
@@ -947,27 +1084,23 @@ async function sha1(text) {
 async function loadRankings() {
   const r = await api('/api/rankings');
   if (!r?.ok) return;
-
   const sel = document.getElementById('rankBoardSelect');
-  const currentVal = sel.value;
+  const cv = sel.value;
   sel.innerHTML = '<option value="">전체</option>';
   const meta = r.meta || {};
   for (const [key, m] of Object.entries(meta)) {
     const opt = document.createElement('option');
-    opt.value = key;
-    opt.textContent = m.name || key;
+    opt.value = key; opt.textContent = m.name || key;
     sel.appendChild(opt);
   }
-  sel.value = currentVal;
+  sel.value = cv;
 
-  const filterBoard = sel.value;
+  const fb = sel.value;
   let all = [];
   for (const [bk, rows] of Object.entries(r.boards || {})) {
-    if (filterBoard && bk !== filterBoard) continue;
-    const boardName = meta[bk]?.name || bk;
-    for (const row of rows) {
-      all.push({ ...row, _boardName: boardName });
-    }
+    if (fb && bk !== fb) continue;
+    const bn = meta[bk]?.name || bk;
+    for (const row of rows) all.push({ ...row, _boardName: bn });
   }
   all.sort((a, b) => b.cpm - a.cpm || b.created_ts - a.created_ts);
 
@@ -976,39 +1109,33 @@ async function loadRankings() {
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">랭킹 데이터가 없습니다.</td></tr>';
     return;
   }
-
-  tbody.innerHTML = all.slice(0, 100).map((row, i) => `
-    <tr>
-      <td class="rank-num">${i + 1}</td>
-      <td>${esc(row.nickname)}</td>
-      <td>${esc(row.typewriter)}</td>
-      <td><strong>${row.cpm}</strong></td>
-      <td>${row.kpm}</td>
-      <td>${typeof row.acc === 'number' ? row.acc.toFixed(1) : row.acc}%</td>
-      <td>${typeof row.completion === 'number' ? row.completion.toFixed(1) : row.completion}%</td>
-      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${esc(row._boardName)}</td>
-      <td>${esc(row.created_at || '')}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = all.slice(0, 100).map((row, i) => `<tr>
+    <td class="rank-num">${i+1}</td><td>${esc(row.nickname)}</td><td>${esc(row.typewriter)}</td>
+    <td><strong>${row.cpm}</strong></td><td>${row.kpm}</td>
+    <td>${typeof row.acc==='number'?row.acc.toFixed(1):row.acc}%</td>
+    <td>${typeof row.completion==='number'?row.completion.toFixed(1):row.completion}%</td>
+    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${esc(row._boardName)}</td>
+    <td>${esc(row.created_at||'')}</td></tr>`).join('');
 }
-
 document.getElementById('rankBoardSelect').addEventListener('change', loadRankings);
-
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s || '';
-  return d.innerHTML;
-}
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
 /* ============================================================ */
-/* Hotkeys (F10/F11/F12)                                          */
+/* Hotkeys (F10/F11/F12/ESC) — global                            */
 /* ============================================================ */
 document.addEventListener('keydown', (e) => {
+  // Modal open → Enter closes results
   if (document.querySelector('.modal-overlay.active')) {
     if (e.key === 'Enter' && document.getElementById('resultsModal').classList.contains('active')) {
-      closeModal('resultsModal');
-      e.preventDefault();
+      closeModal('resultsModal'); e.preventDefault();
     }
+    return;
+  }
+
+  // ESC during practice → pause/resume (handled in line keydown too, but this is global fallback)
+  if (e.key === 'Escape' && practicing && started) {
+    e.preventDefault();
+    if (paused) doResume(); else doPause();
     return;
   }
 
@@ -1021,39 +1148,33 @@ document.addEventListener('keydown', (e) => {
 /* Init — Fast parallel loading                                   */
 /* ============================================================ */
 (async function init() {
-  // 1) Immediately show cached texts (instant, no network wait)
+  // Instantly show cached texts
   try {
     const cached = JSON.parse(localStorage.getItem('cachedTexts'));
-    if (cached && cached.length > 0) {
-      populateTextSelect(cached);
+    if (cached?.texts?.length > 0) {
+      populateTextSelect(cached.texts, cached.languages || []);
     }
   } catch (e) {}
 
-  // 2) Restore auth from localStorage (sync, no network)
+  // Restore auth
   try {
     const saved = JSON.parse(localStorage.getItem('auth'));
-    if (saved?.token) {
-      currentUser = saved;
-    }
+    if (saved?.token) currentUser = saved;
   } catch (e) {}
   updateAuthUI();
 
-  // 3) Fetch fresh data in parallel (background, non-blocking)
-  const textsPromise = loadTexts();
-  const rankPromise = loadRankings();
+  // Fetch fresh in parallel
+  const tp = loadTexts();
+  const rp = loadRankings();
 
-  // 4) Verify auth token in background
+  // Verify auth background
   if (currentUser) {
     api('/api/rankings').then(r => {
-      if (!r) {
-        currentUser = null;
-        localStorage.removeItem('auth');
-        updateAuthUI();
-      }
+      if (!r) { currentUser = null; localStorage.removeItem('auth'); updateAuthUI(); }
     });
   }
 
-  await Promise.all([textsPromise, rankPromise]);
+  await Promise.all([tp, rp]);
 })();
 </script>
 
