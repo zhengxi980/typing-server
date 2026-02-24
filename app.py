@@ -93,7 +93,30 @@ def init_db():
             id          SERIAL PRIMARY KEY,
             title       TEXT NOT NULL,
             content     TEXT NOT NULL,
+            language    TEXT NOT NULL DEFAULT '한국어',
             created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
+    # language 컬럼이 없으면 추가 (기존 DB 호환)
+    cur.execute("""
+        DO $$ BEGIN
+            ALTER TABLE texts ADD COLUMN language TEXT NOT NULL DEFAULT '한국어';
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END $$;
+    """)
+
+    # 텍스트 요청 테이블 (일반 사용자 → 관리자 승인)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS text_requests (
+            id          SERIAL PRIMARY KEY,
+            user_id     TEXT NOT NULL,
+            nickname    TEXT NOT NULL DEFAULT '',
+            title       TEXT NOT NULL,
+            content     TEXT NOT NULL,
+            language    TEXT NOT NULL DEFAULT '한국어',
+            status      TEXT NOT NULL DEFAULT 'pending',
+            created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+            reviewed_at TIMESTAMP
         )
     """)
 
@@ -101,13 +124,13 @@ def init_db():
     cur.execute("SELECT COUNT(*) FROM texts")
     if cur.fetchone()[0] == 0:
         samples = [
-            ("한글 연습 - 기초", "다람쥐 헌 쳇바퀴에 타고파 한글은 세종대왕이 만든 우리 고유의 문자입니다 가나다라마바사아자차카타파하 빠른 갈색 여우가 게으른 개를 뛰어넘었습니다"),
-            ("한글 연습 - 문장", "오늘도 좋은 하루가 되길 바랍니다 타자 연습은 꾸준히 하는 것이 중요합니다 매일 조금씩이라도 연습하면 실력이 빠르게 늘어납니다 포기하지 말고 끝까지 도전해 보세요"),
-            ("English - Basic", "The quick brown fox jumps over the lazy dog Pack my box with five dozen liquor jugs How vexingly quick daft zebras jump"),
-            ("English - Sentences", "Practice makes perfect Every day is a new opportunity to learn and grow The best time to start is now Keep typing and you will improve"),
+            ("한글 연습 - 기초", "다람쥐 헌 쳇바퀴에 타고파 한글은 세종대왕이 만든 우리 고유의 문자입니다 가나다라마바사아자차카타파하 빠른 갈색 여우가 게으른 개를 뛰어넘었습니다", "한국어"),
+            ("한글 연습 - 문장", "오늘도 좋은 하루가 되길 바랍니다 타자 연습은 꾸준히 하는 것이 중요합니다 매일 조금씩이라도 연습하면 실력이 빠르게 늘어납니다 포기하지 말고 끝까지 도전해 보세요", "한국어"),
+            ("English - Basic", "The quick brown fox jumps over the lazy dog Pack my box with five dozen liquor jugs How vexingly quick daft zebras jump", "한국어"),
+            ("English - Sentences", "Practice makes perfect Every day is a new opportunity to learn and grow The best time to start is now Keep typing and you will improve", "한국어"),
         ]
-        for title, content in samples:
-            cur.execute("INSERT INTO texts (title, content) VALUES (%s, %s)", (title, content))
+        for title, content, lang in samples:
+            cur.execute("INSERT INTO texts (title, content, language) VALUES (%s, %s, %s)", (title, content, lang))
 
     cur.close()
     conn.close()
@@ -610,11 +633,19 @@ def ping():
 def get_texts():
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT id, title, content FROM texts ORDER BY id")
+    cur.execute("SELECT id, title, content, language FROM texts ORDER BY language, id")
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "texts": [dict(r) for r in rows]})
+    # 언어별로 그룹핑
+    languages = []
+    lang_set = set()
+    for r in rows:
+        lang = r.get("language", "한국어")
+        if lang not in lang_set:
+            lang_set.add(lang)
+            languages.append(lang)
+    return jsonify({"ok": True, "texts": [dict(r) for r in rows], "languages": languages})
 
 
 # ============================================================
@@ -631,16 +662,44 @@ def add_text():
     data = request.get_json(force=True, silent=True) or {}
     title = str(data.get("title", "") or "").strip()
     content = str(data.get("content", "") or "").strip()
+    language = str(data.get("language", "한국어") or "한국어").strip()
     if not title or not content:
         return jsonify({"ok": False, "msg": "제목과 내용을 입력해 주세요."}), 400
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO texts (title, content) VALUES (%s, %s) RETURNING id", (title, content))
+    cur.execute("INSERT INTO texts (title, content, language) VALUES (%s, %s, %s) RETURNING id", (title, content, language))
     new_id = cur.fetchone()[0]
     cur.close()
     conn.close()
     return jsonify({"ok": True, "id": new_id})
+
+
+# ============================================================
+# API: 텍스트 수정 (관리자 전용)
+# ============================================================
+@app.route("/api/texts/<int:text_id>", methods=["PUT"])
+def update_text(text_id):
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 수정할 수 있습니다."}), 403
+
+    data = request.get_json(force=True, silent=True) or {}
+    title = str(data.get("title", "") or "").strip()
+    content = str(data.get("content", "") or "").strip()
+    language = str(data.get("language", "") or "").strip()
+
+    conn = get_db()
+    cur = conn.cursor()
+    if title and content and language:
+        cur.execute("UPDATE texts SET title=%s, content=%s, language=%s WHERE id=%s", (title, content, language, text_id))
+    elif title:
+        cur.execute("UPDATE texts SET title=%s WHERE id=%s", (title, text_id))
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True})
 
 
 # ============================================================
@@ -660,6 +719,113 @@ def delete_text(text_id):
     cur.close()
     conn.close()
     return jsonify({"ok": True})
+
+
+# ============================================================
+# API: 텍스트 요청 (일반 사용자가 텍스트 등록 요청)
+# ============================================================
+@app.route("/api/text-requests", methods=["POST"])
+def submit_text_request():
+    user, err = require_login()
+    if err:
+        return err
+
+    data = request.get_json(force=True, silent=True) or {}
+    title = str(data.get("title", "") or "").strip()
+    content = str(data.get("content", "") or "").strip()
+    language = str(data.get("language", "한국어") or "한국어").strip()
+    if not title or not content:
+        return jsonify({"ok": False, "msg": "제목과 내용을 입력해 주세요."}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO text_requests (user_id, nickname, title, content, language)
+        VALUES (%s, %s, %s, %s, %s) RETURNING id
+    """, (user["user_id"], user["nickname"], title, content, language))
+    new_id = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "id": new_id, "msg": "텍스트 요청이 등록되었습니다. 관리자 승인을 기다려 주세요."})
+
+
+# ============================================================
+# API: 텍스트 요청 목록 조회
+# ============================================================
+@app.route("/api/text-requests", methods=["GET"])
+def get_text_requests():
+    user, err = require_login()
+    if err:
+        return err
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    if user["user_id"] == ADMIN_ID:
+        # 관리자: 모든 요청 조회
+        cur.execute("SELECT * FROM text_requests ORDER BY created_at DESC")
+    else:
+        # 일반 사용자: 자기 요청만
+        cur.execute("SELECT * FROM text_requests WHERE user_id = %s ORDER BY created_at DESC",
+                     (user["user_id"],))
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "requests": [dict(r) for r in rows]})
+
+
+# ============================================================
+# API: 텍스트 요청 승인 (관리자 전용)
+# ============================================================
+@app.route("/api/text-requests/<int:req_id>/approve", methods=["POST"])
+def approve_text_request(req_id):
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 승인할 수 있습니다."}), 403
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("SELECT * FROM text_requests WHERE id = %s", (req_id,))
+    req = cur.fetchone()
+    if not req:
+        cur.close()
+        conn.close()
+        return jsonify({"ok": False, "msg": "요청을 찾을 수 없습니다."}), 404
+
+    # texts 테이블에 추가
+    cur.execute("INSERT INTO texts (title, content, language) VALUES (%s, %s, %s) RETURNING id",
+                (req["title"], req["content"], req["language"]))
+    new_text_id = cur.fetchone()["id"]
+
+    # 요청 상태 변경
+    cur.execute("UPDATE text_requests SET status = 'approved', reviewed_at = NOW() WHERE id = %s", (req_id,))
+
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "text_id": new_text_id, "msg": "승인 완료. 텍스트가 등록되었습니다."})
+
+
+# ============================================================
+# API: 텍스트 요청 거절 (관리자 전용)
+# ============================================================
+@app.route("/api/text-requests/<int:req_id>/reject", methods=["POST"])
+def reject_text_request(req_id):
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 거절할 수 있습니다."}), 403
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE text_requests SET status = 'rejected', reviewed_at = NOW() WHERE id = %s", (req_id,))
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "msg": "요청이 거절되었습니다."})
 
 
 # ============================================================
