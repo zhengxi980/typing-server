@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시시 타자 연습 - XixiTyping</title>
+<style>
+/* ============================================================ */
+/* Reset & Base                                                  */
+/* ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: 'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  background: #f3f4f6; color: #1f2937;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+a { color: #2563eb; text-decoration: none; }
+a:hover { text-decoration: underline; }
+button {
+  cursor: pointer; border: none; border-radius: 6px;
+  padding: 8px 18px; font-size: 0.9rem; font-weight: 600;
+  transition: opacity .15s;
+}
+button:hover { opacity: 0.85; }
+input, select {
+  border: 1px solid #d1d5db; border-radius: 6px;
+  padding: 8px 12px; font-size: 0.9rem; outline: none;
+  transition: border-color .2s;
+}
+input:focus, select:focus { border-color: #2563eb; }
+
+/* ============================================================ */
+/* Header                                                        */
+/* ============================================================ */
+.header {
+  background: #1e293b; color: #f8fafc;
+  padding: 12px 24px; display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+.header h1 span { color: #60a5fa; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.header-right button {
+  background: #334155; color: #e2e8f0; padding: 6px 14px; font-size: 0.8rem;
+}
+.header-right .btn-accent { background: #2563eb; color: #fff; }
+.header-right .user-info { color: #94a3b8; font-size: 0.85rem; }
+
+/* ============================================================ */
+/* Tabs                                                          */
+/* ============================================================ */
+.tabs {
+  display: flex; background: #e2e8f0; padding: 0;
+  border-bottom: 2px solid #cbd5e1;
+}
+.tab-btn {
+  background: transparent; color: #475569; padding: 10px 24px;
+  border-radius: 0; font-size: 0.9rem; border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.tab-btn.active { background: #fff; color: #1e293b; border-bottom-color: #2563eb; font-weight: 700; }
+
+/* ============================================================ */
+/* Main Container                                                */
+/* ============================================================ */
+.main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 20px; }
+
+/* ============================================================ */
+/* Tab Panels                                                    */
+/* ============================================================ */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ============================================================ */
+/* Practice Tab                                                  */
+/* ============================================================ */
+.practice-controls {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.practice-controls select { min-width: 200px; }
+.btn-start { background: #2563eb; color: #fff; }
+.btn-reset { background: #64748b; color: #fff; }
+.btn-stop { background: #dc2626; color: #fff; }
+
+/* Stats Bar */
+.stats-bar {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 12px 20px; margin-bottom: 16px; font-size: 0.9rem;
+}
+.stat-item { display: flex; align-items: center; gap: 6px; }
+.stat-label { color: #64748b; font-weight: 500; }
+.stat-value { color: #1e293b; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Text Display */
+.text-display {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 24px; margin-bottom: 12px;
+  font-size: 1.2rem; line-height: 2.2; letter-spacing: 0.5px;
+  min-height: 160px; position: relative;
+  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
+  word-break: break-all; white-space: pre-wrap;
+}
+.text-display .ch { color: #9ca3af; transition: color .1s; }
+.text-display .ch.correct { color: #16a34a; }
+.text-display .ch.incorrect { color: #fff; background: #ef4444; border-radius: 2px; }
+.text-display .ch.current { border-bottom: 2px solid #2563eb; }
+.text-display .ch.space-incorrect { background: #fca5a5; border-radius: 2px; }
+
+/* Input Area */
+.input-area {
+  position: relative; margin-bottom: 16px;
+}
+.input-area textarea {
+  width: 100%; min-height: 80px; border: 2px solid #d1d5db;
+  border-radius: 8px; padding: 16px; font-size: 1.1rem;
+  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
+  resize: none; outline: none; transition: border-color .2s;
+  line-height: 1.8;
+}
+.input-area textarea:focus { border-color: #2563eb; }
+.input-area textarea:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
+
+.practice-msg {
+  text-align: center; color: #64748b; padding: 40px 0; font-size: 1rem;
+}
+
+/* Hotkeys hint */
+.hotkey-hint {
+  text-align: center; color: #94a3b8; font-size: 0.8rem; margin-top: 8px;
+}
+
+/* ============================================================ */
+/* Rankings Tab                                                  */
+/* ============================================================ */
+.ranking-controls {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.ranking-table-wrap {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  overflow-x: auto;
+}
+.ranking-table {
+  width: 100%; border-collapse: collapse; font-size: 0.85rem;
+}
+.ranking-table th {
+  background: #f1f5f9; color: #475569; font-weight: 600;
+  padding: 10px 12px; text-align: left; border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+.ranking-table td {
+  padding: 8px 12px; border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+}
+.ranking-table tbody tr:hover { background: #f8fafc; }
+.rank-num { color: #2563eb; font-weight: 700; }
+
+/* ============================================================ */
+/* Modal                                                         */
+/* ============================================================ */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45); z-index: 1000;
+  justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #fff; border-radius: 12px; padding: 28px;
+  min-width: 340px; max-width: 480px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal h2 { font-size: 1.15rem; margin-bottom: 18px; color: #1e293b; }
+.modal-field { margin-bottom: 14px; }
+.modal-field label { display: block; font-size: 0.85rem; color: #475569; margin-bottom: 4px; font-weight: 500; }
+.modal-field input, .modal-field select { width: 100%; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-secondary { background: #e2e8f0; color: #475569; }
+.btn-danger { background: #dc2626; color: #fff; }
+.modal-msg { color: #dc2626; font-size: 0.85rem; margin-top: 8px; min-height: 20px; }
+.modal-msg.success { color: #16a34a; }
+
+/* Results modal */
+.results-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;
+}
+.result-card {
+  background: #f8fafc; border-radius: 8px; padding: 14px; text-align: center;
+}
+.result-card .r-label { font-size: 0.8rem; color: #64748b; margin-bottom: 4px; }
+.result-card .r-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+.result-card .r-value.highlight { color: #2563eb; }
+
+/* ============================================================ */
+/* Footer                                                        */
+/* ============================================================ */
+.footer {
+  text-align: center; padding: 16px; color: #94a3b8; font-size: 0.8rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ============================================================ */
+/* Responsive                                                    */
+/* ============================================================ */
+@media (max-width: 600px) {
+  .header { padding: 10px 14px; }
+  .main { padding: 12px; }
+  .text-display { font-size: 1rem; padding: 16px; line-height: 2; }
+  .stats-bar { gap: 12px; padding: 10px 14px; }
+  .tab-btn { padding: 8px 14px; font-size: 0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- Header                                                        -->
+<!-- ============================================================ -->
+<div class="header">
+  <h1><span>시시</span> 타자 연습</h1>
+  <div class="header-right">
+    <span class="user-info" id="userInfo">로그인하지 않음</span>
+    <button id="btnLogin" class="btn-accent" onclick="showLoginModal()">로그인</button>
+    <button id="btnSignup" onclick="showSignupModal()">회원가입</button>
+    <button id="btnLogout" style="display:none" onclick="doLogout()">로그아웃</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Tabs                                                          -->
+<!-- ============================================================ -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="practice">연습</button>
+  <button class="tab-btn" data-tab="ranking">랭킹</button>
+  <button class="tab-btn" data-tab="account">계정</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- Main Content                                                  -->
+<!-- ============================================================ -->
+<div class="main">
+
+  <!-- Practice Tab -->
+  <div class="tab-panel active" id="panel-practice">
+    <div class="practice-controls">
+      <select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
+      <button class="btn-start" id="btnStart" onclick="startPractice()">시작 (F10)</button>
+      <button class="btn-reset" onclick="resetPractice()">초기화 (F11)</button>
+    </div>
+
+    <div class="stats-bar" id="statsBar" style="display:none;">
+      <div class="stat-item"><span class="stat-label">시간</span><span class="stat-value" id="statTime">0:00</span></div>
+      <div class="stat-item"><span class="stat-label">CPM</span><span class="stat-value" id="statCpm">0</span></div>
+      <div class="stat-item"><span class="stat-label">타수(KPM)</span><span class="stat-value" id="statKpm">0</span></div>
+      <div class="stat-item"><span class="stat-label">정확도</span><span class="stat-value" id="statAcc">0%</span></div>
+      <div class="stat-item"><span class="stat-label">진행률</span><span class="stat-value" id="statProgress">0%</span></div>
+    </div>
+
+    <div id="practiceArea" style="display:none;">
+      <div class="text-display" id="textDisplay"></div>
+      <div class="input-area">
+        <textarea id="typingInput" placeholder="여기에 타자를 입력하세요..." disabled></textarea>
+      </div>
+      <div class="hotkey-hint">F10: 시작 | F11: 초기화 | F12: 종료</div>
+    </div>
+
+    <div class="practice-msg" id="practiceMsg">
+      위에서 연습할 텍스트를 선택하고 <strong>시작</strong> 버튼을 누르세요.
+    </div>
+  </div>
+
+  <!-- Ranking Tab -->
+  <div class="tab-panel" id="panel-ranking">
+    <div class="ranking-controls">
+      <select id="rankBoardSelect"><option value="">전체</option></select>
+      <button class="btn-primary" onclick="loadRankings()" style="padding:6px 14px;font-size:0.85rem;">새로고침</button>
+    </div>
+    <div class="ranking-table-wrap">
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th>
+            <th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th>
+          </tr>
+        </thead>
+        <tbody id="rankBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">랭킹 데이터를 불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Account Tab -->
+  <div class="tab-panel" id="panel-account">
+    <div id="accountLoggedOut">
+      <div class="practice-msg">
+        로그인하면 랭킹 등록, 아이디 찾기, 비밀번호 재설정 등의 기능을 사용할 수 있습니다.
+        <br><br>
+        <button class="btn-primary" onclick="showLoginModal()">로그인</button>
+        <button class="btn-secondary" onclick="showSignupModal()">회원가입</button>
+      </div>
+    </div>
+    <div id="accountLoggedIn" style="display:none;">
+      <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e2e8f0;">
+        <h3 style="margin-bottom:16px;">계정 정보</h3>
+        <p style="margin-bottom:8px;"><strong>ID:</strong> <span id="acctId">-</span></p>
+        <p style="margin-bottom:8px;"><strong>닉네임:</strong> <span id="acctNick">-</span></p>
+        <p style="margin-bottom:20px;color:#64748b;font-size:0.85rem;">다른 사이트와 다른 비밀번호를 사용하는 것을 권장합니다.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-secondary" onclick="showFindIdModal()">아이디 찾기</button>
+          <button class="btn-secondary" onclick="showResetPwModal()">비밀번호 재설정</button>
+          <button class="btn-danger" onclick="showDeleteAccountModal()">회원탈퇴</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">시시 타자 연습 (XixiTyping) — 웹 버전</div>
+
+<!-- ============================================================ -->
+<!-- Modals                                                        -->
+<!-- ============================================================ -->
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <h2>로그인</h2>
+    <div class="modal-field"><label>ID</label><input id="loginId" autocomplete="username"></div>
+    <div class="modal-field"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
+    <div class="modal-msg" id="loginMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('loginModal')">취소</button>
+      <button class="btn-primary" onclick="doLogin()">로그인</button>
+    </div>
+  </div>
+</div>
+
+<!-- Signup Modal -->
+<div class="modal-overlay" id="signupModal">
+  <div class="modal">
+    <h2>회원가입</h2>
+    <div class="modal-field"><label>ID (3자 이상)</label><input id="signupId" autocomplete="username"></div>
+    <div class="modal-field"><label>비밀번호 (4자 이상)</label><input id="signupPw" type="password" autocomplete="new-password"></div>
+    <div class="modal-field"><label>닉네임 (10자 이하)</label><input id="signupNick"></div>
+    <div class="modal-field"><label>이메일</label><input id="signupEmail" type="email"></div>
+    <div class="modal-msg" id="signupMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('signupModal')">취소</button>
+      <button class="btn-primary" onclick="doSignup()">가입</button>
+    </div>
+  </div>
+</div>
+
+<!-- Results Modal -->
+<div class="modal-overlay" id="resultsModal">
+  <div class="modal">
+    <h2>연습 결과</h2>
+    <div class="results-grid">
+      <div class="result-card"><div class="r-label">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
+      <div class="result-card"><div class="r-label">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
+      <div class="result-card"><div class="r-label">정확도</div><div class="r-value" id="resAcc">0%</div></div>
+      <div class="result-card"><div class="r-label">진행률</div><div class="r-value" id="resProgress">0%</div></div>
+      <div class="result-card"><div class="r-label">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
+      <div class="result-card"><div class="r-label">총 글자</div><div class="r-value" id="resChars">0</div></div>
+    </div>
+    <div id="rankSubmitArea" style="display:none;">
+      <div class="modal-field"><label>타자기 구분 (예: 한글 두벌식, 倉頡, 嘸蝦米 등)</label><input id="resTypewriter" placeholder="예) 한글 두벌식"></div>
+      <button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%;">랭킹에 등록</button>
+      <div class="modal-msg" id="rankSubmitMsg"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('resultsModal')">닫기 (Enter)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Find ID Modal -->
+<div class="modal-overlay" id="findIdModal">
+  <div class="modal">
+    <h2>아이디 찾기</h2>
+    <div class="modal-field"><label>이메일</label><input id="findIdEmail" type="email"></div>
+    <div class="modal-msg" id="findIdMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('findIdModal')">닫기</button>
+      <button class="btn-primary" onclick="doFindId()">찾기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetPwModal">
+  <div class="modal">
+    <h2>비밀번호 재설정</h2>
+    <div class="modal-field"><label>ID</label><input id="resetPwId"></div>
+    <div class="modal-field"><label>이메일</label><input id="resetPwEmail" type="email"></div>
+    <div class="modal-field"><label>새 비밀번호</label><input id="resetPwNew" type="password"></div>
+    <div class="modal-field"><label>새 비밀번호 확인</label><input id="resetPwConfirm" type="password"></div>
+    <div class="modal-msg" id="resetPwMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('resetPwModal')">닫기</button>
+      <button class="btn-primary" onclick="doResetPw()">재설정</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal-overlay" id="deleteAccountModal">
+  <div class="modal">
+    <h2>회원탈퇴</h2>
+    <p style="color:#dc2626;font-weight:600;margin-bottom:16px;">회원탈퇴를 진행하면 계정 정보와 랭킹 기록이 모두 삭제됩니다.</p>
+    <div class="modal-field"><label>비밀번호 확인</label><input id="delAcctPw" type="password"></div>
+    <div class="modal-field"><label>확인 문구 ('탈퇴' 입력)</label><input id="delAcctConfirm"></div>
+    <div class="modal-msg" id="delAcctMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('deleteAccountModal')">취소</button>
+      <button class="btn-danger" onclick="doDeleteAccount()">탈퇴</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ============================================================ */
+/* Global State                                                   */
+/* ============================================================ */
+const API = '';  // same origin
+let currentUser = null;  // {user_id, nickname, token}
+let texts = [];
+let currentText = null;  // {id, title, content}
+let practicing = false;
+let startTime = null;
+let timerInterval = null;
+let keystrokes = 0;
+let isComposing = false;
+
+/* ============================================================ */
+/* API Helper                                                     */
+/* ============================================================ */
+async function api(endpoint, method = 'GET', data = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (currentUser?.token) opts.headers['Authorization'] = 'Bearer ' + currentUser.token;
+  if (data) opts.body = JSON.stringify(data);
+  try {
+    const res = await fetch(API + endpoint, opts);
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+/* ============================================================ */
+/* Tabs                                                           */
+/* ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'ranking') loadRankings();
+  });
+});
+
+/* ============================================================ */
+/* Auth                                                           */
+/* ============================================================ */
+function updateAuthUI() {
+  const info = document.getElementById('userInfo');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnSignup = document.getElementById('btnSignup');
+  const btnLogout = document.getElementById('btnLogout');
+  const loggedOut = document.getElementById('accountLoggedOut');
+  const loggedIn = document.getElementById('accountLoggedIn');
+
+  if (currentUser) {
+    info.textContent = currentUser.nickname + ' 님';
+    btnLogin.style.display = 'none';
+    btnSignup.style.display = 'none';
+    btnLogout.style.display = '';
+    loggedOut.style.display = 'none';
+    loggedIn.style.display = '';
+    document.getElementById('acctId').textContent = currentUser.user_id;
+    document.getElementById('acctNick').textContent = currentUser.nickname;
+    document.getElementById('rankSubmitArea').style.display = '';
+  } else {
+    info.textContent = '로그인하지 않음';
+    btnLogin.style.display = '';
+    btnSignup.style.display = '';
+    btnLogout.style.display = 'none';
+    loggedOut.style.display = '';
+    loggedIn.style.display = 'none';
+    document.getElementById('rankSubmitArea').style.display = 'none';
+  }
+}
+
+function showLoginModal() { openModal('loginModal'); document.getElementById('loginId').focus(); }
+function showSignupModal() { openModal('signupModal'); document.getElementById('signupId').focus(); }
+function showFindIdModal() { openModal('findIdModal'); document.getElementById('findIdEmail').focus(); }
+function showResetPwModal() { openModal('resetPwModal'); document.getElementById('resetPwId').focus(); }
+function showDeleteAccountModal() { openModal('deleteAccountModal'); document.getElementById('delAcctPw').focus(); }
+
+async function doLogin() {
+  const id = document.getElementById('loginId').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  if (!id || !pw) { document.getElementById('loginMsg').textContent = 'ID와 비밀번호를 입력해 주세요.'; return; }
+  const r = await api('/api/login', 'POST', { user_id: id, password: pw });
+  if (r?.ok) {
+    currentUser = { user_id: r.user_id, nickname: r.nickname, token: r.token };
+    localStorage.setItem('auth', JSON.stringify(currentUser));
+    closeModal('loginModal');
+    updateAuthUI();
+  } else {
+    document.getElementById('loginMsg').textContent = r?.msg || '로그인에 실패했습니다.';
+  }
+}
+
+async function doSignup() {
+  const id = document.getElementById('signupId').value.trim();
+  const pw = document.getElementById('signupPw').value;
+  const nick = document.getElementById('signupNick').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  if (!id || !pw || !nick || !email) { document.getElementById('signupMsg').textContent = '모든 항목을 입력해 주세요.'; return; }
+  const r = await api('/api/signup', 'POST', { user_id: id, password: pw, nickname: nick, email: email });
+  if (r?.ok) {
+    currentUser = { user_id: r.user_id, nickname: r.nickname, token: r.token };
+    localStorage.setItem('auth', JSON.stringify(currentUser));
+    closeModal('signupModal');
+    updateAuthUI();
+  } else {
+    document.getElementById('signupMsg').textContent = r?.msg || '회원가입에 실패했습니다.';
+  }
+}
+
+async function doLogout() {
+  await api('/api/logout', 'POST');
+  currentUser = null;
+  localStorage.removeItem('auth');
+  updateAuthUI();
+}
+
+async function doFindId() {
+  const email = document.getElementById('findIdEmail').value.trim();
+  if (!email) { document.getElementById('findIdMsg').textContent = '이메일을 입력해 주세요.'; return; }
+  const r = await api('/api/find-id', 'POST', { email });
+  const msg = document.getElementById('findIdMsg');
+  if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '가입된 ID: ' + r.user_id; }
+  else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '찾을 수 없습니다.'; }
+}
+
+async function doResetPw() {
+  const id = document.getElementById('resetPwId').value.trim();
+  const email = document.getElementById('resetPwEmail').value.trim();
+  const pw1 = document.getElementById('resetPwNew').value;
+  const pw2 = document.getElementById('resetPwConfirm').value;
+  if (!id || !email || !pw1) { document.getElementById('resetPwMsg').textContent = '모든 항목을 입력해 주세요.'; return; }
+  if (pw1 !== pw2) { document.getElementById('resetPwMsg').textContent = '새 비밀번호가 서로 다릅니다.'; return; }
+  const r = await api('/api/reset-password', 'POST', { user_id: id, email: email, new_password: pw1 });
+  const msg = document.getElementById('resetPwMsg');
+  if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '비밀번호가 재설정되었습니다.'; }
+  else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '재설정에 실패했습니다.'; }
+}
+
+async function doDeleteAccount() {
+  const pw = document.getElementById('delAcctPw').value;
+  const confirm = document.getElementById('delAcctConfirm').value.trim();
+  if (confirm !== '탈퇴') { document.getElementById('delAcctMsg').textContent = "'탈퇴'라고 입력해 주세요."; return; }
+  const r = await api('/api/delete-account', 'POST', { password: pw });
+  if (r?.ok) {
+    currentUser = null; localStorage.removeItem('auth');
+    closeModal('deleteAccountModal'); updateAuthUI();
+    alert('회원탈퇴가 완료되었습니다.');
+  } else {
+    document.getElementById('delAcctMsg').textContent = r?.msg || '탈퇴에 실패했습니다.';
+  }
+}
+
+/* ============================================================ */
+/* Modal Helpers                                                  */
+/* ============================================================ */
+function openModal(id) {
+  // clear messages
+  document.querySelectorAll('#' + id + ' .modal-msg').forEach(m => m.textContent = '');
+  document.getElementById(id).classList.add('active');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// ESC to close modals
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+  }
+});
+
+// Enter in login
+document.getElementById('loginPw')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('signupEmail')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+
+/* ============================================================ */
+/* Texts                                                          */
+/* ============================================================ */
+async function loadTexts() {
+  const r = await api('/api/texts');
+  if (r?.ok) {
+    texts = r.texts;
+    const sel = document.getElementById('textSelect');
+    sel.innerHTML = '<option value="">텍스트를 선택해 주세요</option>';
+    texts.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.title + ' (' + t.content.length + '자)';
+      sel.appendChild(opt);
+    });
+  }
+}
+
+/* ============================================================ */
+/* Practice                                                       */
+/* ============================================================ */
+function startPractice() {
+  const sel = document.getElementById('textSelect');
+  const id = parseInt(sel.value);
+  if (!id) { alert('연습할 텍스트를 선택해 주세요.'); return; }
+
+  currentText = texts.find(t => t.id === id);
+  if (!currentText) return;
+
+  resetPractice();
+  practicing = true;
+  keystrokes = 0;
+  startTime = null;
+
+  // Build text display
+  const display = document.getElementById('textDisplay');
+  display.innerHTML = '';
+  for (let i = 0; i < currentText.content.length; i++) {
+    const span = document.createElement('span');
+    span.className = 'ch' + (i === 0 ? ' current' : '');
+    span.textContent = currentText.content[i];
+    span.dataset.idx = i;
+    display.appendChild(span);
+  }
+
+  document.getElementById('practiceArea').style.display = '';
+  document.getElementById('practiceMsg').style.display = 'none';
+  document.getElementById('statsBar').style.display = '';
+  const input = document.getElementById('typingInput');
+  input.disabled = false;
+  input.value = '';
+  input.focus();
+}
+
+function resetPractice() {
+  practicing = false;
+  startTime = null;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  keystrokes = 0;
+
+  document.getElementById('typingInput').value = '';
+  document.getElementById('typingInput').disabled = true;
+  document.getElementById('statTime').textContent = '0:00';
+  document.getElementById('statCpm').textContent = '0';
+  document.getElementById('statKpm').textContent = '0';
+  document.getElementById('statAcc').textContent = '0%';
+  document.getElementById('statProgress').textContent = '0%';
+}
+
+function stopPractice() {
+  if (!practicing) return;
+  practicing = false;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  document.getElementById('typingInput').disabled = true;
+  showResults();
+}
+
+function getElapsed() {
+  if (!startTime) return 0;
+  return (Date.now() - startTime) / 1000;
+}
+
+function updateStats() {
+  const elapsed = getElapsed();
+  const mins = Math.floor(elapsed / 60);
+  const secs = Math.floor(elapsed % 60);
+  document.getElementById('statTime').textContent = mins + ':' + String(secs).padStart(2, '0');
+
+  if (!currentText || elapsed <= 0) return;
+
+  const typed = document.getElementById('typingInput').value;
+  const target = currentText.content;
+  let correct = 0;
+  const compared = Math.min(typed.length, target.length);
+  for (let i = 0; i < compared; i++) {
+    if (typed[i] === target[i]) correct++;
+  }
+
+  const cpm = Math.round(correct / (elapsed / 60));
+  const kpm = Math.round(keystrokes / (elapsed / 60));
+  const acc = compared > 0 ? Math.round(correct / compared * 100) : 0;
+  const progress = Math.round(typed.length / target.length * 100);
+
+  document.getElementById('statCpm').textContent = cpm;
+  document.getElementById('statKpm').textContent = kpm;
+  document.getElementById('statAcc').textContent = acc + '%';
+  document.getElementById('statProgress').textContent = Math.min(progress, 100) + '%';
+}
+
+/* ============================================================ */
+/* Typing Input Handler                                           */
+/* ============================================================ */
+const typingInput = document.getElementById('typingInput');
+
+typingInput.addEventListener('compositionstart', () => { isComposing = true; });
+typingInput.addEventListener('compositionend', () => { isComposing = false; handleInput(); });
+
+typingInput.addEventListener('input', () => {
+  if (!isComposing) handleInput();
+});
+
+typingInput.addEventListener('keydown', (e) => {
+  if (!practicing) return;
+
+  // Start timer on first keystroke
+  if (!startTime && !e.ctrlKey && !e.altKey && !e.metaKey && e.key !== 'F10' && e.key !== 'F11' && e.key !== 'F12') {
+    startTime = Date.now();
+    timerInterval = setInterval(updateStats, 200);
+  }
+
+  // Count physical keystrokes (exclude modifiers, function keys)
+  if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === 'Process' || e.keyCode === 229) {
+    keystrokes++;
+  }
+});
+
+function handleInput() {
+  if (!currentText || !practicing) return;
+
+  const typed = typingInput.value;
+  const target = currentText.content;
+  const spans = document.getElementById('textDisplay').children;
+
+  for (let i = 0; i < target.length; i++) {
+    const span = spans[i];
+    if (!span) continue;
+    span.className = 'ch';
+
+    if (i < typed.length) {
+      if (typed[i] === target[i]) {
+        span.className = 'ch correct';
+      } else {
+        span.className = target[i] === ' ' ? 'ch space-incorrect' : 'ch incorrect';
+      }
+    } else if (i === typed.length) {
+      span.className = 'ch current';
+    }
+  }
+
+  updateStats();
+
+  // Auto-complete when all characters typed
+  if (typed.length >= target.length) {
+    stopPractice();
+  }
+}
+
+/* ============================================================ */
+/* Results                                                        */
+/* ============================================================ */
+function showResults() {
+  const elapsed = getElapsed();
+  const typed = typingInput.value;
+  const target = currentText.content;
+  const compared = Math.min(typed.length, target.length);
+  let correct = 0;
+  for (let i = 0; i < compared; i++) {
+    if (typed[i] === target[i]) correct++;
+  }
+
+  const cpm = elapsed > 0 ? Math.round(correct / (elapsed / 60)) : 0;
+  const kpm = elapsed > 0 ? Math.round(keystrokes / (elapsed / 60)) : 0;
+  const acc = compared > 0 ? Math.round(correct / compared * 1000) / 10 : 0;
+  const progress = Math.round(typed.length / target.length * 1000) / 10;
+
+  document.getElementById('resCpm').textContent = cpm;
+  document.getElementById('resKpm').textContent = kpm;
+  document.getElementById('resAcc').textContent = acc + '%';
+  document.getElementById('resProgress').textContent = Math.min(progress, 100) + '%';
+  document.getElementById('resTime').textContent = elapsed.toFixed(1) + '초';
+  document.getElementById('resChars').textContent = typed.length;
+
+  // Store for ranking submission
+  window._lastResult = { cpm, kpm, acc, progress: Math.min(progress, 100), elapsed, chars: typed.length, input_chars: typed.length };
+
+  document.getElementById('rankSubmitMsg').textContent = '';
+  if (currentUser) {
+    document.getElementById('rankSubmitArea').style.display = '';
+  }
+
+  openModal('resultsModal');
+}
+
+async function submitRanking() {
+  if (!currentUser || !window._lastResult || !currentText) return;
+  const tw = document.getElementById('resTypewriter').value.trim();
+  if (!tw) { document.getElementById('rankSubmitMsg').textContent = "'타자기 구분'을 입력해 주세요."; return; }
+
+  // board_key: hash of text content (match desktop app)
+  const boardKey = await sha1(currentText.content);
+  const r = await api('/api/rankings', 'POST', {
+    board_key: boardKey,
+    board_name: currentText.title,
+    typewriter: tw,
+    cpm: window._lastResult.cpm,
+    kpm: window._lastResult.kpm,
+    acc: window._lastResult.acc,
+    completion: window._lastResult.progress,
+    chars: window._lastResult.chars,
+    input_chars: window._lastResult.input_chars,
+    elapsed: window._lastResult.elapsed,
+    created_at: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    created_ts: Math.floor(Date.now() / 1000),
+  });
+
+  const msg = document.getElementById('rankSubmitMsg');
+  if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '랭킹에 등록되었습니다!'; }
+  else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '등록에 실패했습니다.'; }
+}
+
+async function sha1(text) {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-1', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ============================================================ */
+/* Rankings                                                       */
+/* ============================================================ */
+async function loadRankings() {
+  const r = await api('/api/rankings');
+  if (!r?.ok) return;
+
+  // Populate board select
+  const sel = document.getElementById('rankBoardSelect');
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">전체</option>';
+  const meta = r.meta || {};
+  for (const [key, m] of Object.entries(meta)) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = m.name || key;
+    sel.appendChild(opt);
+  }
+  sel.value = currentVal;
+
+  // Flatten & sort
+  const filterBoard = sel.value;
+  let all = [];
+  for (const [bk, rows] of Object.entries(r.boards || {})) {
+    if (filterBoard && bk !== filterBoard) continue;
+    const boardName = meta[bk]?.name || bk;
+    for (const row of rows) {
+      all.push({ ...row, _boardName: boardName });
+    }
+  }
+  all.sort((a, b) => b.cpm - a.cpm || b.created_ts - a.created_ts);
+
+  const tbody = document.getElementById('rankBody');
+  if (all.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">랭킹 데이터가 없습니다.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = all.slice(0, 100).map((row, i) => `
+    <tr>
+      <td class="rank-num">${i + 1}</td>
+      <td>${esc(row.nickname)}</td>
+      <td>${esc(row.typewriter)}</td>
+      <td><strong>${row.cpm}</strong></td>
+      <td>${row.kpm}</td>
+      <td>${typeof row.acc === 'number' ? row.acc.toFixed(1) : row.acc}%</td>
+      <td>${typeof row.completion === 'number' ? row.completion.toFixed(1) : row.completion}%</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${esc(row._boardName)}</td>
+      <td>${esc(row.created_at || '')}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('rankBoardSelect').addEventListener('change', loadRankings);
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+/* ============================================================ */
+/* Hotkeys (F10/F11/F12)                                          */
+/* ============================================================ */
+document.addEventListener('keydown', (e) => {
+  // Don't intercept in modals
+  if (document.querySelector('.modal-overlay.active')) {
+    if (e.key === 'Enter' && document.getElementById('resultsModal').classList.contains('active')) {
+      closeModal('resultsModal');
+      e.preventDefault();
+    }
+    return;
+  }
+
+  if (e.key === 'F10') { e.preventDefault(); startPractice(); }
+  if (e.key === 'F11') { e.preventDefault(); resetPractice(); }
+  if (e.key === 'F12') { e.preventDefault(); stopPractice(); }
+});
+
+/* ============================================================ */
+/* Init                                                           */
+/* ============================================================ */
+(async function init() {
+  // Restore auth
+  try {
+    const saved = JSON.parse(localStorage.getItem('auth'));
+    if (saved?.token) {
+      currentUser = saved;
+      // Verify token is still valid
+      const r = await api('/api/rankings');
+      if (!r) { currentUser = null; localStorage.removeItem('auth'); }
+    }
+  } catch (e) {}
+
+  updateAuthUI();
+  await loadTexts();
+  loadRankings();
+})();
+</script>
+
+</body>
+</html>

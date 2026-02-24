@@ -12,7 +12,7 @@ import hashlib
 import secrets
 import datetime
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
@@ -20,7 +20,7 @@ import psycopg2.extras
 # ============================================================
 # Flask 앱 설정
 # ============================================================
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app)  # 웹 버전에서 접속할 수 있도록 허용
 
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
@@ -86,6 +86,28 @@ def init_db():
             created_ts  BIGINT NOT NULL DEFAULT 0
         )
     """)
+
+    # 연습 텍스트 테이블
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS texts (
+            id          SERIAL PRIMARY KEY,
+            title       TEXT NOT NULL,
+            content     TEXT NOT NULL,
+            created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
+
+    # 기본 샘플 텍스트 삽입 (비어있을 때만)
+    cur.execute("SELECT COUNT(*) FROM texts")
+    if cur.fetchone()[0] == 0:
+        samples = [
+            ("한글 연습 - 기초", "다람쥐 헌 쳇바퀴에 타고파 한글은 세종대왕이 만든 우리 고유의 문자입니다 가나다라마바사아자차카타파하 빠른 갈색 여우가 게으른 개를 뛰어넘었습니다"),
+            ("한글 연습 - 문장", "오늘도 좋은 하루가 되길 바랍니다 타자 연습은 꾸준히 하는 것이 중요합니다 매일 조금씩이라도 연습하면 실력이 빠르게 늘어납니다 포기하지 말고 끝까지 도전해 보세요"),
+            ("English - Basic", "The quick brown fox jumps over the lazy dog Pack my box with five dozen liquor jugs How vexingly quick daft zebras jump"),
+            ("English - Sentences", "Practice makes perfect Every day is a new opportunity to learn and grow The best time to start is now Keep typing and you will improve"),
+        ]
+        for title, content in samples:
+            cur.execute("INSERT INTO texts (title, content) VALUES (%s, %s)", (title, content))
 
     cur.close()
     conn.close()
@@ -567,12 +589,76 @@ def get_boards():
 # API: 서버 상태 확인
 # ============================================================
 @app.route("/", methods=["GET"])
+def index():
+    return send_from_directory("static", "index.html")
+
+
+@app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({"ok": True, "msg": "타자 연습 서버 가동 중", "version": "1.0"})
 
 
 @app.route("/api/ping", methods=["GET"])
 def ping():
+    return jsonify({"ok": True})
+
+
+# ============================================================
+# API: 텍스트 목록
+# ============================================================
+@app.route("/api/texts", methods=["GET"])
+def get_texts():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT id, title, content FROM texts ORDER BY id")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "texts": [dict(r) for r in rows]})
+
+
+# ============================================================
+# API: 텍스트 추가 (관리자 전용)
+# ============================================================
+@app.route("/api/texts", methods=["POST"])
+def add_text():
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 추가할 수 있습니다."}), 403
+
+    data = request.get_json(force=True, silent=True) or {}
+    title = str(data.get("title", "") or "").strip()
+    content = str(data.get("content", "") or "").strip()
+    if not title or not content:
+        return jsonify({"ok": False, "msg": "제목과 내용을 입력해 주세요."}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO texts (title, content) VALUES (%s, %s) RETURNING id", (title, content))
+    new_id = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "id": new_id})
+
+
+# ============================================================
+# API: 텍스트 삭제 (관리자 전용)
+# ============================================================
+@app.route("/api/texts/<int:text_id>", methods=["DELETE"])
+def delete_text(text_id):
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 삭제할 수 있습니다."}), 403
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM texts WHERE id = %s", (text_id,))
+    cur.close()
+    conn.close()
     return jsonify({"ok": True})
 
 
