@@ -5,1178 +5,372 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>禧禧打字網 - XixiTyping</title>
 <style>
-/* ============================================================ */
-/* Reset & Base                                                  */
-/* ============================================================ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; }
-body {
-  font-family: 'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif;
-  background: #f3f4f6; color: #1f2937;
-  min-height: 100vh; display: flex; flex-direction: column;
-}
-a { color: #2563eb; text-decoration: none; }
-a:hover { text-decoration: underline; }
-button {
-  cursor: pointer; border: none; border-radius: 6px;
-  padding: 8px 18px; font-size: 0.9rem; font-weight: 600;
-  transition: opacity .15s;
-}
-button:hover { opacity: 0.85; }
-input, select {
-  border: 1px solid #d1d5db; border-radius: 6px;
-  padding: 8px 12px; font-size: 0.9rem; outline: none;
-  transition: border-color .2s;
-}
-input:focus, select:focus { border-color: #2563eb; }
-
-/* ============================================================ */
-/* Header                                                        */
-/* ============================================================ */
-.header {
-  background: #1e293b; color: #f8fafc;
-  padding: 12px 24px; display: flex; align-items: center;
-  justify-content: space-between; flex-wrap: wrap; gap: 8px;
-}
-.header h1 {
-  font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px;
-  cursor: pointer; user-select: none;
-}
-.header h1:hover { opacity: 0.8; }
-.header h1 span { color: #60a5fa; }
-.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.header-right button {
-  background: #334155; color: #e2e8f0; padding: 6px 14px; font-size: 0.8rem;
-}
-.header-right .btn-accent { background: #2563eb; color: #fff; }
-.header-right .user-info { color: #94a3b8; font-size: 0.85rem; }
-
-/* ============================================================ */
-/* Tabs                                                          */
-/* ============================================================ */
-.tabs {
-  display: flex; background: #e2e8f0; padding: 0;
-  border-bottom: 2px solid #cbd5e1;
-}
-.tab-btn {
-  background: transparent; color: #475569; padding: 10px 24px;
-  border-radius: 0; font-size: 0.9rem; border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
-}
-.tab-btn.active { background: #fff; color: #1e293b; border-bottom-color: #2563eb; font-weight: 700; }
-
-/* ============================================================ */
-/* Main Container                                                */
-/* ============================================================ */
-.main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 20px; }
-
-/* Tab Panels */
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-/* ============================================================ */
-/* Practice Tab                                                  */
-/* ============================================================ */
-.practice-controls {
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  margin-bottom: 16px;
-  justify-content: center;
-}
-.practice-controls select { min-width: 120px; }
-.practice-controls #textSelect { min-width: 200px; }
-.btn-start { background: #2563eb; color: #fff; }
-.btn-reset { background: #64748b; color: #fff; }
-.btn-stop { background: #dc2626; color: #fff; }
-
-/* Stats Bar */
-.stats-bar {
-  display: flex; gap: 20px; flex-wrap: wrap;
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-  padding: 12px 20px; margin-bottom: 16px; font-size: 0.9rem;
-  justify-content: center;
-}
-.stat-item { display: flex; align-items: center; gap: 6px; }
-.stat-label { color: #64748b; font-weight: 500; }
-.stat-value { color: #1e293b; font-weight: 700; font-variant-numeric: tabular-nums; }
-
-/* Pause overlay */
-.pause-overlay {
-  display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255,255,255,0.85); z-index: 10;
-  justify-content: center; align-items: center;
-  border-radius: 8px; font-size: 1.2rem; color: #2563eb; font-weight: 700;
-}
-.pause-overlay.active { display: flex; }
-
-/* Preparation area */
-.prep-area {
-  background: #fef9c3; border: 2px dashed #d97706;
-  border-radius: 8px; padding: 10px 16px; margin-bottom: 12px;
-  display: flex; align-items: center; gap: 12px;
-}
-.prep-area .prep-label {
-  color: #92400e; font-size: 0.9rem; font-weight: 600; white-space: nowrap;
-}
-.prep-area .prep-input {
-  flex: 1; border: 1px dashed #d97706; background: #fffef5;
-  border-radius: 4px; padding: 8px 12px;
-  font-size: 1.05rem;
-  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
-}
-.prep-area .prep-input:focus { border-color: #b45309; outline: none; }
-
-/* Line-by-line practice area */
-.line-practice-wrapper { position: relative; }
-.line-practice-area { margin-bottom: 16px; }
-
-.line-block { margin-bottom: 2px; }
-
-.line-original {
-  background: #fffbeb; border: 1px solid #e5e7eb;
-  border-bottom: none;
-  border-radius: 6px 6px 0 0;
-  padding: 8px 14px;
-  font-size: 1.15rem; line-height: 1.8; letter-spacing: 0.3px;
-  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
-  word-break: break-all; white-space: pre-wrap;
-  min-height: 28px;
-  color: #6b21a8;
-}
-.line-original .ch { color: #6b21a8; transition: color .05s; }
-.line-original .ch.correct { color: #16a34a; }
-.line-original .ch.incorrect { color: #fff; background: #ef4444; border-radius: 2px; }
-.line-original .ch.current { border-bottom: 2px solid #2563eb; color: #6b21a8; }
-.line-original .ch.space-incorrect { background: #fca5a5; border-radius: 2px; }
-
-/* Completed line */
-.line-block.completed .line-original { background: #d9f99d; border-color: #84cc16; }
-.line-block.completed .line-input { background: #f0fdf4; border-color: #84cc16; color: #166534; }
-
-.line-input {
-  width: 100%; display: block;
-  border: 2px dashed #d1d5db;
-  border-radius: 0 0 6px 6px;
-  padding: 8px 14px;
-  font-size: 1.05rem;
-  font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
-  outline: none; transition: border-color .2s, background .2s;
-  line-height: 1.8;
-  margin-bottom: 6px;
-  background: #fff;
-}
-.line-input:focus { border-color: #2563eb; border-style: solid; background: #eff6ff; }
-.line-input:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; border-style: dashed; }
-.line-input.active-line { border-color: #2563eb; border-style: solid; background: #eff6ff; }
-
-.practice-msg {
-  text-align: center; color: #64748b; padding: 40px 0; font-size: 1rem;
-}
-
-.hotkey-hint {
-  text-align: center; color: #94a3b8; font-size: 0.8rem; margin-top: 8px;
-}
-
-/* ============================================================ */
-/* Rankings Tab                                                  */
-/* ============================================================ */
-.ranking-controls {
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.ranking-table-wrap {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-  overflow-x: auto;
-}
-.ranking-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.ranking-table th {
-  background: #f1f5f9; color: #475569; font-weight: 600;
-  padding: 10px 12px; text-align: left; border-bottom: 2px solid #e2e8f0;
-  white-space: nowrap;
-}
-.ranking-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
-.ranking-table tbody tr:hover { background: #f8fafc; }
-.rank-num { color: #2563eb; font-weight: 700; }
-
-/* ============================================================ */
-/* Modal                                                         */
-/* ============================================================ */
-.modal-overlay {
-  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.45); z-index: 1000;
-  justify-content: center; align-items: center;
-}
-.modal-overlay.active { display: flex; }
-.modal {
-  background: #fff; border-radius: 12px; padding: 28px;
-  min-width: 340px; max-width: 480px; width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-  max-height: 90vh; overflow-y: auto;
-}
-.modal h2 { font-size: 1.15rem; margin-bottom: 18px; color: #1e293b; }
-.modal-field { margin-bottom: 14px; }
-.modal-field label { display: block; font-size: 0.85rem; color: #475569; margin-bottom: 4px; font-weight: 500; }
-.modal-field input, .modal-field select { width: 100%; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-.btn-primary { background: #2563eb; color: #fff; }
-.btn-secondary { background: #e2e8f0; color: #475569; }
-.btn-danger { background: #dc2626; color: #fff; }
-.modal-msg { color: #dc2626; font-size: 0.85rem; margin-top: 8px; min-height: 20px; }
-.modal-msg.success { color: #16a34a; }
-
-/* Results modal */
-.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
-.result-card { background: #f8fafc; border-radius: 8px; padding: 14px; text-align: center; }
-.result-card .r-label { font-size: 0.8rem; color: #64748b; margin-bottom: 4px; }
-.result-card .r-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
-.result-card .r-value.highlight { color: #2563eb; }
-
-/* Footer */
-.footer {
-  text-align: center; padding: 16px; color: #94a3b8; font-size: 0.8rem;
-  border-top: 1px solid #e2e8f0;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .header { padding: 10px 14px; }
-  .main { padding: 12px; }
-  .line-original { font-size: 1rem; padding: 6px 10px; }
-  .line-input { font-size: 0.95rem; padding: 6px 10px; }
-  .stats-bar { gap: 12px; padding: 10px 14px; }
-  .tab-btn { padding: 8px 14px; font-size: 0.8rem; }
-  .prep-area { flex-direction: column; gap: 6px; }
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:'Segoe UI','Malgun Gothic','맑은 고딕',sans-serif;background:#f3f4f6;color:#1f2937;min-height:100vh;display:flex;flex-direction:column}
+a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}
+button{cursor:pointer;border:none;border-radius:6px;padding:8px 18px;font-size:.9rem;font-weight:600;transition:opacity .15s}button:hover{opacity:.85}
+input,select,textarea{border:1px solid #d1d5db;border-radius:6px;padding:8px 12px;font-size:.9rem;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:#2563eb}
+.header{background:#1e293b;color:#f8fafc;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.5px;cursor:pointer;user-select:none}.header h1:hover{opacity:.8}.header h1 span{color:#60a5fa}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.header-right button{background:#334155;color:#e2e8f0;padding:6px 14px;font-size:.8rem}
+.header-right .btn-accent{background:#2563eb;color:#fff}.header-right .user-info{color:#94a3b8;font-size:.85rem}
+.tabs{display:flex;background:#e2e8f0;padding:0;border-bottom:2px solid #cbd5e1}
+.tab-btn{background:transparent;color:#475569;padding:10px 24px;border-radius:0;font-size:.9rem;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab-btn.active{background:#fff;color:#1e293b;border-bottom-color:#2563eb;font-weight:700}
+.main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:20px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.practice-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;justify-content:center}
+.practice-controls select{min-width:120px}.practice-controls #textSelect{min-width:200px}
+.btn-start{background:#2563eb;color:#fff}.btn-reset{background:#64748b;color:#fff}.btn-stop{background:#dc2626;color:#fff}
+.stats-bar{display:flex;gap:20px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 20px;margin-bottom:16px;font-size:.9rem;justify-content:center}
+.stat-item{display:flex;align-items:center;gap:6px}.stat-label{color:#64748b;font-weight:500}.stat-value{color:#1e293b;font-weight:700;font-variant-numeric:tabular-nums}
+.pause-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center;font-size:1.4rem;color:#fff;font-weight:700}
+.pause-overlay.active{display:flex}
+.prep-area{background:#fef9c3;border:2px dashed #d97706;border-radius:8px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.prep-area .prep-label{color:#92400e;font-size:.9rem;font-weight:600;white-space:nowrap}
+.prep-area .prep-input{flex:1;border:1px dashed #d97706;background:#fffef5;border-radius:4px;padding:8px 12px;font-size:1.05rem;font-family:'D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace}
+.prep-area .prep-input:focus{border-color:#b45309;outline:none}
+:root{--pf:'D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace;--pfs:18px;--plh:2;--pls:0.5px;--ppad:10px 14px}
+.line-practice-wrapper{position:relative}.line-practice-area{margin-bottom:16px}.line-block{margin-bottom:2px}
+.line-original{background:#fffbeb;border:1px solid #e5e7eb;border-bottom:none;border-radius:6px 6px 0 0;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);word-break:break-all;white-space:pre-wrap;min-height:28px;color:#6b21a8}
+.line-original .ch{color:#6b21a8;transition:color .05s}.line-original .ch.correct{color:#16a34a}
+.line-original .ch.incorrect{color:#fff;background:#ef4444;border-radius:2px}.line-original .ch.current{border-bottom:2px solid #2563eb;color:#6b21a8}
+.line-original .ch.space-incorrect{background:#fca5a5;border-radius:2px}
+.line-block.completed .line-original{background:#d9f99d;border-color:#84cc16}
+.line-block.completed .line-input{background:#f0fdf4;border-color:#84cc16;color:#166534}
+.line-input{width:100%;display:block;border:2px dashed #d1d5db;border-radius:0 0 6px 6px;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);outline:none;transition:border-color .2s,background .2s;margin-bottom:6px;background:#fff}
+.line-input:focus{border-color:#2563eb;border-style:solid;background:#eff6ff}
+.line-input:disabled{background:#f9fafb;color:#9ca3af;cursor:not-allowed;border-style:dashed}
+.line-input.active-line{border-color:#2563eb;border-style:solid;background:#eff6ff}
+.practice-msg{text-align:center;color:#64748b;padding:40px 0;font-size:1rem}
+.hotkey-hint{text-align:center;color:#94a3b8;font-size:.8rem;margin-top:8px}
+.settings-section{background:#fff;border-radius:8px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px}
+.settings-section h3{font-size:1rem;margin-bottom:12px;color:#1e293b}
+.settings-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.settings-row label{font-size:.9rem;color:#475569;min-width:120px;font-weight:500}
+.admin-text-list{max-height:400px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px}
+.admin-text-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:8px}
+.admin-text-item:last-child{border-bottom:none}.admin-text-item:hover{background:#f8fafc}
+.admin-text-info{flex:1;min-width:0}.admin-text-title{font-weight:600;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-text-meta{font-size:.75rem;color:#94a3b8}.admin-text-actions{display:flex;gap:6px;flex-shrink:0}
+.admin-text-actions button{padding:4px 10px;font-size:.75rem}
+.ranking-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.ranking-table-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto}
+.ranking-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.ranking-table th{background:#f1f5f9;color:#475569;font-weight:600;padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.ranking-table td{padding:8px 12px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+.ranking-table tbody tr:hover{background:#f8fafc}.rank-num{color:#2563eb;font-weight:700}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;min-width:340px;max-width:560px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.15rem;margin-bottom:18px;color:#1e293b}
+.modal-field{margin-bottom:14px}.modal-field label{display:block;font-size:.85rem;color:#475569;margin-bottom:4px;font-weight:500}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn-primary{background:#2563eb;color:#fff}.btn-secondary{background:#e2e8f0;color:#475569}.btn-danger{background:#dc2626;color:#fff}
+.modal-msg{color:#dc2626;font-size:.85rem;margin-top:8px;min-height:20px}.modal-msg.success{color:#16a34a}
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.result-card{background:#f8fafc;border-radius:8px;padding:14px;text-align:center}
+.result-card .r-label{font-size:.8rem;color:#64748b;margin-bottom:4px}
+.result-card .r-value{font-size:1.4rem;font-weight:700;color:#1e293b}.result-card .r-value.highlight{color:#2563eb}
+.footer{text-align:center;padding:16px;color:#94a3b8;font-size:.8rem;border-top:1px solid #e2e8f0}
+@media(max-width:600px){.header{padding:10px 14px}.main{padding:12px}.stats-bar{gap:12px;padding:10px 14px}.tab-btn{padding:8px 14px;font-size:.8rem}.prep-area{flex-direction:column;gap:6px}}
 </style>
 </head>
 <body>
+<div class="header"><h1 onclick="location.reload()"><span>禧禧</span>打字網</h1>
+<div class="header-right"><span class="user-info" id="userInfo">로그인하지 않음</span>
+<button id="btnLogin" class="btn-accent" onclick="showLoginModal()">로그인</button>
+<button id="btnSignup" onclick="showSignupModal()">회원가입</button>
+<button id="btnLogout" style="display:none" onclick="doLogout()">로그아웃</button></div></div>
 
-<!-- Header -->
-<div class="header">
-  <h1 onclick="location.reload()"><span>禧禧</span>打字網</h1>
-  <div class="header-right">
-    <span class="user-info" id="userInfo">로그인하지 않음</span>
-    <button id="btnLogin" class="btn-accent" onclick="showLoginModal()">로그인</button>
-    <button id="btnSignup" onclick="showSignupModal()">회원가입</button>
-    <button id="btnLogout" style="display:none" onclick="doLogout()">로그아웃</button>
-  </div>
+<div class="tabs" id="tabBar">
+<button class="tab-btn active" data-tab="practice">연습</button>
+<button class="tab-btn" data-tab="ranking">랭킹</button>
+<button class="tab-btn" data-tab="settings">설정</button>
+<button class="tab-btn" data-tab="account">계정</button>
+<button class="tab-btn" data-tab="admin" id="tabAdmin" style="display:none">관리</button>
 </div>
 
-<!-- Tabs -->
-<div class="tabs">
-  <button class="tab-btn active" data-tab="practice">연습</button>
-  <button class="tab-btn" data-tab="ranking">랭킹</button>
-  <button class="tab-btn" data-tab="account">계정</button>
-</div>
-
-<!-- Main Content -->
 <div class="main">
+<!-- Practice -->
+<div class="tab-panel active" id="panel-practice">
+<div class="practice-controls">
+<select id="langSelect"><option value="">전체</option></select>
+<select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
+<button class="btn-start" onclick="startPractice()">시작 (F10)</button>
+<button class="btn-reset" onclick="resetPractice()">초기화 (F11)</button>
+</div>
+<div class="stats-bar" id="statsBar" style="display:none">
+<div class="stat-item"><span class="stat-label">시간</span><span class="stat-value" id="statTime">0:00</span></div>
+<div class="stat-item"><span class="stat-label">CPM</span><span class="stat-value" id="statCpm">0</span></div>
+<div class="stat-item"><span class="stat-label">타수(KPM)</span><span class="stat-value" id="statKpm">0</span></div>
+<div class="stat-item"><span class="stat-label">정확도</span><span class="stat-value" id="statAcc">0%</span></div>
+<div class="stat-item"><span class="stat-label">진행률</span><span class="stat-value" id="statProgress">0%</span></div>
+<div class="stat-item" id="pauseStatus" style="display:none"><span class="stat-value" style="color:#dc2626">⏸ 일시정지</span></div>
+</div>
+<div id="practiceArea" style="display:none">
+<div class="prep-area" id="prepArea"><span class="prep-label">準備區：</span><input class="prep-input" id="prepInput" placeholder="在這裡調整輸入法，按 Enter 開始計時"></div>
+<div class="line-practice-wrapper"><div class="line-practice-area" id="linePracticeArea"></div></div>
+<div class="hotkey-hint">Enter/Space(행끝): 다음 행 | Tab/Shift+Tab: 행 이동 | BackSpace(행앞): 이전 행 | ESC: 일시정지</div>
+</div>
+<div class="practice-msg" id="practiceMsg">위에서 텍스트를 선택하고 <strong>시작</strong>을 누르세요.</div>
+</div>
 
-  <!-- Practice Tab -->
-  <div class="tab-panel active" id="panel-practice">
-    <div class="practice-controls">
-      <select id="langSelect"><option value="">전체</option></select>
-      <select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
-      <button class="btn-start" id="btnStart" onclick="startPractice()">시작 (F10)</button>
-      <button class="btn-reset" onclick="resetPractice()">초기화 (F11)</button>
-    </div>
+<!-- Ranking -->
+<div class="tab-panel" id="panel-ranking">
+<div class="ranking-controls"><select id="rankBoardSelect"><option value="">전체</option></select>
+<button class="btn-primary" onclick="loadRankings()" style="padding:6px 14px;font-size:.85rem">새로고침</button></div>
+<div class="ranking-table-wrap"><table class="ranking-table">
+<thead><tr><th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th><th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th></tr></thead>
+<tbody id="rankBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">로딩 중...</td></tr></tbody>
+</table></div></div>
 
-    <div class="stats-bar" id="statsBar" style="display:none;">
-      <div class="stat-item"><span class="stat-label">시간</span><span class="stat-value" id="statTime">0:00</span></div>
-      <div class="stat-item"><span class="stat-label">CPM</span><span class="stat-value" id="statCpm">0</span></div>
-      <div class="stat-item"><span class="stat-label">타수(KPM)</span><span class="stat-value" id="statKpm">0</span></div>
-      <div class="stat-item"><span class="stat-label">정확도</span><span class="stat-value" id="statAcc">0%</span></div>
-      <div class="stat-item"><span class="stat-label">진행률</span><span class="stat-value" id="statProgress">0%</span></div>
-      <div class="stat-item" id="pauseStatus" style="display:none;"><span class="stat-value" style="color:#dc2626;">⏸ 일시정지</span></div>
-    </div>
+<!-- Settings -->
+<div class="tab-panel" id="panel-settings">
+<div class="settings-section"><h3>연습 단위</h3>
+<div class="settings-row"><label>표시 형식</label>
+<select id="settingUnitMode"><option value="line">행 단위 (줄마다 분할)</option><option value="paragraph">문단 단위 (원본 줄바꿈 유지)</option></select></div>
+<p style="font-size:.8rem;color:#94a3b8;margin-top:4px">※ '행 단위'는 긴 문단을 창 너비에 맞게 여러 줄로 분할합니다.</p></div>
+<div class="settings-section"><h3>폰트 크기</h3>
+<div class="settings-row"><label>원문/입력</label><input type="number" id="settingFontSize" value="18" min="12" max="40" step="1" style="width:80px"><span style="font-size:.85rem;color:#94a3b8">px</span></div></div>
+<div class="settings-section"><h3>줄 간격</h3>
+<div class="settings-row"><label>line-height</label><input type="number" id="settingLineHeight" value="2" min="1.2" max="3" step="0.1" style="width:80px"></div></div>
+<div class="settings-section"><h3>자간</h3>
+<div class="settings-row"><label>letter-spacing</label><input type="number" id="settingLetterSpacing" value="0.5" min="0" max="5" step="0.1" style="width:80px"><span style="font-size:.85rem;color:#94a3b8">px</span></div></div>
+</div>
 
-    <div id="practiceArea" style="display:none;">
-      <!-- Preparation area -->
-      <div class="prep-area" id="prepArea">
-        <span class="prep-label">準備區：</span>
-        <input class="prep-input" id="prepInput" placeholder="在這裡調整輸入法，按 Enter 開始計時">
-      </div>
+<!-- Account -->
+<div class="tab-panel" id="panel-account">
+<div id="accountLoggedOut"><div class="practice-msg">로그인하면 랭킹 등록 등의 기능을 사용할 수 있습니다.<br><br>
+<button class="btn-primary" onclick="showLoginModal()">로그인</button> <button class="btn-secondary" onclick="showSignupModal()">회원가입</button></div></div>
+<div id="accountLoggedIn" style="display:none"><div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e2e8f0">
+<h3 style="margin-bottom:16px">계정 정보</h3>
+<p style="margin-bottom:8px"><strong>ID:</strong> <span id="acctId">-</span></p>
+<p style="margin-bottom:20px"><strong>닉네임:</strong> <span id="acctNick">-</span></p>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button class="btn-secondary" onclick="showFindIdModal()">아이디 찾기</button>
+<button class="btn-secondary" onclick="showResetPwModal()">비밀번호 재설정</button>
+<button class="btn-danger" onclick="showDeleteAccountModal()">회원탈퇴</button></div></div></div></div>
 
-      <div class="line-practice-wrapper">
-        <div class="line-practice-area" id="linePracticeArea"></div>
-        <div class="pause-overlay" id="pauseOverlay">⏸ 일시정지 — 아무 키를 누르면 재개</div>
-      </div>
-      <div class="hotkey-hint">Enter: 다음 행 | Tab: 다음 행 | Shift+Tab: 이전 행 | ESC: 일시정지 | F10: 시작 | F11: 초기화 | F12: 종료</div>
-    </div>
-
-    <div class="practice-msg" id="practiceMsg">
-      위에서 연습할 텍스트를 선택하고 <strong>시작</strong> 버튼을 누르세요.
-    </div>
-  </div>
-
-  <!-- Ranking Tab -->
-  <div class="tab-panel" id="panel-ranking">
-    <div class="ranking-controls">
-      <select id="rankBoardSelect"><option value="">전체</option></select>
-      <button class="btn-primary" onclick="loadRankings()" style="padding:6px 14px;font-size:0.85rem;">새로고침</button>
-    </div>
-    <div class="ranking-table-wrap">
-      <table class="ranking-table">
-        <thead><tr>
-          <th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th>
-          <th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th>
-        </tr></thead>
-        <tbody id="rankBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">랭킹 데이터를 불러오는 중...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Account Tab -->
-  <div class="tab-panel" id="panel-account">
-    <div id="accountLoggedOut">
-      <div class="practice-msg">
-        로그인하면 랭킹 등록, 아이디 찾기, 비밀번호 재설정 등의 기능을 사용할 수 있습니다.
-        <br><br>
-        <button class="btn-primary" onclick="showLoginModal()">로그인</button>
-        <button class="btn-secondary" onclick="showSignupModal()">회원가입</button>
-      </div>
-    </div>
-    <div id="accountLoggedIn" style="display:none;">
-      <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e2e8f0;">
-        <h3 style="margin-bottom:16px;">계정 정보</h3>
-        <p style="margin-bottom:8px;"><strong>ID:</strong> <span id="acctId">-</span></p>
-        <p style="margin-bottom:8px;"><strong>닉네임:</strong> <span id="acctNick">-</span></p>
-        <p style="margin-bottom:20px;color:#64748b;font-size:0.85rem;">다른 사이트와 다른 비밀번호를 사용하는 것을 권장합니다.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn-secondary" onclick="showFindIdModal()">아이디 찾기</button>
-          <button class="btn-secondary" onclick="showResetPwModal()">비밀번호 재설정</button>
-          <button class="btn-danger" onclick="showDeleteAccountModal()">회원탈퇴</button>
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- Admin -->
+<div class="tab-panel" id="panel-admin">
+<div class="settings-section"><h3>서버 텍스트 관리</h3>
+<div style="display:flex;gap:10px;margin-bottom:12px">
+<button class="btn-primary" onclick="showAddTextModal()">새 텍스트 추가</button>
+<button class="btn-secondary" onclick="refreshAdminTextList()">새로고침</button></div>
+<div class="admin-text-list" id="adminTextList"><div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div></div></div></div>
 </div>
 
 <div class="footer">禧禧打字網 (XixiTyping) — 웹 버전</div>
 
 <!-- Modals -->
-<!-- Login -->
-<div class="modal-overlay" id="loginModal"><div class="modal">
-  <h2>로그인</h2>
-  <div class="modal-field"><label>ID</label><input id="loginId" autocomplete="username"></div>
-  <div class="modal-field"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
-  <div class="modal-msg" id="loginMsg"></div>
-  <div class="modal-actions">
-    <button class="btn-secondary" onclick="closeModal('loginModal')">취소</button>
-    <button class="btn-primary" onclick="doLogin()">로그인</button>
-  </div>
-</div></div>
+<div class="modal-overlay" id="loginModal"><div class="modal"><h2>로그인</h2>
+<div class="modal-field"><label>ID</label><input id="loginId" autocomplete="username"></div>
+<div class="modal-field"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
+<div class="modal-msg" id="loginMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('loginModal')">취소</button><button class="btn-primary" onclick="doLogin()">로그인</button></div></div></div>
 
-<!-- Signup -->
-<div class="modal-overlay" id="signupModal"><div class="modal">
-  <h2>회원가입</h2>
-  <div class="modal-field"><label>ID (3자 이상)</label><input id="signupId" autocomplete="username"></div>
-  <div class="modal-field"><label>비밀번호 (4자 이상)</label><input id="signupPw" type="password" autocomplete="new-password"></div>
-  <div class="modal-field"><label>닉네임 (10자 이하)</label><input id="signupNick"></div>
-  <div class="modal-field"><label>이메일</label><input id="signupEmail" type="email"></div>
-  <div class="modal-msg" id="signupMsg"></div>
-  <div class="modal-actions">
-    <button class="btn-secondary" onclick="closeModal('signupModal')">취소</button>
-    <button class="btn-primary" onclick="doSignup()">가입</button>
-  </div>
-</div></div>
+<div class="modal-overlay" id="signupModal"><div class="modal"><h2>회원가입</h2>
+<div class="modal-field"><label>ID (3자 이상)</label><input id="signupId" autocomplete="username"></div>
+<div class="modal-field"><label>비밀번호 (4자 이상)</label><input id="signupPw" type="password" autocomplete="new-password"></div>
+<div class="modal-field"><label>닉네임 (10자 이하)</label><input id="signupNick"></div>
+<div class="modal-field"><label>이메일</label><input id="signupEmail" type="email"></div>
+<div class="modal-msg" id="signupMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('signupModal')">취소</button><button class="btn-primary" onclick="doSignup()">가입</button></div></div></div>
 
-<!-- Results -->
-<div class="modal-overlay" id="resultsModal"><div class="modal">
-  <h2>연습 결과</h2>
-  <div class="results-grid">
-    <div class="result-card"><div class="r-label">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
-    <div class="result-card"><div class="r-label">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
-    <div class="result-card"><div class="r-label">정확도</div><div class="r-value" id="resAcc">0%</div></div>
-    <div class="result-card"><div class="r-label">진행률</div><div class="r-value" id="resProgress">0%</div></div>
-    <div class="result-card"><div class="r-label">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
-    <div class="result-card"><div class="r-label">총 글자</div><div class="r-value" id="resChars">0</div></div>
-  </div>
-  <div id="rankSubmitArea" style="display:none;">
-    <div class="modal-field"><label>타자기 구분 (예: 한글 두벌식, 倉頡, 嘸蝦米 등)</label><input id="resTypewriter" placeholder="예) 한글 두벌식"></div>
-    <button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%;">랭킹에 등록</button>
-    <div class="modal-msg" id="rankSubmitMsg"></div>
-  </div>
-  <div class="modal-actions">
-    <button class="btn-secondary" onclick="closeModal('resultsModal')">닫기 (Enter)</button>
-  </div>
-</div></div>
+<div class="modal-overlay" id="resultsModal"><div class="modal"><h2>연습 결과</h2>
+<div class="results-grid">
+<div class="result-card"><div class="r-label">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
+<div class="result-card"><div class="r-label">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
+<div class="result-card"><div class="r-label">정확도</div><div class="r-value" id="resAcc">0%</div></div>
+<div class="result-card"><div class="r-label">진행률</div><div class="r-value" id="resProgress">0%</div></div>
+<div class="result-card"><div class="r-label">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
+<div class="result-card"><div class="r-label">총 글자</div><div class="r-value" id="resChars">0</div></div></div>
+<div id="rankSubmitArea" style="display:none">
+<div class="modal-field"><label>타자기 구분</label><input id="resTypewriter" placeholder="예) 한글 두벌식, 倉頡, 嘸蝦米"></div>
+<button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%">랭킹에 등록</button>
+<div class="modal-msg" id="rankSubmitMsg"></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resultsModal')">닫기 (Enter)</button></div></div></div>
 
-<!-- Find ID -->
-<div class="modal-overlay" id="findIdModal"><div class="modal">
-  <h2>아이디 찾기</h2>
-  <div class="modal-field"><label>이메일</label><input id="findIdEmail" type="email"></div>
-  <div class="modal-msg" id="findIdMsg"></div>
-  <div class="modal-actions">
-    <button class="btn-secondary" onclick="closeModal('findIdModal')">닫기</button>
-    <button class="btn-primary" onclick="doFindId()">찾기</button>
-  </div>
-</div></div>
+<div class="modal-overlay" id="findIdModal"><div class="modal"><h2>아이디 찾기</h2>
+<div class="modal-field"><label>이메일</label><input id="findIdEmail" type="email"></div>
+<div class="modal-msg" id="findIdMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('findIdModal')">닫기</button><button class="btn-primary" onclick="doFindId()">찾기</button></div></div></div>
 
-<!-- Reset Password -->
-<div class="modal-overlay" id="resetPwModal"><div class="modal">
-  <h2>비밀번호 재설정</h2>
-  <div class="modal-field"><label>ID</label><input id="resetPwId"></div>
-  <div class="modal-field"><label>이메일</label><input id="resetPwEmail" type="email"></div>
-  <div class="modal-field"><label>새 비밀번호</label><input id="resetPwNew" type="password"></div>
-  <div class="modal-field"><label>새 비밀번호 확인</label><input id="resetPwConfirm" type="password"></div>
-  <div class="modal-msg" id="resetPwMsg"></div>
-  <div class="modal-actions">
-    <button class="btn-secondary" onclick="closeModal('resetPwModal')">닫기</button>
-    <button class="btn-primary" onclick="doResetPw()">재설정</button>
-  </div>
-</div></div>
+<div class="modal-overlay" id="resetPwModal"><div class="modal"><h2>비밀번호 재설정</h2>
+<div class="modal-field"><label>ID</label><input id="resetPwId"></div>
+<div class="modal-field"><label>이메일</label><input id="resetPwEmail" type="email"></div>
+<div class="modal-field"><label>새 비밀번호</label><input id="resetPwNew" type="password"></div>
+<div class="modal-field"><label>확인</label><input id="resetPwConfirm" type="password"></div>
+<div class="modal-msg" id="resetPwMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resetPwModal')">닫기</button><button class="btn-primary" onclick="doResetPw()">재설정</button></div></div></div>
 
-<!-- Delete Account -->
-<div class="modal-overlay" id="deleteAccountModal"><div class="modal">
-  <h2>회원탈퇴</h2>
-  <p style="color:#dc2626;font-weight:600;margin-bottom:16px;">회원탈퇴를 진행하면 계정 정보와 랭킹 기록이 모두 삭제됩니다.</p>
-  <div class="modal-field"><label>비밀번호 확인</label><input id="delAcctPw" type="password"></div>
-  <div class="modal-field"><label>확인 문구 ('탈퇴' 입력)</label><input id="delAcctConfirm"></div>
-  <div class="modal-msg" id="delAcctMsg"></div>
-  <div class="modal-actions">
-    <button class="btn-secondary" onclick="closeModal('deleteAccountModal')">취소</button>
-    <button class="btn-danger" onclick="doDeleteAccount()">탈퇴</button>
-  </div>
-</div></div>
+<div class="modal-overlay" id="deleteAccountModal"><div class="modal"><h2>회원탈퇴</h2>
+<p style="color:#dc2626;font-weight:600;margin-bottom:16px">계정과 랭킹이 모두 삭제됩니다.</p>
+<div class="modal-field"><label>비밀번호</label><input id="delAcctPw" type="password"></div>
+<div class="modal-field"><label>'탈퇴' 입력</label><input id="delAcctConfirm"></div>
+<div class="modal-msg" id="delAcctMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('deleteAccountModal')">취소</button><button class="btn-danger" onclick="doDeleteAccount()">탈퇴</button></div></div></div>
 
+<div class="modal-overlay" id="editTextModal"><div class="modal" style="max-width:640px"><h2 id="editTextTitle">텍스트 편집</h2>
+<input type="hidden" id="editTextId">
+<div class="modal-field"><label>제목</label><input id="editTextName"></div>
+<div class="modal-field"><label>언어</label><select id="editTextLang"><option>한국어</option><option>中文</option><option>영어</option><option>日本語</option></select></div>
+<div class="modal-field"><label>내용</label><textarea id="editTextContent" rows="12" style="font-family:monospace;font-size:.85rem;line-height:1.6"></textarea></div>
+<div class="modal-msg" id="editTextMsg"></div>
+<div class="modal-actions">
+<button class="btn-danger" id="btnDeleteText" onclick="doDeleteText()" style="margin-right:auto">삭제</button>
+<button class="btn-secondary" onclick="closeModal('editTextModal')">취소</button>
+<button class="btn-primary" onclick="doSaveText()">저장</button></div></div></div>
+
+<div class="pause-overlay" id="pauseOverlay">⏸ 일시정지 — 아무 키를 누르거나 클릭하면 재개</div>
 
 <script>
-/* ============================================================ */
-/* Global State                                                   */
-/* ============================================================ */
-const API = '';
-let currentUser = null;
-let allTexts = [];       // all texts from server
-let texts = [];          // filtered by language
-let languages = [];
-let currentText = null;
-let practicing = false;
-let started = false;     // timer started (after Enter in prep)
-let paused = false;
-let startTime = null;
-let timerInterval = null;
-let keystrokes = 0;
-let totalPausedMs = 0;
-let pauseStartTime = null;
+const API='',ADMIN_ID='zhengxi980';
+let currentUser=null,allTexts=[],texts=[],languages=[];
+let currentText=null,practicing=false,started=false,paused=false;
+let startTime=null,timerInterval=null,keystrokes=0;
+let totalPausedMs=0,pauseStartTime=null;
+let lines=[],currentLineIdx=0,lineInputs=[],lineDisplays=[],lineBlocks=[];
+let unitMode='line',manualPause=false;
+
+function normalizeFullwidth(s){let o='';for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c>=0xFF10&&c<=0xFF19)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF21&&c<=0xFF3A)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF41&&c<=0xFF5A)o+=String.fromCharCode(c-0xFEE0);else o+=s[i];}return o;}
+
+async function api(ep,method='GET',data=null){const o={method,headers:{'Content-Type':'application/json'}};if(currentUser?.token)o.headers['Authorization']='Bearer '+currentUser.token;if(data)o.body=JSON.stringify(data);try{const r=await fetch(API+ep,o);return await r.json();}catch(e){return null;}}
+
+/* Tabs */
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('panel-'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='ranking')loadRankings();if(b.dataset.tab==='admin')refreshAdminTextList();});});
+
+/* Auth */
+function isAdmin(){return currentUser?.user_id===ADMIN_ID;}
+function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+' 님';document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent='로그인하지 않음';document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';}
+function showLoginModal(){openModal('loginModal');document.getElementById('loginId').focus();}
+function showSignupModal(){openModal('signupModal');document.getElementById('signupId').focus();}
+function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
+function showResetPwModal(){openModal('resetPwModal');document.getElementById('resetPwId').focus();}
+function showDeleteAccountModal(){openModal('deleteAccountModal');document.getElementById('delAcctPw').focus();}
+async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent='ID와 비밀번호를 입력하세요.';return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();}else{document.getElementById('loginMsg').textContent=r?.msg||'로그인 실패';}}
+async function doSignup(){const id=document.getElementById('signupId').value.trim(),pw=document.getElementById('signupPw').value,nk=document.getElementById('signupNick').value.trim(),em=document.getElementById('signupEmail').value.trim();if(!id||!pw||!nk||!em){document.getElementById('signupMsg').textContent='모든 항목을 입력하세요.';return;}const r=await api('/api/signup','POST',{user_id:id,password:pw,nickname:nk,email:em});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('signupModal');updateAuthUI();}else{document.getElementById('signupMsg').textContent=r?.msg||'실패';}}
+async function doLogout(){await api('/api/logout','POST');currentUser=null;localStorage.removeItem('auth');updateAuthUI();}
+async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent='이메일을 입력하세요.';return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=r?.msg||'없음';}}
+async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent='모든 항목 입력';return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent='비밀번호 불일치';return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent='완료';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
+async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!=='탈퇴'){document.getElementById('delAcctMsg').textContent="'탈퇴' 입력 필요";return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert('탈퇴 완료');}else{document.getElementById('delAcctMsg').textContent=r?.msg||'실패';}}
+
+/* Modal helpers */
+function openModal(id){document.querySelectorAll('#'+id+' .modal-msg').forEach(m=>m.textContent='');document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-overlay.active')){document.querySelectorAll('.modal-overlay.active').forEach(m=>m.classList.remove('active'));e.preventDefault();return;}});
+document.getElementById('loginPw')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
+
+/* Texts + Language filter */
+function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">전체</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;ls.appendChild(o);});ls.value=pv;filterTexts();}
+function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">텍스트를 선택해 주세요</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+'자)';s.appendChild(o);});if(pv)s.value=pv;}
+document.getElementById('langSelect').addEventListener('change',filterTexts);
+async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
+
+/* Settings */
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;}catch(e){}applyFontSettings();}
+function saveSettings(){const s={unitMode:document.getElementById('settingUnitMode').value,fontSize:document.getElementById('settingFontSize').value,lineHeight:document.getElementById('settingLineHeight').value,letterSpacing:document.getElementById('settingLetterSpacing').value};unitMode=s.unitMode;localStorage.setItem('webSettings',JSON.stringify(s));applyFontSettings();}
+function applyFontSettings(){document.documentElement.style.setProperty('--pfs',document.getElementById('settingFontSize').value+'px');document.documentElement.style.setProperty('--plh',document.getElementById('settingLineHeight').value);document.documentElement.style.setProperty('--pls',document.getElementById('settingLetterSpacing').value+'px');}
+['settingUnitMode','settingFontSize','settingLineHeight','settingLetterSpacing'].forEach(id=>{document.getElementById(id).addEventListener('change',saveSettings);document.getElementById(id).addEventListener('input',saveSettings);});
+
+/* Admin text management */
+async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;const l=document.getElementById('adminTextList');if(r.texts.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">텍스트 없음</div>';return;}l.innerHTML=r.texts.map(t=>'<div class="admin-text-item"><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');}
+function showAddTextModal(){document.getElementById('editTextTitle').textContent='새 텍스트 추가';document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
+function showEditTextModal(id){const t=allTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent='텍스트 편집';document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
+async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent='제목과 내용 필요';return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent='저장 완료!';await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
+async function doDeleteText(){const id=document.getElementById('editTextId').value;if(!id)return;if(!confirm('삭제하시겠습니까?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){closeModal('editTextModal');await loadTexts();refreshAdminTextList();}}
+async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'" 삭제?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
+
+/* Pause */
+function doPause(manual=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();document.getElementById('pauseOverlay').classList.add('active');document.getElementById('pauseStatus').style.display='';}
+function doResume(){if(!paused)return;paused=false;manualPause=false;if(pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';if(lineInputs[currentLineIdx])lineInputs[currentLineIdx].focus();}
+
+/* Line split */
+function splitTextToLines(content){if(unitMode==='paragraph'){const p=content.split('\n').filter(l=>l.length>0);return p.length>0?p:[content];}const raw=content.split('\n').filter(l=>l.length>0);if(raw.length===0)return[content];const m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';document.body.appendChild(m);const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;const result=[];for(const r of raw){let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}document.body.removeChild(m);return result.length>0?result:[content];}
+
+/* Practice */
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;resetPractice();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
+lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}const inp=document.createElement('input');inp.type='text';inp.className='line-input';inp.autocomplete='off';inp.spellcheck=false;inp.disabled=(idx!==0);if(idx===0)inp.classList.add('active-line');block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
+inp.addEventListener('compositionstart',()=>{inp._composing=true;});inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
+/* Fix #6: click on other line input switches line, no pause */
+inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){doResume();e.preventDefault();return;}if(idx!==currentLineIdx){switchToLine(idx);e.preventDefault();}});});
+document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
+
+function switchToLine(toIdx){if(toIdx===currentLineIdx)return;lineInputs[currentLineIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);}
+function updateCursorDisplay(idx){const spans=lineDisplays[idx].children,typed=lineInputs[idx].value;for(let i=0;i<spans.length;i++){spans[i].classList.remove('current');if(i===typed.length)spans[i].classList.add('current');}}
+
+document.getElementById('prepInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(!practicing)return;started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';if(lineInputs[0])lineInputs[0].focus();}});
+
+function handleLineKeydown(e,idx){if(!practicing)return;
+if(e.key==='Escape'){e.preventDefault();if(paused)doResume();else doPause(true);return;}
+/* Fix #4: any key while paused resumes */
+if(paused){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock'];if(!ig.includes(e.key)){e.preventDefault();doResume();}return;}
+/* auto-start */
+if(!started&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)){started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';}
+/* Fix #7: block leading space */
+if((e.key===' '||e.code==='Space')&&lineInputs[idx].value.length===0){e.preventDefault();return;}
+/* keystroke count */
+if(e.key.length===1||e.key==='Backspace'||e.key==='Enter'||e.key==='Process'||e.keyCode===229)keystrokes++;
+if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();keystrokes++;if(idx<lines.length-1)moveToLine(idx+1,idx);return;}
+if(e.key==='Tab'&&e.shiftKey){e.preventDefault();keystrokes++;if(idx>0)moveToLine(idx-1,idx);return;}
+if(e.key==='Backspace'&&lineInputs[idx].selectionStart===0&&lineInputs[idx].selectionEnd===0){if(idx>0){e.preventDefault();moveToLine(idx-1,idx);return;}}
+if(e.key==='Enter'){e.preventDefault();if(idx<lines.length-1)moveToLine(idx+1,idx,true);else stopPractice();return;}}
+
+function moveToLine(toIdx,fromIdx,markComplete=false){if(markComplete)lineBlocks[fromIdx].classList.add('completed');lineInputs[fromIdx].disabled=true;lineInputs[fromIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});}
+
+function handleLineInput(idx){if(!practicing||paused)return;const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
+/* Fix #7: strip leading spaces */
+if(typed.length>0&&typed[0]===' '){typed=typed.replace(/^ +/,'');inp.value=typed;}
+const target=lines[idx],spans=lineDisplays[idx].children;
+/* Fix #8: space after last char = auto next line */
+if(typed.length>target.length&&typed[typed.length-1]===' '){inp.value=typed.slice(0,-1);typed=inp.value;refreshHighlights(idx,typed,target,spans);updateStats();if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);}else{stopPractice();}return;}
+refreshHighlights(idx,typed,target,spans);updateStats();
+/* auto-advance on exact match */
+if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(target);if(tN===gN&&idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);}}}
 
-// Line-by-line state
-let lines = [];
-let currentLineIdx = 0;
-let lineInputs = [];
-let lineDisplays = [];
-let lineBlocks = [];
+function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}}
 
-/* ============================================================ */
-/* Fullwidth → halfwidth normalization (match desktop)            */
-/* ============================================================ */
-function normalizeFullwidth(s) {
-  let out = '';
-  for (let i = 0; i < s.length; i++) {
-    const c = s.charCodeAt(i);
-    // FF10-FF19 → 0030-0039 (digits)
-    // FF21-FF3A → 0041-005A (uppercase)
-    // FF41-FF5A → 0061-007A (lowercase)
-    if (c >= 0xFF10 && c <= 0xFF19) out += String.fromCharCode(c - 0xFEE0);
-    else if (c >= 0xFF21 && c <= 0xFF3A) out += String.fromCharCode(c - 0xFEE0);
-    else if (c >= 0xFF41 && c <= 0xFF5A) out += String.fromCharCode(c - 0xFEE0);
-    else out += s[i];
-  }
-  return out;
-}
+function resetPractice(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
 
-/* ============================================================ */
-/* API Helper                                                     */
-/* ============================================================ */
-async function api(endpoint, method = 'GET', data = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (currentUser?.token) opts.headers['Authorization'] = 'Bearer ' + currentUser.token;
-  if (data) opts.body = JSON.stringify(data);
-  try {
-    const res = await fetch(API + endpoint, opts);
-    return await res.json();
-  } catch (e) { return null; }
-}
+function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.disabled=true;i.classList.remove('active-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';showResults();}
 
-/* ============================================================ */
-/* Tabs                                                           */
-/* ============================================================ */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-    if (btn.dataset.tab === 'ranking') loadRankings();
-  });
-});
+function getElapsed(){if(!startTime)return 0;let pe=totalPausedMs;if(paused&&pauseStartTime)pe+=(Date.now()-pauseStartTime);return Math.max(0,(Date.now()-startTime-pe))/1000;}
 
-/* ============================================================ */
-/* Auth (same as before)                                          */
-/* ============================================================ */
-function updateAuthUI() {
-  const info = document.getElementById('userInfo');
-  if (currentUser) {
-    info.textContent = currentUser.nickname + ' 님';
-    document.getElementById('btnLogin').style.display = 'none';
-    document.getElementById('btnSignup').style.display = 'none';
-    document.getElementById('btnLogout').style.display = '';
-    document.getElementById('accountLoggedOut').style.display = 'none';
-    document.getElementById('accountLoggedIn').style.display = '';
-    document.getElementById('acctId').textContent = currentUser.user_id;
-    document.getElementById('acctNick').textContent = currentUser.nickname;
-    document.getElementById('rankSubmitArea').style.display = '';
-  } else {
-    info.textContent = '로그인하지 않음';
-    document.getElementById('btnLogin').style.display = '';
-    document.getElementById('btnSignup').style.display = '';
-    document.getElementById('btnLogout').style.display = 'none';
-    document.getElementById('accountLoggedOut').style.display = '';
-    document.getElementById('accountLoggedIn').style.display = 'none';
-    document.getElementById('rankSubmitArea').style.display = 'none';
-  }
-}
+function updateStats(){const el=getElapsed(),mn=Math.floor(el/60),sc=Math.floor(el%60);document.getElementById('statTime').textContent=mn+':'+String(sc).padStart(2,'0');if(el<=0)return;let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);document.getElementById('statCpm').textContent=Math.round(tc/(el/60));document.getElementById('statKpm').textContent=Math.round(keystrokes/(el/60));document.getElementById('statAcc').textContent=(tco>0?Math.round(tc/tco*100):0)+'%';document.getElementById('statProgress').textContent=Math.min(ttg>0?Math.round(ttl/ttg*100):0,100)+'%';}
 
-function showLoginModal() { openModal('loginModal'); document.getElementById('loginId').focus(); }
-function showSignupModal() { openModal('signupModal'); document.getElementById('signupId').focus(); }
-function showFindIdModal() { openModal('findIdModal'); document.getElementById('findIdEmail').focus(); }
-function showResetPwModal() { openModal('resetPwModal'); document.getElementById('resetPwId').focus(); }
-function showDeleteAccountModal() { openModal('deleteAccountModal'); document.getElementById('delAcctPw').focus(); }
+/* Focus pause/resume */
+document.addEventListener('focusin',e=>{if(!practicing||!started)return;if(paused&&!manualPause&&lineInputs.includes(e.target))doResume();});
+document.addEventListener('focusout',e=>{if(!practicing||!started||paused)return;setTimeout(()=>{if(!practicing||!started||paused)return;const a=document.activeElement;if(lineInputs.includes(a)||a===document.getElementById('prepInput'))return;doPause(false);},150);});
+document.getElementById('pauseOverlay').addEventListener('click',()=>{if(paused)doResume();});
 
-async function doLogin() {
-  const id = document.getElementById('loginId').value.trim();
-  const pw = document.getElementById('loginPw').value;
-  if (!id || !pw) { document.getElementById('loginMsg').textContent = 'ID와 비밀번호를 입력해 주세요.'; return; }
-  const r = await api('/api/login', 'POST', { user_id: id, password: pw });
-  if (r?.ok) {
-    currentUser = { user_id: r.user_id, nickname: r.nickname, token: r.token };
-    localStorage.setItem('auth', JSON.stringify(currentUser));
-    closeModal('loginModal'); updateAuthUI();
-  } else { document.getElementById('loginMsg').textContent = r?.msg || '로그인에 실패했습니다.'; }
-}
-async function doSignup() {
-  const id = document.getElementById('signupId').value.trim();
-  const pw = document.getElementById('signupPw').value;
-  const nick = document.getElementById('signupNick').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
-  if (!id || !pw || !nick || !email) { document.getElementById('signupMsg').textContent = '모든 항목을 입력해 주세요.'; return; }
-  const r = await api('/api/signup', 'POST', { user_id: id, password: pw, nickname: nick, email: email });
-  if (r?.ok) {
-    currentUser = { user_id: r.user_id, nickname: r.nickname, token: r.token };
-    localStorage.setItem('auth', JSON.stringify(currentUser));
-    closeModal('signupModal'); updateAuthUI();
-  } else { document.getElementById('signupMsg').textContent = r?.msg || '회원가입에 실패했습니다.'; }
-}
-async function doLogout() { await api('/api/logout', 'POST'); currentUser = null; localStorage.removeItem('auth'); updateAuthUI(); }
-async function doFindId() {
-  const email = document.getElementById('findIdEmail').value.trim();
-  if (!email) { document.getElementById('findIdMsg').textContent = '이메일을 입력해 주세요.'; return; }
-  const r = await api('/api/find-id', 'POST', { email });
-  const msg = document.getElementById('findIdMsg');
-  if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '가입된 ID: ' + r.user_id; }
-  else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '찾을 수 없습니다.'; }
-}
-async function doResetPw() {
-  const id = document.getElementById('resetPwId').value.trim();
-  const email = document.getElementById('resetPwEmail').value.trim();
-  const pw1 = document.getElementById('resetPwNew').value;
-  const pw2 = document.getElementById('resetPwConfirm').value;
-  if (!id || !email || !pw1) { document.getElementById('resetPwMsg').textContent = '모든 항목을 입력해 주세요.'; return; }
-  if (pw1 !== pw2) { document.getElementById('resetPwMsg').textContent = '새 비밀번호가 서로 다릅니다.'; return; }
-  const r = await api('/api/reset-password', 'POST', { user_id: id, email: email, new_password: pw1 });
-  const msg = document.getElementById('resetPwMsg');
-  if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '비밀번호가 재설정되었습니다.'; }
-  else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '재설정에 실패했습니다.'; }
-}
-async function doDeleteAccount() {
-  const pw = document.getElementById('delAcctPw').value;
-  const conf = document.getElementById('delAcctConfirm').value.trim();
-  if (conf !== '탈퇴') { document.getElementById('delAcctMsg').textContent = "'탈퇴'라고 입력해 주세요."; return; }
-  const r = await api('/api/delete-account', 'POST', { password: pw });
-  if (r?.ok) {
-    currentUser = null; localStorage.removeItem('auth');
-    closeModal('deleteAccountModal'); updateAuthUI(); alert('회원탈퇴가 완료되었습니다.');
-  } else { document.getElementById('delAcctMsg').textContent = r?.msg || '탈퇴에 실패했습니다.'; }
-}
+/* Results */
+function showResults(){const el=getElapsed();let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);
+const cpm=el>0?Math.round(tc/(el/60)):0,kpm=el>0?Math.round(keystrokes/(el/60)):0,acc=tco>0?Math.round(tc/tco*1000)/10:0,prog=ttg>0?Math.round(ttl/ttg*1000)/10:0;
+document.getElementById('resCpm').textContent=cpm;document.getElementById('resKpm').textContent=kpm;document.getElementById('resAcc').textContent=acc+'%';document.getElementById('resProgress').textContent=Math.min(prog,100)+'%';document.getElementById('resTime').textContent=el.toFixed(1)+'초';document.getElementById('resChars').textContent=ttl;
+window._lastResult={cpm,kpm,acc,progress:Math.min(prog,100),elapsed:el,chars:ttl,input_chars:ttl};document.getElementById('rankSubmitMsg').textContent='';if(currentUser)document.getElementById('rankSubmitArea').style.display='';openModal('resultsModal');}
 
-/* ============================================================ */
-/* Modal Helpers                                                  */
-/* ============================================================ */
-function openModal(id) {
-  document.querySelectorAll('#' + id + ' .modal-msg').forEach(m => m.textContent = '');
-  document.getElementById(id).classList.add('active');
-}
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.querySelector('.modal-overlay.active')) {
-    document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
-    e.preventDefault(); return;
-  }
-});
-document.getElementById('loginPw')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-document.getElementById('signupEmail')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+async function submitRanking(){if(!currentUser||!window._lastResult||!currentText)return;const tw=document.getElementById('resTypewriter').value.trim();if(!tw){document.getElementById('rankSubmitMsg').textContent="타자기 구분을 입력하세요.";return;}const bk=await sha1(currentText.content);const r=await api('/api/rankings','POST',{board_key:bk,board_name:currentText.title,typewriter:tw,cpm:window._lastResult.cpm,kpm:window._lastResult.kpm,acc:window._lastResult.acc,completion:window._lastResult.progress,chars:window._lastResult.chars,input_chars:window._lastResult.input_chars,elapsed:window._lastResult.elapsed,created_at:new Date().toLocaleString('sv-SE').replace('T',' '),created_ts:Math.floor(Date.now()/1000)});const m=document.getElementById('rankSubmitMsg');if(r?.ok){m.className='modal-msg success';m.textContent='등록 완료!';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
+async function sha1(t){const d=new TextEncoder().encode(t),h=await crypto.subtle.digest('SHA-1',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 
-/* ============================================================ */
-/* Texts — Fast loading + Language filter                         */
-/* ============================================================ */
-function populateTextSelect(textList, langList) {
-  allTexts = textList;
-  languages = langList || [];
+/* Rankings */
+async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)return;const s=document.getElementById('rankBoardSelect'),cv=s.value;s.innerHTML='<option value="">전체</option>';const meta=r.meta||{};for(const[k,m]of Object.entries(meta)){const o=document.createElement('option');o.value=k;o.textContent=m.name||k;s.appendChild(o);}s.value=cv;const fb=s.value;let all=[];for(const[bk,rows]of Object.entries(r.boards||{})){if(fb&&bk!==fb)continue;const bn=meta[bk]?.name||bk;for(const row of rows)all.push({...row,_boardName:bn});}all.sort((a,b)=>b.cpm-a.cpm||b.created_ts-a.created_ts);const tb=document.getElementById('rankBody');if(all.length===0){tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">데이터 없음</td></tr>';return;}tb.innerHTML=all.slice(0,100).map((r,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td>'+esc(r.nickname)+'</td><td>'+esc(r.typewriter)+'</td><td><strong>'+r.cpm+'</strong></td><td>'+r.kpm+'</td><td>'+(typeof r.acc==='number'?r.acc.toFixed(1):r.acc)+'%</td><td>'+(typeof r.completion==='number'?r.completion.toFixed(1):r.completion)+'%</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">'+esc(r._boardName)+'</td><td>'+esc(r.created_at||'')+'</td></tr>').join('');}
+document.getElementById('rankBoardSelect').addEventListener('change',loadRankings);
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
-  // Populate language dropdown
-  const langSel = document.getElementById('langSelect');
-  const prevLang = langSel.value;
-  langSel.innerHTML = '<option value="">전체</option>';
-  languages.forEach(l => {
-    const opt = document.createElement('option');
-    opt.value = l; opt.textContent = l;
-    langSel.appendChild(opt);
-  });
-  langSel.value = prevLang;
+/* Global hotkeys */
+document.addEventListener('keydown',e=>{if(document.querySelector('.modal-overlay.active')){if(e.key==='Enter'&&document.getElementById('resultsModal').classList.contains('active')){closeModal('resultsModal');e.preventDefault();}return;}
+if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
+if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
+if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();resetPractice();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
 
-  filterTexts();
-}
-
-function filterTexts() {
-  const lang = document.getElementById('langSelect').value;
-  texts = lang ? allTexts.filter(t => (t.language || '') === lang) : [...allTexts];
-
-  const sel = document.getElementById('textSelect');
-  const prevVal = sel.value;
-  sel.innerHTML = '<option value="">텍스트를 선택해 주세요</option>';
-  texts.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.id;
-    opt.textContent = t.title + ' (' + t.content.length + '자)';
-    sel.appendChild(opt);
-  });
-  if (prevVal) sel.value = prevVal;
-}
-
-document.getElementById('langSelect').addEventListener('change', filterTexts);
-
-async function loadTexts() {
-  const r = await api('/api/texts');
-  if (r?.ok) {
-    populateTextSelect(r.texts, r.languages);
-    try { localStorage.setItem('cachedTexts', JSON.stringify({ texts: r.texts, languages: r.languages })); } catch (e) {}
-  }
-}
-
-/* ============================================================ */
-/* Pause system                                                   */
-/* ============================================================ */
-function doPause() {
-  if (!started || paused) return;
-  paused = true;
-  pauseStartTime = Date.now();
-  document.getElementById('pauseOverlay').classList.add('active');
-  document.getElementById('pauseStatus').style.display = '';
-  // Disable current input
-  if (lineInputs[currentLineIdx]) lineInputs[currentLineIdx].blur();
-}
-
-function doResume() {
-  if (!paused) return;
-  paused = false;
-  if (pauseStartTime) {
-    totalPausedMs += (Date.now() - pauseStartTime);
-    pauseStartTime = null;
-  }
-  document.getElementById('pauseOverlay').classList.remove('active');
-  document.getElementById('pauseStatus').style.display = 'none';
-  if (lineInputs[currentLineIdx]) {
-    lineInputs[currentLineIdx].focus();
-  }
-}
-
-/* ============================================================ */
-/* Practice — Line-by-line UI                                     */
-/* ============================================================ */
-function startPractice() {
-  const sel = document.getElementById('textSelect');
-  const id = parseInt(sel.value);
-  if (!id) { alert('연습할 텍스트를 선택해 주세요.'); return; }
-
-  currentText = texts.find(t => t.id === id);
-  if (!currentText) return;
-
-  resetPractice();
-  practicing = true;
-  started = false;  // timer not started yet — wait for Enter in prep
-  paused = false;
-  keystrokes = 0;
-  startTime = null;
-  totalPausedMs = 0;
-
-  // Split content into lines
-  lines = currentText.content.split('\n').filter(l => l.length > 0);
-  if (lines.length === 0) lines = [currentText.content];
-  currentLineIdx = 0;
-
-  // Build line-by-line UI
-  const area = document.getElementById('linePracticeArea');
-  area.innerHTML = '';
-  lineInputs = [];
-  lineDisplays = [];
-  lineBlocks = [];
-
-  lines.forEach((line, idx) => {
-    const block = document.createElement('div');
-    block.className = 'line-block';
-
-    const origDiv = document.createElement('div');
-    origDiv.className = 'line-original';
-    for (let i = 0; i < line.length; i++) {
-      const span = document.createElement('span');
-      span.className = 'ch' + (idx === 0 && i === 0 ? ' current' : '');
-      span.textContent = line[i];
-      origDiv.appendChild(span);
-    }
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'line-input';
-    input.autocomplete = 'off';
-    input.spellcheck = false;
-    input.disabled = (idx !== 0);
-    if (idx === 0) input.classList.add('active-line');
-
-    block.appendChild(origDiv);
-    block.appendChild(input);
-    area.appendChild(block);
-
-    lineInputs.push(input);
-    lineDisplays.push(origDiv);
-    lineBlocks.push(block);
-
-    // Events
-    input.addEventListener('input', () => { if (!input._composing) handleLineInput(idx); });
-    input.addEventListener('compositionstart', () => { input._composing = true; });
-    input.addEventListener('compositionend', () => { input._composing = false; handleLineInput(idx); });
-    input.addEventListener('keydown', (e) => handleLineKeydown(e, idx));
-    // Focus out → auto pause
-    input.addEventListener('blur', () => {
-      if (started && !paused && practicing) {
-        // Only pause if focus left the practice area entirely
-        setTimeout(() => {
-          if (started && !paused && practicing) {
-            const active = document.activeElement;
-            const isInPractice = lineInputs.includes(active) || active === document.getElementById('prepInput');
-            if (!isInPractice) doPause();
-          }
-        }, 100);
-      }
-    });
-  });
-
-  document.getElementById('practiceArea').style.display = '';
-  document.getElementById('practiceMsg').style.display = 'none';
-  document.getElementById('statsBar').style.display = '';
-
-  // Show prep area, focus it
-  document.getElementById('prepArea').style.display = '';
-  const prepInput = document.getElementById('prepInput');
-  prepInput.value = '';
-  prepInput.focus();
-}
-
-// Preparation area: Enter → start timer and focus first line
-document.getElementById('prepInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    if (!practicing) return;
-    // Start timer
-    started = true;
-    startTime = Date.now();
-    timerInterval = setInterval(updateStats, 200);
-    // Hide prep area
-    document.getElementById('prepArea').style.display = 'none';
-    // Focus first line input
-    if (lineInputs[0]) {
-      lineInputs[0].focus();
-    }
-  }
-});
-
-function handleLineKeydown(e, idx) {
-  if (!practicing) return;
-
-  // ESC → toggle pause
-  if (e.key === 'Escape') {
-    e.preventDefault();
-    if (paused) doResume();
-    else doPause();
-    return;
-  }
-
-  // If paused, any non-modifier key resumes
-  if (paused) {
-    const ignoreKeys = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'NumLock'];
-    if (!ignoreKeys.includes(e.key)) {
-      e.preventDefault();
-      doResume();
-    }
-    return;
-  }
-
-  // Start timer on first keystroke if not started (fallback)
-  if (!started && !e.ctrlKey && !e.altKey && !e.metaKey &&
-      !['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)) {
-    started = true;
-    startTime = Date.now();
-    timerInterval = setInterval(updateStats, 200);
-    document.getElementById('prepArea').style.display = 'none';
-  }
-
-  // Count physical keystrokes
-  if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === 'Process' || e.keyCode === 229) {
-    keystrokes++;
-  }
-
-  // Tab → next line
-  if (e.key === 'Tab' && !e.shiftKey) {
-    e.preventDefault();
-    keystrokes++;
-    if (idx < lines.length - 1) moveToLine(idx + 1, idx);
-    return;
-  }
-
-  // Shift+Tab → previous line
-  if (e.key === 'Tab' && e.shiftKey) {
-    e.preventDefault();
-    keystrokes++;
-    if (idx > 0) moveToLine(idx - 1, idx);
-    return;
-  }
-
-  // BackSpace at beginning → previous line (match desktop)
-  if (e.key === 'Backspace' && lineInputs[idx].selectionStart === 0 && lineInputs[idx].selectionEnd === 0) {
-    if (idx > 0) {
-      e.preventDefault();
-      moveToLine(idx - 1, idx);
-      return;
-    }
-  }
-
-  // Enter → submit line, move to next
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    if (idx < lines.length - 1) {
-      moveToLine(idx + 1, idx, true);
-    } else {
-      // Last line — finish
-      stopPractice();
-    }
-    return;
-  }
-}
-
-function moveToLine(toIdx, fromIdx, markComplete = false) {
-  if (markComplete) {
-    lineBlocks[fromIdx].classList.add('completed');
-  }
-  lineInputs[fromIdx].disabled = true;
-  lineInputs[fromIdx].classList.remove('active-line');
-
-  currentLineIdx = toIdx;
-  lineInputs[toIdx].disabled = false;
-  lineInputs[toIdx].classList.add('active-line');
-  lineInputs[toIdx].focus();
-
-  // Set cursor indicator
-  const spans = lineDisplays[toIdx].children;
-  const typed = lineInputs[toIdx].value;
-  for (let i = 0; i < spans.length; i++) {
-    if (i === typed.length) { spans[i].classList.add('current'); break; }
-  }
-
-  lineBlocks[toIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function handleLineInput(idx) {
-  if (!practicing || paused) return;
-  const input = lineInputs[idx];
-  if (input._composing) return;
-
-  const typed = input.value;
-  const target = lines[idx];
-  const spans = lineDisplays[idx].children;
-
-  // Update character highlights
-  for (let i = 0; i < target.length; i++) {
-    const span = spans[i];
-    if (!span) continue;
-    span.className = 'ch';
-    if (i < typed.length) {
-      // Use normalized comparison (match desktop)
-      const tn = normalizeFullwidth(target[i]);
-      const un = normalizeFullwidth(typed[i]);
-      if (un === tn) {
-        span.className = 'ch correct';
-      } else {
-        span.className = target[i] === ' ' ? 'ch space-incorrect' : 'ch incorrect';
-      }
-    } else if (i === typed.length) {
-      span.className = 'ch current';
-    }
-  }
-
-  updateStats();
-
-  // Auto-advance on match (match desktop: 일치時 자동 PgDn)
-  if (typed.length > 0) {
-    const typedN = normalizeFullwidth(typed);
-    const targetN = normalizeFullwidth(target);
-    if (typedN === targetN) {
-      if (idx < lines.length - 1) {
-        // Auto-advance to next line
-        lineBlocks[idx].classList.add('completed');
-        moveToLine(idx + 1, idx, false);
-      }
-      // Last line: don't auto-finish, wait for Enter (match desktop behavior)
-    }
-  }
-}
-
-function resetPractice() {
-  practicing = false;
-  started = false;
-  paused = false;
-  startTime = null;
-  totalPausedMs = 0;
-  pauseStartTime = null;
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  keystrokes = 0;
-  currentLineIdx = 0;
-  lines = [];
-  lineInputs = [];
-  lineDisplays = [];
-  lineBlocks = [];
-
-  document.getElementById('linePracticeArea').innerHTML = '';
-  document.getElementById('statTime').textContent = '0:00';
-  document.getElementById('statCpm').textContent = '0';
-  document.getElementById('statKpm').textContent = '0';
-  document.getElementById('statAcc').textContent = '0%';
-  document.getElementById('statProgress').textContent = '0%';
-  document.getElementById('pauseOverlay').classList.remove('active');
-  document.getElementById('pauseStatus').style.display = 'none';
-}
-
-function stopPractice() {
-  if (!practicing) return;
-  practicing = false;
-  started = false;
-  if (paused && pauseStartTime) {
-    totalPausedMs += (Date.now() - pauseStartTime);
-    pauseStartTime = null;
-  }
-  paused = false;
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  lineInputs.forEach(inp => { inp.disabled = true; inp.classList.remove('active-line'); });
-  document.getElementById('pauseOverlay').classList.remove('active');
-  document.getElementById('pauseStatus').style.display = 'none';
-  showResults();
-}
-
-function getElapsed() {
-  if (!startTime) return 0;
-  let pauseExtra = totalPausedMs;
-  if (paused && pauseStartTime) pauseExtra += (Date.now() - pauseStartTime);
-  return Math.max(0, (Date.now() - startTime - pauseExtra)) / 1000;
-}
-
-function updateStats() {
-  const elapsed = getElapsed();
-  const mins = Math.floor(elapsed / 60);
-  const secs = Math.floor(elapsed % 60);
-  document.getElementById('statTime').textContent = mins + ':' + String(secs).padStart(2, '0');
-
-  if (elapsed <= 0) return;
-
-  let totalCorrect = 0, totalCompared = 0, totalTypedLen = 0;
-  for (let li = 0; li < lines.length; li++) {
-    const typed = lineInputs[li] ? normalizeFullwidth(lineInputs[li].value) : '';
-    const target = normalizeFullwidth(lines[li]);
-    const compared = Math.min(typed.length, target.length);
-    for (let i = 0; i < compared; i++) {
-      if (typed[i] === target[i]) totalCorrect++;
-    }
-    totalCompared += compared;
-    totalTypedLen += (lineInputs[li] ? lineInputs[li].value.length : 0);
-  }
-
-  const totalTargetLen = lines.reduce((sum, l) => sum + l.length, 0);
-  const cpm = Math.round(totalCorrect / (elapsed / 60));
-  const kpm = Math.round(keystrokes / (elapsed / 60));
-  const acc = totalCompared > 0 ? Math.round(totalCorrect / totalCompared * 100) : 0;
-  const progress = totalTargetLen > 0 ? Math.round(totalTypedLen / totalTargetLen * 100) : 0;
-
-  document.getElementById('statCpm').textContent = cpm;
-  document.getElementById('statKpm').textContent = kpm;
-  document.getElementById('statAcc').textContent = acc + '%';
-  document.getElementById('statProgress').textContent = Math.min(progress, 100) + '%';
-}
-
-/* ============================================================ */
-/* Results                                                        */
-/* ============================================================ */
-function showResults() {
-  const elapsed = getElapsed();
-  let totalCorrect = 0, totalCompared = 0, totalTypedLen = 0;
-  for (let li = 0; li < lines.length; li++) {
-    const typed = lineInputs[li] ? normalizeFullwidth(lineInputs[li].value) : '';
-    const target = normalizeFullwidth(lines[li]);
-    const compared = Math.min(typed.length, target.length);
-    for (let i = 0; i < compared; i++) {
-      if (typed[i] === target[i]) totalCorrect++;
-    }
-    totalCompared += compared;
-    totalTypedLen += (lineInputs[li] ? lineInputs[li].value.length : 0);
-  }
-  const totalTargetLen = lines.reduce((sum, l) => sum + l.length, 0);
-
-  const cpm = elapsed > 0 ? Math.round(totalCorrect / (elapsed / 60)) : 0;
-  const kpm = elapsed > 0 ? Math.round(keystrokes / (elapsed / 60)) : 0;
-  const acc = totalCompared > 0 ? Math.round(totalCorrect / totalCompared * 1000) / 10 : 0;
-  const progress = totalTargetLen > 0 ? Math.round(totalTypedLen / totalTargetLen * 1000) / 10 : 0;
-
-  document.getElementById('resCpm').textContent = cpm;
-  document.getElementById('resKpm').textContent = kpm;
-  document.getElementById('resAcc').textContent = acc + '%';
-  document.getElementById('resProgress').textContent = Math.min(progress, 100) + '%';
-  document.getElementById('resTime').textContent = elapsed.toFixed(1) + '초';
-  document.getElementById('resChars').textContent = totalTypedLen;
-
-  window._lastResult = { cpm, kpm, acc, progress: Math.min(progress, 100), elapsed, chars: totalTypedLen, input_chars: totalTypedLen };
-  document.getElementById('rankSubmitMsg').textContent = '';
-  if (currentUser) document.getElementById('rankSubmitArea').style.display = '';
-  openModal('resultsModal');
-}
-
-async function submitRanking() {
-  if (!currentUser || !window._lastResult || !currentText) return;
-  const tw = document.getElementById('resTypewriter').value.trim();
-  if (!tw) { document.getElementById('rankSubmitMsg').textContent = "'타자기 구분'을 입력해 주세요."; return; }
-  const boardKey = await sha1(currentText.content);
-  const r = await api('/api/rankings', 'POST', {
-    board_key: boardKey, board_name: currentText.title, typewriter: tw,
-    cpm: window._lastResult.cpm, kpm: window._lastResult.kpm, acc: window._lastResult.acc,
-    completion: window._lastResult.progress, chars: window._lastResult.chars,
-    input_chars: window._lastResult.input_chars, elapsed: window._lastResult.elapsed,
-    created_at: new Date().toLocaleString('sv-SE').replace('T', ' '),
-    created_ts: Math.floor(Date.now() / 1000),
-  });
-  const msg = document.getElementById('rankSubmitMsg');
-  if (r?.ok) { msg.className = 'modal-msg success'; msg.textContent = '랭킹에 등록되었습니다!'; }
-  else { msg.className = 'modal-msg'; msg.textContent = r?.msg || '등록에 실패했습니다.'; }
-}
-
-async function sha1(text) {
-  const data = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest('SHA-1', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-/* ============================================================ */
-/* Rankings                                                       */
-/* ============================================================ */
-async function loadRankings() {
-  const r = await api('/api/rankings');
-  if (!r?.ok) return;
-  const sel = document.getElementById('rankBoardSelect');
-  const cv = sel.value;
-  sel.innerHTML = '<option value="">전체</option>';
-  const meta = r.meta || {};
-  for (const [key, m] of Object.entries(meta)) {
-    const opt = document.createElement('option');
-    opt.value = key; opt.textContent = m.name || key;
-    sel.appendChild(opt);
-  }
-  sel.value = cv;
-
-  const fb = sel.value;
-  let all = [];
-  for (const [bk, rows] of Object.entries(r.boards || {})) {
-    if (fb && bk !== fb) continue;
-    const bn = meta[bk]?.name || bk;
-    for (const row of rows) all.push({ ...row, _boardName: bn });
-  }
-  all.sort((a, b) => b.cpm - a.cpm || b.created_ts - a.created_ts);
-
-  const tbody = document.getElementById('rankBody');
-  if (all.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">랭킹 데이터가 없습니다.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = all.slice(0, 100).map((row, i) => `<tr>
-    <td class="rank-num">${i+1}</td><td>${esc(row.nickname)}</td><td>${esc(row.typewriter)}</td>
-    <td><strong>${row.cpm}</strong></td><td>${row.kpm}</td>
-    <td>${typeof row.acc==='number'?row.acc.toFixed(1):row.acc}%</td>
-    <td>${typeof row.completion==='number'?row.completion.toFixed(1):row.completion}%</td>
-    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">${esc(row._boardName)}</td>
-    <td>${esc(row.created_at||'')}</td></tr>`).join('');
-}
-document.getElementById('rankBoardSelect').addEventListener('change', loadRankings);
-function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-
-/* ============================================================ */
-/* Hotkeys (F10/F11/F12/ESC) — global                            */
-/* ============================================================ */
-document.addEventListener('keydown', (e) => {
-  // Modal open → Enter closes results
-  if (document.querySelector('.modal-overlay.active')) {
-    if (e.key === 'Enter' && document.getElementById('resultsModal').classList.contains('active')) {
-      closeModal('resultsModal'); e.preventDefault();
-    }
-    return;
-  }
-
-  // ESC during practice → pause/resume (handled in line keydown too, but this is global fallback)
-  if (e.key === 'Escape' && practicing && started) {
-    e.preventDefault();
-    if (paused) doResume(); else doPause();
-    return;
-  }
-
-  if (e.key === 'F10') { e.preventDefault(); startPractice(); }
-  if (e.key === 'F11') { e.preventDefault(); resetPractice(); }
-  if (e.key === 'F12') { e.preventDefault(); stopPractice(); }
-});
-
-/* ============================================================ */
-/* Init — Fast parallel loading                                   */
-/* ============================================================ */
-(async function init() {
-  // Instantly show cached texts
-  try {
-    const cached = JSON.parse(localStorage.getItem('cachedTexts'));
-    if (cached?.texts?.length > 0) {
-      populateTextSelect(cached.texts, cached.languages || []);
-    }
-  } catch (e) {}
-
-  // Restore auth
-  try {
-    const saved = JSON.parse(localStorage.getItem('auth'));
-    if (saved?.token) currentUser = saved;
-  } catch (e) {}
-  updateAuthUI();
-
-  // Fetch fresh in parallel
-  const tp = loadTexts();
-  const rp = loadRankings();
-
-  // Verify auth background
-  if (currentUser) {
-    api('/api/rankings').then(r => {
-      if (!r) { currentUser = null; localStorage.removeItem('auth'); updateAuthUI(); }
-    });
-  }
-
-  await Promise.all([tp, rp]);
-})();
+/* Init */
+(async function init(){loadSettings();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser)api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});await Promise.all([tp,rp]);})();
 </script>
-
 </body>
 </html>
