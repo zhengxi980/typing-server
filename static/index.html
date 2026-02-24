@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>시시 타자 연습 - XixiTyping</title>
+<title>禧禧打字網 - XixiTyping</title>
 <style>
 /* ============================================================ */
 /* Reset & Base                                                  */
@@ -38,7 +38,11 @@ input:focus, select:focus { border-color: #2563eb; }
   padding: 12px 24px; display: flex; align-items: center;
   justify-content: space-between; flex-wrap: wrap; gap: 8px;
 }
-.header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+.header h1 {
+  font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px;
+  cursor: pointer; user-select: none;
+}
+.header h1:hover { opacity: 0.8; }
 .header h1 span { color: #60a5fa; }
 .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .header-right button {
@@ -78,6 +82,7 @@ input:focus, select:focus { border-color: #2563eb; }
 .practice-controls {
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
   margin-bottom: 16px;
+  justify-content: center;
 }
 .practice-controls select { min-width: 200px; }
 .btn-start { background: #2563eb; color: #fff; }
@@ -89,39 +94,51 @@ input:focus, select:focus { border-color: #2563eb; }
   display: flex; gap: 20px; flex-wrap: wrap;
   background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
   padding: 12px 20px; margin-bottom: 16px; font-size: 0.9rem;
+  justify-content: center;
 }
 .stat-item { display: flex; align-items: center; gap: 6px; }
 .stat-label { color: #64748b; font-weight: 500; }
 .stat-value { color: #1e293b; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-/* Text Display */
-.text-display {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-  padding: 24px; margin-bottom: 12px;
-  font-size: 1.2rem; line-height: 2.2; letter-spacing: 0.5px;
-  min-height: 160px; position: relative;
+/* Line-by-line practice area */
+.line-practice-area {
+  margin-bottom: 16px;
+}
+.line-block {
+  margin-bottom: 4px;
+}
+.line-original {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 6px 6px 0 0;
+  padding: 10px 16px;
+  font-size: 1.15rem; line-height: 1.8; letter-spacing: 0.5px;
   font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
   word-break: break-all; white-space: pre-wrap;
+  min-height: 32px;
 }
-.text-display .ch { color: #9ca3af; transition: color .1s; }
-.text-display .ch.correct { color: #16a34a; }
-.text-display .ch.incorrect { color: #fff; background: #ef4444; border-radius: 2px; }
-.text-display .ch.current { border-bottom: 2px solid #2563eb; }
-.text-display .ch.space-incorrect { background: #fca5a5; border-radius: 2px; }
+.line-original .ch { color: #9ca3af; transition: color .08s; }
+.line-original .ch.correct { color: #16a34a; }
+.line-original .ch.incorrect { color: #fff; background: #ef4444; border-radius: 2px; }
+.line-original .ch.current { border-bottom: 2px solid #2563eb; }
+.line-original .ch.space-incorrect { background: #fca5a5; border-radius: 2px; }
+/* Completed line - subtle green left border */
+.line-block.completed .line-original {
+  border-left: 3px solid #16a34a;
+}
 
-/* Input Area */
-.input-area {
-  position: relative; margin-bottom: 16px;
-}
-.input-area textarea {
-  width: 100%; min-height: 80px; border: 2px solid #d1d5db;
-  border-radius: 8px; padding: 16px; font-size: 1.1rem;
+.line-input {
+  width: 100%;
+  border: 2px solid #d1d5db; border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 6px 6px;
+  padding: 8px 16px;
+  font-size: 1.05rem;
   font-family: 'D2Coding', 'Noto Sans KR', 'Consolas', 'Malgun Gothic', monospace;
-  resize: none; outline: none; transition: border-color .2s;
+  outline: none; transition: border-color .2s;
   line-height: 1.8;
+  margin-bottom: 8px;
 }
-.input-area textarea:focus { border-color: #2563eb; }
-.input-area textarea:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
+.line-input:focus { border-color: #2563eb; }
+.line-input:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
+.line-input.active-line { border-color: #2563eb; background: #f0f7ff; }
 
 .practice-msg {
   text-align: center; color: #64748b; padding: 40px 0; font-size: 1rem;
@@ -209,7 +226,8 @@ input:focus, select:focus { border-color: #2563eb; }
 @media (max-width: 600px) {
   .header { padding: 10px 14px; }
   .main { padding: 12px; }
-  .text-display { font-size: 1rem; padding: 16px; line-height: 2; }
+  .line-original { font-size: 1rem; padding: 8px 12px; }
+  .line-input { font-size: 0.95rem; padding: 6px 12px; }
   .stats-bar { gap: 12px; padding: 10px 14px; }
   .tab-btn { padding: 8px 14px; font-size: 0.8rem; }
 }
@@ -221,7 +239,7 @@ input:focus, select:focus { border-color: #2563eb; }
 <!-- Header                                                        -->
 <!-- ============================================================ -->
 <div class="header">
-  <h1><span>시시</span> 타자 연습</h1>
+  <h1 onclick="location.reload()"><span>禧禧</span>打字網</h1>
   <div class="header-right">
     <span class="user-info" id="userInfo">로그인하지 않음</span>
     <button id="btnLogin" class="btn-accent" onclick="showLoginModal()">로그인</button>
@@ -261,10 +279,7 @@ input:focus, select:focus { border-color: #2563eb; }
     </div>
 
     <div id="practiceArea" style="display:none;">
-      <div class="text-display" id="textDisplay"></div>
-      <div class="input-area">
-        <textarea id="typingInput" placeholder="여기에 타자를 입력하세요..." disabled></textarea>
-      </div>
+      <div class="line-practice-area" id="linePracticeArea"></div>
       <div class="hotkey-hint">F10: 시작 | F11: 초기화 | F12: 종료</div>
     </div>
 
@@ -319,7 +334,7 @@ input:focus, select:focus { border-color: #2563eb; }
 
 </div>
 
-<div class="footer">시시 타자 연습 (XixiTyping) — 웹 버전</div>
+<div class="footer">禧禧打字網 (XixiTyping) — 웹 버전</div>
 
 <!-- ============================================================ -->
 <!-- Modals                                                        -->
@@ -435,7 +450,13 @@ let practicing = false;
 let startTime = null;
 let timerInterval = null;
 let keystrokes = 0;
-let isComposing = false;
+
+// Line-by-line state
+let lines = [];          // array of line strings
+let currentLineIdx = 0;  // which line is active
+let lineInputs = [];     // references to input elements
+let lineDisplays = [];   // references to line-original divs
+let lineBlocks = [];     // references to line-block divs
 
 /* ============================================================ */
 /* API Helper                                                     */
@@ -580,43 +601,47 @@ async function doDeleteAccount() {
 /* Modal Helpers                                                  */
 /* ============================================================ */
 function openModal(id) {
-  // clear messages
   document.querySelectorAll('#' + id + ' .modal-msg').forEach(m => m.textContent = '');
   document.getElementById(id).classList.add('active');
 }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-// ESC to close modals
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
   }
 });
 
-// Enter in login
 document.getElementById('loginPw')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('signupEmail')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
 
 /* ============================================================ */
-/* Texts                                                          */
+/* Texts — Fast loading with localStorage cache                   */
 /* ============================================================ */
+function populateTextSelect(textList) {
+  texts = textList;
+  const sel = document.getElementById('textSelect');
+  const prevVal = sel.value;
+  sel.innerHTML = '<option value="">텍스트를 선택해 주세요</option>';
+  texts.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.title + ' (' + t.content.length + '자)';
+    sel.appendChild(opt);
+  });
+  if (prevVal) sel.value = prevVal;
+}
+
 async function loadTexts() {
   const r = await api('/api/texts');
   if (r?.ok) {
-    texts = r.texts;
-    const sel = document.getElementById('textSelect');
-    sel.innerHTML = '<option value="">텍스트를 선택해 주세요</option>';
-    texts.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = t.title + ' (' + t.content.length + '자)';
-      sel.appendChild(opt);
-    });
+    populateTextSelect(r.texts);
+    try { localStorage.setItem('cachedTexts', JSON.stringify(r.texts)); } catch (e) {}
   }
 }
 
 /* ============================================================ */
-/* Practice                                                       */
+/* Practice — Line-by-line UI                                     */
 /* ============================================================ */
 function startPractice() {
   const sel = document.getElementById('textSelect');
@@ -631,114 +656,127 @@ function startPractice() {
   keystrokes = 0;
   startTime = null;
 
-  // Build text display
-  const display = document.getElementById('textDisplay');
-  display.innerHTML = '';
-  for (let i = 0; i < currentText.content.length; i++) {
-    const span = document.createElement('span');
-    span.className = 'ch' + (i === 0 ? ' current' : '');
-    span.textContent = currentText.content[i];
-    span.dataset.idx = i;
-    display.appendChild(span);
-  }
+  // Split content into lines
+  lines = currentText.content.split('\n').filter(l => l.length > 0);
+  if (lines.length === 0) { lines = [currentText.content]; }
+  currentLineIdx = 0;
+
+  // Build line-by-line UI
+  const area = document.getElementById('linePracticeArea');
+  area.innerHTML = '';
+  lineInputs = [];
+  lineDisplays = [];
+  lineBlocks = [];
+
+  lines.forEach((line, idx) => {
+    const block = document.createElement('div');
+    block.className = 'line-block';
+
+    // Original text display
+    const origDiv = document.createElement('div');
+    origDiv.className = 'line-original';
+    for (let i = 0; i < line.length; i++) {
+      const span = document.createElement('span');
+      span.className = 'ch' + (idx === 0 && i === 0 ? ' current' : '');
+      span.textContent = line[i];
+      origDiv.appendChild(span);
+    }
+
+    // Input field
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'line-input';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.disabled = (idx !== 0);
+    if (idx === 0) input.classList.add('active-line');
+    input.placeholder = idx === 0 ? '여기에 입력하세요...' : '';
+
+    block.appendChild(origDiv);
+    block.appendChild(input);
+    area.appendChild(block);
+
+    lineInputs.push(input);
+    lineDisplays.push(origDiv);
+    lineBlocks.push(block);
+
+    // Event handlers
+    input.addEventListener('input', () => {
+      if (!input._composing) handleLineInput(idx);
+    });
+    input.addEventListener('compositionstart', () => { input._composing = true; });
+    input.addEventListener('compositionend', () => {
+      input._composing = false;
+      handleLineInput(idx);
+    });
+    input.addEventListener('keydown', (e) => handleLineKeydown(e, idx));
+  });
 
   document.getElementById('practiceArea').style.display = '';
   document.getElementById('practiceMsg').style.display = 'none';
   document.getElementById('statsBar').style.display = '';
-  const input = document.getElementById('typingInput');
-  input.disabled = false;
-  input.value = '';
-  input.focus();
+  lineInputs[0].focus();
 }
 
-function resetPractice() {
-  practicing = false;
-  startTime = null;
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  keystrokes = 0;
-
-  document.getElementById('typingInput').value = '';
-  document.getElementById('typingInput').disabled = true;
-  document.getElementById('statTime').textContent = '0:00';
-  document.getElementById('statCpm').textContent = '0';
-  document.getElementById('statKpm').textContent = '0';
-  document.getElementById('statAcc').textContent = '0%';
-  document.getElementById('statProgress').textContent = '0%';
-}
-
-function stopPractice() {
-  if (!practicing) return;
-  practicing = false;
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  document.getElementById('typingInput').disabled = true;
-  showResults();
-}
-
-function getElapsed() {
-  if (!startTime) return 0;
-  return (Date.now() - startTime) / 1000;
-}
-
-function updateStats() {
-  const elapsed = getElapsed();
-  const mins = Math.floor(elapsed / 60);
-  const secs = Math.floor(elapsed % 60);
-  document.getElementById('statTime').textContent = mins + ':' + String(secs).padStart(2, '0');
-
-  if (!currentText || elapsed <= 0) return;
-
-  const typed = document.getElementById('typingInput').value;
-  const target = currentText.content;
-  let correct = 0;
-  const compared = Math.min(typed.length, target.length);
-  for (let i = 0; i < compared; i++) {
-    if (typed[i] === target[i]) correct++;
-  }
-
-  const cpm = Math.round(correct / (elapsed / 60));
-  const kpm = Math.round(keystrokes / (elapsed / 60));
-  const acc = compared > 0 ? Math.round(correct / compared * 100) : 0;
-  const progress = Math.round(typed.length / target.length * 100);
-
-  document.getElementById('statCpm').textContent = cpm;
-  document.getElementById('statKpm').textContent = kpm;
-  document.getElementById('statAcc').textContent = acc + '%';
-  document.getElementById('statProgress').textContent = Math.min(progress, 100) + '%';
-}
-
-/* ============================================================ */
-/* Typing Input Handler                                           */
-/* ============================================================ */
-const typingInput = document.getElementById('typingInput');
-
-typingInput.addEventListener('compositionstart', () => { isComposing = true; });
-typingInput.addEventListener('compositionend', () => { isComposing = false; handleInput(); });
-
-typingInput.addEventListener('input', () => {
-  if (!isComposing) handleInput();
-});
-
-typingInput.addEventListener('keydown', (e) => {
+function handleLineKeydown(e, idx) {
   if (!practicing) return;
 
   // Start timer on first keystroke
-  if (!startTime && !e.ctrlKey && !e.altKey && !e.metaKey && e.key !== 'F10' && e.key !== 'F11' && e.key !== 'F12') {
+  if (!startTime && !e.ctrlKey && !e.altKey && !e.metaKey &&
+      e.key !== 'F10' && e.key !== 'F11' && e.key !== 'F12') {
     startTime = Date.now();
     timerInterval = setInterval(updateStats, 200);
   }
 
-  // Count physical keystrokes (exclude modifiers, function keys)
+  // Count physical keystrokes
   if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === 'Process' || e.keyCode === 229) {
     keystrokes++;
   }
-});
 
-function handleInput() {
-  if (!currentText || !practicing) return;
+  // Enter → move to next line
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (idx < lines.length - 1) {
+      moveToNextLine(idx);
+    } else {
+      stopPractice();
+    }
+  }
+}
 
-  const typed = typingInput.value;
-  const target = currentText.content;
-  const spans = document.getElementById('textDisplay').children;
+function moveToNextLine(fromIdx) {
+  lineBlocks[fromIdx].classList.add('completed');
+  lineInputs[fromIdx].disabled = true;
+  lineInputs[fromIdx].classList.remove('active-line');
+
+  const nextIdx = fromIdx + 1;
+  if (nextIdx >= lines.length) {
+    stopPractice();
+    return;
+  }
+
+  currentLineIdx = nextIdx;
+  lineInputs[nextIdx].disabled = false;
+  lineInputs[nextIdx].classList.add('active-line');
+  lineInputs[nextIdx].placeholder = '여기에 입력하세요...';
+  lineInputs[nextIdx].focus();
+
+  // Set cursor indicator on first char of next line
+  const spans = lineDisplays[nextIdx].children;
+  if (spans.length > 0) spans[0].classList.add('current');
+
+  // Scroll into view
+  lineBlocks[nextIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function handleLineInput(idx) {
+  if (!practicing) return;
+  const input = lineInputs[idx];
+  if (input._composing) return;
+
+  const typed = input.value;
+  const target = lines[idx];
+  const spans = lineDisplays[idx].children;
 
   for (let i = 0; i < target.length; i++) {
     const span = spans[i];
@@ -757,11 +795,73 @@ function handleInput() {
   }
 
   updateStats();
+}
 
-  // Auto-complete when all characters typed
-  if (typed.length >= target.length) {
-    stopPractice();
+function resetPractice() {
+  practicing = false;
+  startTime = null;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  keystrokes = 0;
+  currentLineIdx = 0;
+  lines = [];
+  lineInputs = [];
+  lineDisplays = [];
+  lineBlocks = [];
+
+  document.getElementById('linePracticeArea').innerHTML = '';
+  document.getElementById('statTime').textContent = '0:00';
+  document.getElementById('statCpm').textContent = '0';
+  document.getElementById('statKpm').textContent = '0';
+  document.getElementById('statAcc').textContent = '0%';
+  document.getElementById('statProgress').textContent = '0%';
+}
+
+function stopPractice() {
+  if (!practicing) return;
+  practicing = false;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  lineInputs.forEach(inp => { inp.disabled = true; inp.classList.remove('active-line'); });
+  showResults();
+}
+
+function getElapsed() {
+  if (!startTime) return 0;
+  return (Date.now() - startTime) / 1000;
+}
+
+function updateStats() {
+  const elapsed = getElapsed();
+  const mins = Math.floor(elapsed / 60);
+  const secs = Math.floor(elapsed % 60);
+  document.getElementById('statTime').textContent = mins + ':' + String(secs).padStart(2, '0');
+
+  if (elapsed <= 0) return;
+
+  let totalCorrect = 0;
+  let totalCompared = 0;
+  let totalTypedLen = 0;
+
+  for (let li = 0; li < lines.length; li++) {
+    const typed = lineInputs[li] ? lineInputs[li].value : '';
+    const target = lines[li];
+    const compared = Math.min(typed.length, target.length);
+    for (let i = 0; i < compared; i++) {
+      if (typed[i] === target[i]) totalCorrect++;
+    }
+    totalCompared += compared;
+    totalTypedLen += typed.length;
   }
+
+  const totalTargetLen = lines.reduce((sum, l) => sum + l.length, 0);
+  const cpm = Math.round(totalCorrect / (elapsed / 60));
+  const kpm = Math.round(keystrokes / (elapsed / 60));
+  const acc = totalCompared > 0 ? Math.round(totalCorrect / totalCompared * 100) : 0;
+  const progress = totalTargetLen > 0 ? Math.round(totalTypedLen / totalTargetLen * 100) : 0;
+
+  document.getElementById('statCpm').textContent = cpm;
+  document.getElementById('statKpm').textContent = kpm;
+  document.getElementById('statAcc').textContent = acc + '%';
+  document.getElementById('statProgress').textContent = Math.min(progress, 100) + '%';
 }
 
 /* ============================================================ */
@@ -769,28 +869,37 @@ function handleInput() {
 /* ============================================================ */
 function showResults() {
   const elapsed = getElapsed();
-  const typed = typingInput.value;
-  const target = currentText.content;
-  const compared = Math.min(typed.length, target.length);
-  let correct = 0;
-  for (let i = 0; i < compared; i++) {
-    if (typed[i] === target[i]) correct++;
+
+  let totalCorrect = 0;
+  let totalCompared = 0;
+  let totalTypedLen = 0;
+
+  for (let li = 0; li < lines.length; li++) {
+    const typed = lineInputs[li] ? lineInputs[li].value : '';
+    const target = lines[li];
+    const compared = Math.min(typed.length, target.length);
+    for (let i = 0; i < compared; i++) {
+      if (typed[i] === target[i]) totalCorrect++;
+    }
+    totalCompared += compared;
+    totalTypedLen += typed.length;
   }
 
-  const cpm = elapsed > 0 ? Math.round(correct / (elapsed / 60)) : 0;
+  const totalTargetLen = lines.reduce((sum, l) => sum + l.length, 0);
+
+  const cpm = elapsed > 0 ? Math.round(totalCorrect / (elapsed / 60)) : 0;
   const kpm = elapsed > 0 ? Math.round(keystrokes / (elapsed / 60)) : 0;
-  const acc = compared > 0 ? Math.round(correct / compared * 1000) / 10 : 0;
-  const progress = Math.round(typed.length / target.length * 1000) / 10;
+  const acc = totalCompared > 0 ? Math.round(totalCorrect / totalCompared * 1000) / 10 : 0;
+  const progress = totalTargetLen > 0 ? Math.round(totalTypedLen / totalTargetLen * 1000) / 10 : 0;
 
   document.getElementById('resCpm').textContent = cpm;
   document.getElementById('resKpm').textContent = kpm;
   document.getElementById('resAcc').textContent = acc + '%';
   document.getElementById('resProgress').textContent = Math.min(progress, 100) + '%';
   document.getElementById('resTime').textContent = elapsed.toFixed(1) + '초';
-  document.getElementById('resChars').textContent = typed.length;
+  document.getElementById('resChars').textContent = totalTypedLen;
 
-  // Store for ranking submission
-  window._lastResult = { cpm, kpm, acc, progress: Math.min(progress, 100), elapsed, chars: typed.length, input_chars: typed.length };
+  window._lastResult = { cpm, kpm, acc, progress: Math.min(progress, 100), elapsed, chars: totalTypedLen, input_chars: totalTypedLen };
 
   document.getElementById('rankSubmitMsg').textContent = '';
   if (currentUser) {
@@ -805,7 +914,6 @@ async function submitRanking() {
   const tw = document.getElementById('resTypewriter').value.trim();
   if (!tw) { document.getElementById('rankSubmitMsg').textContent = "'타자기 구분'을 입력해 주세요."; return; }
 
-  // board_key: hash of text content (match desktop app)
   const boardKey = await sha1(currentText.content);
   const r = await api('/api/rankings', 'POST', {
     board_key: boardKey,
@@ -840,7 +948,6 @@ async function loadRankings() {
   const r = await api('/api/rankings');
   if (!r?.ok) return;
 
-  // Populate board select
   const sel = document.getElementById('rankBoardSelect');
   const currentVal = sel.value;
   sel.innerHTML = '<option value="">전체</option>';
@@ -853,7 +960,6 @@ async function loadRankings() {
   }
   sel.value = currentVal;
 
-  // Flatten & sort
   const filterBoard = sel.value;
   let all = [];
   for (const [bk, rows] of Object.entries(r.boards || {})) {
@@ -898,7 +1004,6 @@ function esc(s) {
 /* Hotkeys (F10/F11/F12)                                          */
 /* ============================================================ */
 document.addEventListener('keydown', (e) => {
-  // Don't intercept in modals
   if (document.querySelector('.modal-overlay.active')) {
     if (e.key === 'Enter' && document.getElementById('resultsModal').classList.contains('active')) {
       closeModal('resultsModal');
@@ -913,23 +1018,42 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ============================================================ */
-/* Init                                                           */
+/* Init — Fast parallel loading                                   */
 /* ============================================================ */
 (async function init() {
-  // Restore auth
+  // 1) Immediately show cached texts (instant, no network wait)
+  try {
+    const cached = JSON.parse(localStorage.getItem('cachedTexts'));
+    if (cached && cached.length > 0) {
+      populateTextSelect(cached);
+    }
+  } catch (e) {}
+
+  // 2) Restore auth from localStorage (sync, no network)
   try {
     const saved = JSON.parse(localStorage.getItem('auth'));
     if (saved?.token) {
       currentUser = saved;
-      // Verify token is still valid
-      const r = await api('/api/rankings');
-      if (!r) { currentUser = null; localStorage.removeItem('auth'); }
     }
   } catch (e) {}
-
   updateAuthUI();
-  await loadTexts();
-  loadRankings();
+
+  // 3) Fetch fresh data in parallel (background, non-blocking)
+  const textsPromise = loadTexts();
+  const rankPromise = loadRankings();
+
+  // 4) Verify auth token in background
+  if (currentUser) {
+    api('/api/rankings').then(r => {
+      if (!r) {
+        currentUser = null;
+        localStorage.removeItem('auth');
+        updateAuthUI();
+      }
+    });
+  }
+
+  await Promise.all([textsPromise, rankPromise]);
 })();
 </script>
 
