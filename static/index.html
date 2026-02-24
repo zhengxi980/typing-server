@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>禧禧打字網 - XixiTyping</title>
+<link href="https://fonts.googleapis.com/css2?family=Iansui&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px}
-body{font-family:'Segoe UI','Malgun Gothic','맑은 고딕',sans-serif;background:#f3f4f6;color:#1f2937;min-height:100vh;display:flex;flex-direction:column}
+body{font-family:'Iansui','芫荽','Segoe UI','Malgun Gothic','맑은 고딕',sans-serif;background:#f3f4f6;color:#1f2937;min-height:100vh;display:flex;flex-direction:column}
 a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}
 button{cursor:pointer;border:none;border-radius:6px;padding:8px 18px;font-size:.9rem;font-weight:600;transition:opacity .15s}button:hover{opacity:.85}
 input,select,textarea{border:1px solid #d1d5db;border-radius:6px;padding:8px 12px;font-size:.9rem;outline:none;transition:border-color .2s}
@@ -27,13 +28,14 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .btn-start{background:#2563eb;color:#fff}.btn-reset{background:#64748b;color:#fff}.btn-stop{background:#dc2626;color:#fff}
 .stats-bar{display:flex;gap:20px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 20px;margin-bottom:16px;font-size:.9rem;justify-content:center}
 .stat-item{display:flex;align-items:center;gap:6px}.stat-label{color:#64748b;font-weight:500}.stat-value{color:#1e293b;font-weight:700;font-variant-numeric:tabular-nums}
+/* Pause overlay: only covers practice panel, not full screen */
 .pause-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center;font-size:1.4rem;color:#fff;font-weight:700}
 .pause-overlay.active{display:flex}
 .prep-area{background:#fef9c3;border:2px dashed #d97706;border-radius:8px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
 .prep-area .prep-label{color:#92400e;font-size:.9rem;font-weight:600;white-space:nowrap}
-.prep-area .prep-input{flex:1;border:1px dashed #d97706;background:#fffef5;border-radius:4px;padding:8px 12px;font-size:1.05rem;font-family:'D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace}
+.prep-area .prep-input{flex:1;border:1px dashed #d97706;background:#fffef5;border-radius:4px;padding:8px 12px;font-size:1.05rem;font-family:var(--pf)}
 .prep-area .prep-input:focus{border-color:#b45309;outline:none}
-:root{--pf:'D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace;--pfs:18px;--plh:2;--pls:0.5px;--ppad:10px 14px}
+:root{--pf:'Iansui','芫荽','D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace;--pfs:18px;--plh:2;--pls:0.5px;--ppad:10px 14px}
 .line-practice-wrapper{position:relative}.line-practice-area{margin-bottom:16px}.line-block{margin-bottom:2px}
 .line-original{background:#fffbeb;border:1px solid #e5e7eb;border-bottom:none;border-radius:6px 6px 0 0;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);word-break:break-all;white-space:pre-wrap;min-height:28px;color:#6b21a8}
 .line-original .ch{color:#6b21a8;transition:color .05s}.line-original .ch.correct{color:#16a34a}
@@ -51,7 +53,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .settings-section h3{font-size:1rem;margin-bottom:12px;color:#1e293b}
 .settings-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
 .settings-row label{font-size:.9rem;color:#475569;min-width:120px;font-weight:500}
-.admin-text-list{max-height:400px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px}
+.admin-text-list{max-height:500px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px}
 .admin-text-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:8px}
 .admin-text-item:last-child{border-bottom:none}.admin-text-item:hover{background:#f8fafc}
 .admin-text-info{flex:1;min-width:0}.admin-text-title{font-weight:600;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -77,6 +79,13 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .result-card .r-label{font-size:.8rem;color:#64748b;margin-bottom:4px}
 .result-card .r-value{font-size:1.4rem;font-weight:700;color:#1e293b}.result-card .r-value.highlight{color:#2563eb}
 .footer{text-align:center;padding:16px;color:#94a3b8;font-size:.8rem;border-top:1px solid #e2e8f0}
+/* Scroll buttons (#11) */
+.scroll-btn{position:fixed;right:12px;z-index:50;width:40px;height:40px;border-radius:50%;background:#334155;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:.6;transition:opacity .2s}
+.scroll-btn:hover{opacity:1}
+.scroll-btn.up{bottom:68px}.scroll-btn.down{bottom:20px}
+/* Admin controls */
+.admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.admin-controls select{min-width:100px}
 @media(max-width:600px){.header{padding:10px 14px}.main{padding:12px}.stats-bar{gap:12px;padding:10px 14px}.tab-btn{padding:8px 14px;font-size:.8rem}.prep-area{flex-direction:column;gap:6px}}
 </style>
 </head>
@@ -115,7 +124,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div id="practiceArea" style="display:none">
 <div class="prep-area" id="prepArea"><span class="prep-label">準備區：</span><input class="prep-input" id="prepInput" placeholder="在這裡調整輸入法，按 Enter 開始計時"></div>
 <div class="line-practice-wrapper"><div class="line-practice-area" id="linePracticeArea"></div></div>
-<div class="hotkey-hint">Enter/Space(행끝): 다음 행 | Tab/Shift+Tab: 행 이동 | BackSpace(행앞): 이전 행 | ESC: 일시정지</div>
+<div class="hotkey-hint">Enter/Space(행끝): 다음 행 | Tab/Shift+Tab/↑↓: 행 이동 | BackSpace(행앞): 이전 행 | ESC: 일시정지</div>
 </div>
 <div class="practice-msg" id="practiceMsg">위에서 텍스트를 선택하고 <strong>시작</strong>을 누르세요.</div>
 </div>
@@ -141,6 +150,13 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="settings-row"><label>line-height</label><input type="number" id="settingLineHeight" value="2" min="1.2" max="3" step="0.1" style="width:80px"></div></div>
 <div class="settings-section"><h3>자간</h3>
 <div class="settings-row"><label>letter-spacing</label><input type="number" id="settingLetterSpacing" value="0.5" min="0" max="5" step="0.1" style="width:80px"><span style="font-size:.85rem;color:#94a3b8">px</span></div></div>
+<div class="settings-section"><h3>키 입력 효과음</h3>
+<div class="settings-row"><label>효과음</label>
+<select id="settingSfxEnabled"><option value="on">켜기</option><option value="off">끄기</option></select></div>
+<div class="settings-row"><label>효과음 종류</label>
+<select id="settingSfxStyle"><option value="typewriter">전통 타자기</option><option value="mechanical">기계식 키보드</option><option value="soft">소프트</option></select></div>
+<div class="settings-row"><label>음량</label><input type="range" id="settingSfxVolume" min="0" max="100" value="50" style="width:160px"><span id="sfxVolLabel" style="font-size:.85rem;color:#94a3b8;min-width:35px">50%</span></div>
+</div>
 </div>
 
 <!-- Account -->
@@ -156,18 +172,27 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <button class="btn-secondary" onclick="showResetPwModal()">비밀번호 재설정</button>
 <button class="btn-danger" onclick="showDeleteAccountModal()">회원탈퇴</button></div></div></div></div>
 
-<!-- Admin -->
+<!-- Admin (#1: language filter + select all/deselect) -->
 <div class="tab-panel" id="panel-admin">
 <div class="settings-section"><h3>서버 텍스트 관리</h3>
-<div style="display:flex;gap:10px;margin-bottom:12px">
+<div class="admin-controls">
 <button class="btn-primary" onclick="showAddTextModal()">새 텍스트 추가</button>
-<button class="btn-secondary" onclick="refreshAdminTextList()">새로고침</button></div>
+<button class="btn-secondary" onclick="refreshAdminTextList()">새로고침</button>
+<select id="adminLangFilter"><option value="">전체</option></select>
+<button class="btn-secondary" onclick="adminSelectAll(true)" style="padding:5px 10px;font-size:.8rem">전체 선택</button>
+<button class="btn-secondary" onclick="adminSelectAll(false)" style="padding:5px 10px;font-size:.8rem">전체 해제</button>
+<button class="btn-danger" onclick="adminDeleteSelected()" style="padding:5px 10px;font-size:.8rem">선택 삭제</button>
+</div>
 <div class="admin-text-list" id="adminTextList"><div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div></div></div></div>
 </div>
 
 <div class="footer">禧禧打字網 (XixiTyping) — 웹 버전</div>
 
-<!-- Modals -->
+<!-- Scroll buttons (#11) -->
+<button class="scroll-btn up" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="맨 위로">▲</button>
+<button class="scroll-btn down" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="맨 아래로">▼</button>
+
+<!-- Modals (same as before) -->
 <div class="modal-overlay" id="loginModal"><div class="modal"><h2>로그인</h2>
 <div class="modal-field"><label>ID</label><input id="loginId" autocomplete="username"></div>
 <div class="modal-field"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
@@ -220,13 +245,14 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <input type="hidden" id="editTextId">
 <div class="modal-field"><label>제목</label><input id="editTextName"></div>
 <div class="modal-field"><label>언어</label><select id="editTextLang"><option>한국어</option><option>中文</option><option>영어</option><option>日本語</option></select></div>
-<div class="modal-field"><label>내용</label><textarea id="editTextContent" rows="12" style="font-family:monospace;font-size:.85rem;line-height:1.6"></textarea></div>
+<div class="modal-field"><label>내용</label><textarea id="editTextContent" rows="12" style="font-family:var(--pf);font-size:.85rem;line-height:1.6"></textarea></div>
 <div class="modal-msg" id="editTextMsg"></div>
 <div class="modal-actions">
 <button class="btn-danger" id="btnDeleteText" onclick="doDeleteText()" style="margin-right:auto">삭제</button>
 <button class="btn-secondary" onclick="closeModal('editTextModal')">취소</button>
 <button class="btn-primary" onclick="doSaveText()">저장</button></div></div></div>
 
+<!-- Pause overlay: only show when on practice tab (#10) -->
 <div class="pause-overlay" id="pauseOverlay">⏸ 일시정지 — 아무 키를 누르거나 클릭하면 재개</div>
 
 <script>
@@ -237,13 +263,49 @@ let startTime=null,timerInterval=null,keystrokes=0;
 let totalPausedMs=0,pauseStartTime=null;
 let lines=[],currentLineIdx=0,lineInputs=[],lineDisplays=[],lineBlocks=[];
 let unitMode='line',manualPause=false;
+let adminAllTexts=[];  /* #1: admin full text cache */
+
+/* #9: SFX state */
+let sfxEnabled=false, sfxStyle='typewriter', sfxVolume=0.5;
+let sfxCtx=null;
+function playSfx(){
+  if(!sfxEnabled)return;
+  try{
+    if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=sfxCtx.createOscillator(),g=sfxCtx.createGain();
+    o.connect(g);g.connect(sfxCtx.destination);
+    const t=sfxCtx.currentTime;
+    if(sfxStyle==='typewriter'){o.type='square';o.frequency.setValueAtTime(800,t);o.frequency.exponentialRampToValueAtTime(200,t+0.04);g.gain.setValueAtTime(sfxVolume*0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.06);o.start(t);o.stop(t+0.06);}
+    else if(sfxStyle==='mechanical'){o.type='sawtooth';o.frequency.setValueAtTime(1200,t);o.frequency.exponentialRampToValueAtTime(300,t+0.03);g.gain.setValueAtTime(sfxVolume*0.25,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.05);o.start(t);o.stop(t+0.05);}
+    else{o.type='sine';o.frequency.setValueAtTime(600,t);g.gain.setValueAtTime(sfxVolume*0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);o.start(t);o.stop(t+0.04);}
+  }catch(e){}
+}
 
 function normalizeFullwidth(s){let o='';for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c>=0xFF10&&c<=0xFF19)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF21&&c<=0xFF3A)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF41&&c<=0xFF5A)o+=String.fromCharCode(c-0xFEE0);else o+=s[i];}return o;}
 
+/* #8: strip leading whitespace chars (full-width space, half-width space, tab, etc.) */
+function stripLeadingBlanks(s){return s.replace(/^[\s\u3000\u00A0\t ]+/,'');}
+
 async function api(ep,method='GET',data=null){const o={method,headers:{'Content-Type':'application/json'}};if(currentUser?.token)o.headers['Authorization']='Bearer '+currentUser.token;if(data)o.body=JSON.stringify(data);try{const r=await fetch(API+ep,o);return await r.json();}catch(e){return null;}}
 
-/* Tabs */
-document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('panel-'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='ranking')loadRankings();if(b.dataset.tab==='admin')refreshAdminTextList();});});
+/* Tabs — #10: switching tab while practicing pauses silently */
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{
+  const prevTab=document.querySelector('.tab-btn.active')?.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById('panel-'+b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='ranking')loadRankings();
+  if(b.dataset.tab==='admin')refreshAdminTextList();
+  /* #10: if leaving practice tab while practicing, pause silently (no overlay) */
+  if(prevTab==='practice'&&b.dataset.tab!=='practice'&&practicing&&started&&!paused){
+    doPause(false,true);/* silent=true */
+  }
+  /* #10: returning to practice tab shows overlay if paused */
+  if(b.dataset.tab==='practice'&&paused&&practicing){
+    document.getElementById('pauseOverlay').classList.add('active');
+  }
+});});
 
 /* Auth */
 function isAdmin(){return currentUser?.user_id===ADMIN_ID;}
@@ -263,7 +325,7 @@ async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').v
 /* Modal helpers */
 function openModal(id){document.querySelectorAll('#'+id+' .modal-msg').forEach(m=>m.textContent='');document.getElementById(id).classList.add('active');}
 function closeModal(id){document.getElementById(id).classList.remove('active');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-overlay.active')){document.querySelectorAll('.modal-overlay.active').forEach(m=>m.classList.remove('active'));e.preventDefault();return;}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){document.querySelectorAll('.modal-overlay.active:not(#pauseOverlay)').forEach(m=>m.classList.remove('active'));e.preventDefault();return;}});
 document.getElementById('loginPw')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
 
@@ -273,32 +335,69 @@ function filterTexts(){const lang=document.getElementById('langSelect').value;te
 document.getElementById('langSelect').addEventListener('change',filterTexts);
 async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
 
-/* Settings */
-function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;}catch(e){}applyFontSettings();}
-function saveSettings(){const s={unitMode:document.getElementById('settingUnitMode').value,fontSize:document.getElementById('settingFontSize').value,lineHeight:document.getElementById('settingLineHeight').value,letterSpacing:document.getElementById('settingLetterSpacing').value};unitMode=s.unitMode;localStorage.setItem('webSettings',JSON.stringify(s));applyFontSettings();}
+/* Settings — #9: add SFX settings */
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;
+sfxEnabled=(s.sfxEnabled==='on');document.getElementById('settingSfxEnabled').value=sfxEnabled?'on':'off';
+sfxStyle=s.sfxStyle||'typewriter';document.getElementById('settingSfxStyle').value=sfxStyle;
+sfxVolume=s.sfxVolume!=null?parseFloat(s.sfxVolume)/100:0.5;document.getElementById('settingSfxVolume').value=Math.round(sfxVolume*100);document.getElementById('sfxVolLabel').textContent=Math.round(sfxVolume*100)+'%';
+}catch(e){}applyFontSettings();}
+function saveSettings(){const s={unitMode:document.getElementById('settingUnitMode').value,fontSize:document.getElementById('settingFontSize').value,lineHeight:document.getElementById('settingLineHeight').value,letterSpacing:document.getElementById('settingLetterSpacing').value,sfxEnabled:document.getElementById('settingSfxEnabled').value,sfxStyle:document.getElementById('settingSfxStyle').value,sfxVolume:document.getElementById('settingSfxVolume').value};unitMode=s.unitMode;sfxEnabled=(s.sfxEnabled==='on');sfxStyle=s.sfxStyle;sfxVolume=parseInt(s.sfxVolume)/100;document.getElementById('sfxVolLabel').textContent=s.sfxVolume+'%';localStorage.setItem('webSettings',JSON.stringify(s));applyFontSettings();}
 function applyFontSettings(){document.documentElement.style.setProperty('--pfs',document.getElementById('settingFontSize').value+'px');document.documentElement.style.setProperty('--plh',document.getElementById('settingLineHeight').value);document.documentElement.style.setProperty('--pls',document.getElementById('settingLetterSpacing').value+'px');}
-['settingUnitMode','settingFontSize','settingLineHeight','settingLetterSpacing'].forEach(id=>{document.getElementById(id).addEventListener('change',saveSettings);document.getElementById(id).addEventListener('input',saveSettings);});
+['settingUnitMode','settingFontSize','settingLineHeight','settingLetterSpacing','settingSfxEnabled','settingSfxStyle','settingSfxVolume'].forEach(id=>{document.getElementById(id).addEventListener('change',saveSettings);document.getElementById(id).addEventListener('input',saveSettings);});
 
-/* Admin text management */
-async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;const l=document.getElementById('adminTextList');if(r.texts.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">텍스트 없음</div>';return;}l.innerHTML=r.texts.map(t=>'<div class="admin-text-item"><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');}
+/* #1: Admin text management with language filter + select all */
+async function refreshAdminTextList(){
+  const r=await api('/api/texts');if(!r?.ok)return;
+  adminAllTexts=r.texts;
+  /* populate admin language filter */
+  const af=document.getElementById('adminLangFilter'),pv=af.value;
+  const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];
+  af.innerHTML='<option value="">전체</option>';
+  langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;af.appendChild(o);});
+  af.value=pv;
+  renderAdminList();
+}
+document.getElementById('adminLangFilter').addEventListener('change',renderAdminList);
+function renderAdminList(){
+  const lang=document.getElementById('adminLangFilter').value;
+  const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;
+  const l=document.getElementById('adminTextList');
+  if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">텍스트 없음</div>';return;}
+  l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');
+}
+function adminSelectAll(checked){document.querySelectorAll('.admin-chk').forEach(c=>c.checked=checked);}
+async function adminDeleteSelected(){
+  const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));
+  if(ids.length===0){alert('삭제할 텍스트를 선택하세요.');return;}
+  if(!confirm(ids.length+'개의 텍스트를 삭제하시겠습니까?'))return;
+  for(const id of ids){await api('/api/texts/'+id,'DELETE');}
+  await loadTexts();refreshAdminTextList();
+}
 function showAddTextModal(){document.getElementById('editTextTitle').textContent='새 텍스트 추가';document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
-function showEditTextModal(id){const t=allTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent='텍스트 편집';document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
+function showEditTextModal(id){const t=allTexts.find(x=>x.id===id)||adminAllTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent='텍스트 편집';document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
 async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent='제목과 내용 필요';return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent='저장 완료!';await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
 async function doDeleteText(){const id=document.getElementById('editTextId').value;if(!id)return;if(!confirm('삭제하시겠습니까?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){closeModal('editTextModal');await loadTexts();refreshAdminTextList();}}
 async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'" 삭제?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
 
-/* Pause */
-function doPause(manual=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();document.getElementById('pauseOverlay').classList.add('active');document.getElementById('pauseStatus').style.display='';}
+/* Pause — #10: silent param = no overlay */
+function doPause(manual=false,silent=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();
+  if(!silent){document.getElementById('pauseOverlay').classList.add('active');}
+  document.getElementById('pauseStatus').style.display='';}
 function doResume(){if(!paused)return;paused=false;manualPause=false;if(pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';if(lineInputs[currentLineIdx])lineInputs[currentLineIdx].focus();}
 
 /* Line split */
-function splitTextToLines(content){if(unitMode==='paragraph'){const p=content.split('\n').filter(l=>l.length>0);return p.length>0?p:[content];}const raw=content.split('\n').filter(l=>l.length>0);if(raw.length===0)return[content];const m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';document.body.appendChild(m);const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;const result=[];for(const r of raw){let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}document.body.removeChild(m);return result.length>0?result:[content];}
+function splitTextToLines(content){
+  /* #8: strip leading blanks from content */
+  content=stripLeadingBlanks(content);
+  if(unitMode==='paragraph'){const p=content.split('\n').filter(l=>l.length>0);return p.length>0?p:[content];}
+  const raw=content.split('\n').filter(l=>l.length>0);if(raw.length===0)return[content];
+  const m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';document.body.appendChild(m);const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;const result=[];for(const r of raw){let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}document.body.removeChild(m);return result.length>0?result:[content];}
 
 /* Practice */
 function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;resetPractice();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
 lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}const inp=document.createElement('input');inp.type='text';inp.className='line-input';inp.autocomplete='off';inp.spellcheck=false;inp.disabled=(idx!==0);if(idx===0)inp.classList.add('active-line');block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
 inp.addEventListener('compositionstart',()=>{inp._composing=true;});inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
-/* Fix #6: click on other line input switches line, no pause */
+/* #6: click switches line without pause */
 inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){doResume();e.preventDefault();return;}if(idx!==currentLineIdx){switchToLine(idx);e.preventDefault();}});});
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
 
@@ -308,28 +407,46 @@ function updateCursorDisplay(idx){const spans=lineDisplays[idx].children,typed=l
 document.getElementById('prepInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(!practicing)return;started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';if(lineInputs[0])lineInputs[0].focus();}});
 
 function handleLineKeydown(e,idx){if(!practicing)return;
+/* #4: ESC pause */
 if(e.key==='Escape'){e.preventDefault();if(paused)doResume();else doPause(true);return;}
-/* Fix #4: any key while paused resumes */
+/* any key while paused resumes */
 if(paused){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock'];if(!ig.includes(e.key)){e.preventDefault();doResume();}return;}
 /* auto-start */
 if(!started&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)){started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';}
-/* Fix #7: block leading space */
+/* block leading space */
 if((e.key===' '||e.code==='Space')&&lineInputs[idx].value.length===0){e.preventDefault();return;}
-/* keystroke count */
-if(e.key.length===1||e.key==='Backspace'||e.key==='Enter'||e.key==='Process'||e.keyCode===229)keystrokes++;
+/* #9: play SFX */
+if(e.key.length===1||e.key==='Backspace'||e.key==='Enter'||e.key==='Process'||e.keyCode===229){keystrokes++;playSfx();}
+/* Tab */
 if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();keystrokes++;if(idx<lines.length-1)moveToLine(idx+1,idx);return;}
 if(e.key==='Tab'&&e.shiftKey){e.preventDefault();keystrokes++;if(idx>0)moveToLine(idx-1,idx);return;}
+/* #7: Arrow up/down to move lines */
+if(e.key==='ArrowUp'){e.preventDefault();if(idx>0)switchToLine(idx-1);return;}
+if(e.key==='ArrowDown'){e.preventDefault();if(idx<lines.length-1)switchToLine(idx+1);return;}
+/* BackSpace at beginning */
 if(e.key==='Backspace'&&lineInputs[idx].selectionStart===0&&lineInputs[idx].selectionEnd===0){if(idx>0){e.preventDefault();moveToLine(idx-1,idx);return;}}
+/* Enter */
 if(e.key==='Enter'){e.preventDefault();if(idx<lines.length-1)moveToLine(idx+1,idx,true);else stopPractice();return;}}
 
 function moveToLine(toIdx,fromIdx,markComplete=false){if(markComplete)lineBlocks[fromIdx].classList.add('completed');lineInputs[fromIdx].disabled=true;lineInputs[fromIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});}
 
 function handleLineInput(idx){if(!practicing||paused)return;const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
-/* Fix #7: strip leading spaces */
-if(typed.length>0&&typed[0]===' '){typed=typed.replace(/^ +/,'');inp.value=typed;}
+/* strip leading spaces */
+if(typed.length>0&&/^[\s\u3000]/.test(typed)){typed=stripLeadingBlanks(typed);inp.value=typed;}
 const target=lines[idx],spans=lineDisplays[idx].children;
-/* Fix #8: space after last char = auto next line */
-if(typed.length>target.length&&typed[typed.length-1]===' '){inp.value=typed.slice(0,-1);typed=inp.value;refreshHighlights(idx,typed,target,spans);updateStats();if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);}else{stopPractice();}return;}
+/* #2: if typed exceeds target length → auto advance (space or any char) */
+if(typed.length>target.length){
+  /* keep only up to target length, move overflow to next line */
+  const overflow=typed.slice(target.length);
+  inp.value=typed.slice(0,target.length);typed=inp.value;
+  refreshHighlights(idx,typed,target,spans);updateStats();
+  if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);
+    /* put overflow (minus trailing space) as initial value of next line */
+    const next=overflow.replace(/^ /,'');
+    if(next){lineInputs[idx+1].value=next;handleLineInput(idx+1);}
+  }else{stopPractice();}
+  return;
+}
 refreshHighlights(idx,typed,target,spans);updateStats();
 /* auto-advance on exact match */
 if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(target);if(tN===gN&&idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);}}}
@@ -344,9 +461,13 @@ function getElapsed(){if(!startTime)return 0;let pe=totalPausedMs;if(paused&&pau
 
 function updateStats(){const el=getElapsed(),mn=Math.floor(el/60),sc=Math.floor(el%60);document.getElementById('statTime').textContent=mn+':'+String(sc).padStart(2,'0');if(el<=0)return;let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);document.getElementById('statCpm').textContent=Math.round(tc/(el/60));document.getElementById('statKpm').textContent=Math.round(keystrokes/(el/60));document.getElementById('statAcc').textContent=(tco>0?Math.round(tc/tco*100):0)+'%';document.getElementById('statProgress').textContent=Math.min(ttg>0?Math.round(ttl/ttg*100):0,100)+'%';}
 
-/* Focus pause/resume */
+/* Focus pause/resume — #6: line inputs don't trigger pause */
 document.addEventListener('focusin',e=>{if(!practicing||!started)return;if(paused&&!manualPause&&lineInputs.includes(e.target))doResume();});
-document.addEventListener('focusout',e=>{if(!practicing||!started||paused)return;setTimeout(()=>{if(!practicing||!started||paused)return;const a=document.activeElement;if(lineInputs.includes(a)||a===document.getElementById('prepInput'))return;doPause(false);},150);});
+document.addEventListener('focusout',e=>{if(!practicing||!started||paused)return;setTimeout(()=>{if(!practicing||!started||paused)return;const a=document.activeElement;if(lineInputs.includes(a)||a===document.getElementById('prepInput'))return;
+/* #10: if we're not on practice tab, already paused silently by tab switch */
+const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;
+if(activeTab!=='practice')return;
+doPause(false);},150);});
 document.getElementById('pauseOverlay').addEventListener('click',()=>{if(paused)doResume();});
 
 /* Results */
@@ -364,10 +485,15 @@ document.getElementById('rankBoardSelect').addEventListener('change',loadRanking
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 /* Global hotkeys */
-document.addEventListener('keydown',e=>{if(document.querySelector('.modal-overlay.active')){if(e.key==='Enter'&&document.getElementById('resultsModal').classList.contains('active')){closeModal('resultsModal');e.preventDefault();}return;}
-if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
-if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
-if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();resetPractice();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
+document.addEventListener('keydown',e=>{
+  /* Modal ESC is handled above, skip here for non-pause modals */
+  if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){
+    if(e.key==='Enter'&&document.getElementById('resultsModal').classList.contains('active')){closeModal('resultsModal');e.preventDefault();}return;}
+  /* #4: ESC during practice */
+  if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
+  /* any key while paused resumes */
+  if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
+  if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();resetPractice();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
 
 /* Init */
 (async function init(){loadSettings();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser)api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});await Promise.all([tp,rp]);})();
