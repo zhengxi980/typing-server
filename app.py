@@ -120,6 +120,20 @@ def init_db():
         )
     """)
 
+    # review_comment, user_notified 컬럼 추가 (기존 DB 호환)
+    cur.execute("""
+        DO $$ BEGIN
+            ALTER TABLE text_requests ADD COLUMN review_comment TEXT NOT NULL DEFAULT '';
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END $$;
+    """)
+    cur.execute("""
+        DO $$ BEGIN
+            ALTER TABLE text_requests ADD COLUMN user_notified BOOLEAN NOT NULL DEFAULT TRUE;
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END $$;
+    """)
+
     # 기본 샘플 텍스트 삽입 (비어있을 때만)
     cur.execute("SELECT COUNT(*) FROM texts")
     if cur.fetchone()[0] == 0:
@@ -801,8 +815,13 @@ def approve_text_request(req_id):
                 (req["title"], req["content"], req["language"]))
     new_text_id = cur.fetchone()["id"]
 
-    # 요청 상태 변경
-    cur.execute("UPDATE text_requests SET status = 'approved', reviewed_at = NOW() WHERE id = %s", (req_id,))
+    # 요청 상태 변경 + 코멘트 저장
+    data = request.get_json(force=True, silent=True) or {}
+    comment = str(data.get("comment", "") or "").strip()
+    cur.execute("""UPDATE text_requests
+                   SET status = 'approved', reviewed_at = NOW(),
+                       review_comment = %s, user_notified = FALSE
+                   WHERE id = %s""", (comment, req_id))
 
     cur.close()
     conn.close()
@@ -822,10 +841,70 @@ def reject_text_request(req_id):
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("UPDATE text_requests SET status = 'rejected', reviewed_at = NOW() WHERE id = %s", (req_id,))
+    data = request.get_json(force=True, silent=True) or {}
+    comment = str(data.get("comment", "") or "").strip()
+    cur.execute("""UPDATE text_requests
+                   SET status = 'rejected', reviewed_at = NOW(),
+                       review_comment = %s, user_notified = FALSE
+                   WHERE id = %s""", (comment, req_id))
     cur.close()
     conn.close()
     return jsonify({"ok": True, "msg": "요청이 거절되었습니다."})
+
+
+# ============================================================
+# API: 텍스트 요청 알림 조회 (사용자용)
+# ============================================================
+@app.route("/api/text-requests/notifications", methods=["GET"])
+def get_text_request_notifications():
+    user, err = require_login()
+    if err:
+        return err
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT id, title, status, review_comment, reviewed_at
+        FROM text_requests
+        WHERE user_id = %s AND status != 'pending' AND user_notified = FALSE
+        ORDER BY reviewed_at DESC
+    """, (user["user_id"],))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    result = []
+    for r in rows:
+        d = dict(r)
+        if d.get("reviewed_at"):
+            d["reviewed_at"] = str(d["reviewed_at"])
+        result.append(d)
+
+    return jsonify({"ok": True, "notifications": result})
+
+
+# ============================================================
+# API: 텍스트 요청 알림 확인 처리
+# ============================================================
+@app.route("/api/text-requests/notifications/ack", methods=["POST"])
+def ack_text_request_notifications():
+    user, err = require_login()
+    if err:
+        return err
+
+    data = request.get_json(force=True, silent=True) or {}
+    ids = data.get("ids", [])
+    if not ids:
+        return jsonify({"ok": True})
+
+    conn = get_db()
+    cur = conn.cursor()
+    for req_id in ids:
+        cur.execute("""UPDATE text_requests SET user_notified = TRUE
+                       WHERE id = %s AND user_id = %s""", (req_id, user["user_id"]))
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True})
 
 
 # ============================================================

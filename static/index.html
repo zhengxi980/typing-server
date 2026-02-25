@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>禧禧打字網 - XixiTyping</title>
-<!-- #1: Favicon -->
 <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
@@ -27,8 +26,10 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .tab-btn.active{background:#fff;color:#1e293b;border-bottom-color:#2563eb;font-weight:700}
 .main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:20px}
 .tab-panel{display:none}.tab-panel.active{display:block}
-.practice-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;justify-content:center}
-.practice-controls select{min-width:120px}.practice-controls #textSelect{min-width:200px}
+/* FIX#3: select row + button row always separate */
+.practice-select-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;justify-content:center}
+.practice-select-row select{min-width:120px}.practice-select-row #textSelect{min-width:200px}
+.practice-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
 .btn-start{background:#2563eb;color:#fff}.btn-reset{background:#64748b;color:#fff}.btn-stop{background:#dc2626;color:#fff}
 .stats-bar{display:flex;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:.85rem;justify-content:center;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .stat-item{display:flex;align-items:center;gap:4px}.stat-label{color:#64748b;font-weight:500}.stat-value{color:#1e293b;font-weight:700;font-variant-numeric:tabular-nums}
@@ -39,7 +40,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .prep-area .prep-input{flex:1;border:1px dashed #d97706;background:#fffef5;border-radius:4px;padding:8px 12px;font-size:1.05rem;font-family:var(--pf)}
 .prep-area .prep-input:focus{border-color:#b45309;outline:none}
 :root{--pf:'Iansui','芫荽','D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace;--pfs:18px;--plh:2;--pls:0.5px;--ppad:10px 14px}
-.line-practice-wrapper{position:relative}.line-practice-area{margin-bottom:16px}.line-block{margin-bottom:2px}
+.line-practice-wrapper{position:relative}.line-practice-area{margin-bottom:16px}.line-block{margin-bottom:2px;cursor:text}
 .line-original{background:#fffbeb;border:1px solid #e5e7eb;border-bottom:none;border-radius:6px 6px 0 0;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);word-break:break-all;white-space:pre-wrap;min-height:28px;color:#6b21a8}
 .line-original .ch{color:#6b21a8;transition:color .05s}.line-original .ch.correct{color:#16a34a}
 .line-original .ch.incorrect{color:#fff;background:#ef4444;border-radius:2px}.line-original .ch.current{border-bottom:2px solid #2563eb;color:#6b21a8}
@@ -48,7 +49,8 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .line-block.completed .line-input{background:#f0fdf4;border-color:#84cc16;color:#166534}
 .line-input{width:100%;display:block;border:2px dashed #d1d5db;border-radius:0 0 6px 6px;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);outline:none;transition:border-color .2s,background .2s;margin-bottom:6px;background:#fff}
 .line-input:focus{border-color:#2563eb;border-style:solid;background:#eff6ff}
-.line-input:disabled{background:#f9fafb;color:#9ca3af;cursor:not-allowed;border-style:dashed}
+/* FIX#6: class-based activation instead of :disabled */
+.line-input.inactive-line{background:#f9fafb;color:#9ca3af;border-style:dashed}
 .line-input.active-line{border-color:#2563eb;border-style:solid;background:#eff6ff}
 .practice-msg{text-align:center;color:#64748b;padding:40px 0;font-size:1rem}
 .hotkey-hint{text-align:center;color:#94a3b8;font-size:.8rem;margin-top:8px}
@@ -88,8 +90,13 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .admin-controls select{min-width:100px}
 .admin-count{font-size:.85rem;color:#475569;font-weight:500}
-.pending-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:8px}
+/* FIX#4: pending-item stacked layout for comment input */
+.pending-item{display:flex;flex-direction:column;padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:6px}
 .pending-item:last-child{border-bottom:none}.pending-item:hover{background:#f8fafc}
+/* FIX#5: notification banner */
+.notif-banner{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:.88rem;color:#92400e;position:relative}
+.notif-banner .notif-close{position:absolute;top:8px;right:12px;cursor:pointer;font-weight:700;color:#b45309;font-size:1rem;background:none;border:none;padding:0}
+.notif-banner .notif-title{font-weight:700;margin-bottom:2px}
 @media(max-width:600px){.header{padding:10px 14px}.main{padding:12px}.stats-bar{gap:8px;padding:8px 10px;font-size:.78rem}.tab-btn{padding:8px 14px;font-size:.8rem}.prep-area{flex-direction:column;gap:6px}}
 </style>
 </head>
@@ -100,7 +107,6 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <button id="btnSignup" onclick="showSignupModal()">회원가입</button>
 <button id="btnLogout" style="display:none" onclick="doLogout()">로그아웃</button></div></div>
 
-<!-- #3: Tab order: 연습, 설정, 랭킹, 계정, 관리 -->
 <div class="tabs" id="tabBar">
 <button class="tab-btn active" data-tab="practice">연습</button>
 <button class="tab-btn" data-tab="settings">설정</button>
@@ -110,12 +116,17 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 </div>
 
 <div class="main">
+<!-- FIX#5: notification area at top -->
+<div id="notifArea"></div>
+
 <!-- Practice -->
 <div class="tab-panel active" id="panel-practice">
-<!-- #5: F12 stop button -->
-<div class="practice-controls">
+<!-- FIX#3: selects and buttons on separate rows -->
+<div class="practice-select-row">
 <select id="langSelect"><option value="">전체</option></select>
 <select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
+</div>
+<div class="practice-btn-row">
 <button class="btn-start" onclick="startPractice()">시작 (F10)</button>
 <button class="btn-reset" onclick="doReset()">초기화 (F11)</button>
 <button class="btn-stop" onclick="stopPractice()">연습 종료 (F12)</button>
@@ -138,7 +149,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="practice-msg" id="practiceMsg">위에서 텍스트를 선택하고 <strong>시작</strong>을 누르세요.</div>
 </div>
 
-<!-- Settings (moved before Ranking per #3) -->
+<!-- Settings -->
 <div class="tab-panel" id="panel-settings">
 <div class="settings-section"><h3>연습 단위</h3>
 <div class="settings-row"><label>표시 형식</label>
@@ -157,7 +168,6 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <select id="settingSfxStyle"><option value="typewriter">전통 타자기</option><option value="retro">레트로</option><option value="analog">아날로그</option><option value="mechanical">기계음</option><option value="soft">소프트</option></select></div>
 <div class="settings-row"><label>음량</label><input type="range" id="settingSfxVolume" min="0" max="100" value="50" style="width:160px"><span id="sfxVolLabel" style="font-size:.85rem;color:#94a3b8;min-width:35px">50%</span></div>
 </div>
-<!-- #7: Text request -->
 <div class="settings-section"><h3>더 많은 타자 연습 텍스트 신청</h3>
 <p style="font-size:.85rem;color:#64748b;margin-bottom:12px">새 텍스트를 등록하고 싶다면 .txt 파일을 선택해서 업로드하세요. 관리자 승인 후 등록됩니다.</p>
 <div id="textRequestLogin" style="display:none"><p style="color:#dc2626;font-size:.85rem">로그인 후 이용할 수 있습니다.</p></div>
@@ -166,15 +176,12 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="settings-row"><label>언어</label><select id="reqTextLang"><option>한국어</option><option>中文</option><option>영어</option><option>日本語</option></select></div>
 <button class="btn-primary" onclick="submitTextRequest()" style="font-size:.85rem;padding:6px 14px">신청하기</button>
 <div class="modal-msg" id="reqTextMsg"></div>
-</div>
-</div>
-<!-- #7: Admin pending text requests (only visible to admin) -->
+</div></div>
 <div class="settings-section" id="pendingRequestsSection" style="display:none">
 <h3>승인 대기 텍스트 목록</h3>
 <button class="btn-secondary" onclick="loadPendingRequests()" style="margin-bottom:10px;font-size:.85rem;padding:5px 12px">새로고침</button>
 <div id="pendingRequestsList" style="max-height:400px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px"><div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div></div>
-</div>
-</div>
+</div></div>
 
 <!-- Ranking -->
 <div class="tab-panel" id="panel-ranking">
@@ -214,7 +221,6 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 </div>
 
 <div class="footer">禧禧打字網 (XixiTyping) — 웹 버전</div>
-
 <button class="scroll-btn up" onmousedown="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})" title="맨 위로">▲</button>
 <button class="scroll-btn down" onmousedown="event.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="맨 아래로">▼</button>
 
@@ -289,19 +295,17 @@ let totalPausedMs=0,pauseStartTime=null;
 let lines=[],currentLineIdx=0,lineInputs=[],lineDisplays=[],lineBlocks=[];
 let unitMode='line',manualPause=false;
 let adminAllTexts=[];
+let rawParagraphs=[]; /* FIX#1: preserve original paragraphs for reflow */
 
 /* SFX */
-let sfxEnabled=false, sfxStyle='typewriter', sfxVolume=0.5;
-const sfxBuffers={};
-let sfxCtx=null;
+let sfxEnabled=false,sfxStyle='typewriter',sfxVolume=0.5;
+const sfxBuffers={};let sfxCtx=null;
 const SFX_URLS={typewriter:'/static/sfx/sfx_typewriter.wav',retro:'/static/sfx/sfx_retro.wav',analog:'/static/sfx/sfx_analog.wav',mechanical:'/static/sfx/sfx_mechanical.wav'};
 async function loadSfxBuffer(key){if(sfxBuffers[key])return;try{if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();const url=SFX_URLS[key];if(!url)return;const resp=await fetch(url);const ab=await resp.arrayBuffer();sfxBuffers[key]=await sfxCtx.decodeAudioData(ab);}catch(e){}}
 function playSfx(){if(!sfxEnabled)return;try{if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();if(sfxStyle==='soft'){const o=sfxCtx.createOscillator(),g=sfxCtx.createGain();o.connect(g);g.connect(sfxCtx.destination);const t=sfxCtx.currentTime;o.type='sine';o.frequency.setValueAtTime(600,t);g.gain.setValueAtTime(sfxVolume*0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);o.start(t);o.stop(t+0.04);return;}const buf=sfxBuffers[sfxStyle];if(!buf){loadSfxBuffer(sfxStyle);return;}const src=sfxCtx.createBufferSource(),g=sfxCtx.createGain();src.buffer=buf;src.connect(g);g.connect(sfxCtx.destination);g.gain.value=sfxVolume;src.start(0);}catch(e){}}
 function preloadAllSfx(){for(const k of Object.keys(SFX_URLS))loadSfxBuffer(k);}
 
 function normalizeFullwidth(s){let o='';for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c>=0xFF10&&c<=0xFF19)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF21&&c<=0xFF3A)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF41&&c<=0xFF5A)o+=String.fromCharCode(c-0xFEE0);else o+=s[i];}return o;}
-
-/* #10: strip ALL leading whitespace from a line */
 function stripLeadingBlanks(s){return s.replace(/^[\s\u3000\u00A0\t\u0020]+/,'');}
 
 async function api(ep,method='GET',data=null){const o={method,headers:{'Content-Type':'application/json'}};if(currentUser?.token)o.headers['Authorization']='Bearer '+currentUser.token;if(data)o.body=JSON.stringify(data);try{const r=await fetch(API+ep,o);return await r.json();}catch(e){return null;}}
@@ -327,12 +331,28 @@ function showSignupModal(){openModal('signupModal');document.getElementById('sig
 function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
 function showResetPwModal(){openModal('resetPwModal');document.getElementById('resetPwId').focus();}
 function showDeleteAccountModal(){openModal('deleteAccountModal');document.getElementById('delAcctPw').focus();}
-async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent='ID와 비밀번호를 입력하세요.';return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();}else{document.getElementById('loginMsg').textContent=r?.msg||'로그인 실패';}}
+async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent='ID와 비밀번호를 입력하세요.';return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();checkNotifications();}else{document.getElementById('loginMsg').textContent=r?.msg||'로그인 실패';}}
 async function doSignup(){const id=document.getElementById('signupId').value.trim(),pw=document.getElementById('signupPw').value,nk=document.getElementById('signupNick').value.trim(),em=document.getElementById('signupEmail').value.trim();if(!id||!pw||!nk||!em){document.getElementById('signupMsg').textContent='모든 항목을 입력하세요.';return;}const r=await api('/api/signup','POST',{user_id:id,password:pw,nickname:nk,email:em});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('signupModal');updateAuthUI();}else{document.getElementById('signupMsg').textContent=r?.msg||'실패';}}
-async function doLogout(){await api('/api/logout','POST');currentUser=null;localStorage.removeItem('auth');updateAuthUI();}
+async function doLogout(){await api('/api/logout','POST');currentUser=null;localStorage.removeItem('auth');updateAuthUI();document.getElementById('notifArea').innerHTML='';}
 async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent='이메일을 입력하세요.';return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=r?.msg||'없음';}}
 async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent='모든 항목 입력';return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent='비밀번호 불일치';return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent='완료';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
 async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!=='탈퇴'){document.getElementById('delAcctMsg').textContent="'탈퇴' 입력 필요";return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert('탈퇴 완료');}else{document.getElementById('delAcctMsg').textContent=r?.msg||'실패';}}
+
+/* FIX#5: Notification — check for text request results on login */
+async function checkNotifications(){
+  if(!currentUser||isAdmin())return;
+  const r=await api('/api/text-requests/notifications');
+  if(!r?.ok||!r.notifications?.length)return;
+  const area=document.getElementById('notifArea');let html='';const ids=[];
+  for(const n of r.notifications){
+    ids.push(n.id);
+    const st=n.status==='approved'?'✅ 승인됨':'❌ 거절됨';
+    const cm=n.review_comment?' — 사유: '+esc(n.review_comment):'';
+    html+='<div class="notif-banner"><button class="notif-close" onclick="this.parentElement.remove()">✕</button><div class="notif-title">텍스트 신청 결과: '+esc(n.title)+'</div>'+st+cm+'</div>';
+  }
+  area.innerHTML=html;
+  if(ids.length)api('/api/text-requests/notifications/ack','POST',{ids});
+}
 
 /* Modal helpers */
 function openModal(id){document.querySelectorAll('#'+id+' .modal-msg').forEach(m=>m.textContent='');document.getElementById(id).classList.add('active');}
@@ -341,7 +361,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelec
 document.getElementById('loginPw')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
 
-/* Texts + Language filter */
+/* Texts */
 function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">전체</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;ls.appendChild(o);});ls.value=pv;filterTexts();}
 function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">텍스트를 선택해 주세요</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+'자)';s.appendChild(o);});if(pv)s.value=pv;}
 document.getElementById('langSelect').addEventListener('change',filterTexts);
@@ -349,30 +369,16 @@ document.getElementById('textSelect').addEventListener('change',function(){if(th
 async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
 
 /* Settings */
-function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;
-sfxEnabled=(s.sfxEnabled==='on');document.getElementById('settingSfxEnabled').value=sfxEnabled?'on':'off';sfxStyle=s.sfxStyle||'typewriter';document.getElementById('settingSfxStyle').value=sfxStyle;sfxVolume=s.sfxVolume!=null?parseFloat(s.sfxVolume)/100:0.5;document.getElementById('settingSfxVolume').value=Math.round(sfxVolume*100);document.getElementById('sfxVolLabel').textContent=Math.round(sfxVolume*100)+'%';
-}catch(e){}applyFontSettings();}
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;sfxEnabled=(s.sfxEnabled==='on');document.getElementById('settingSfxEnabled').value=sfxEnabled?'on':'off';sfxStyle=s.sfxStyle||'typewriter';document.getElementById('settingSfxStyle').value=sfxStyle;sfxVolume=s.sfxVolume!=null?parseFloat(s.sfxVolume)/100:0.5;document.getElementById('settingSfxVolume').value=Math.round(sfxVolume*100);document.getElementById('sfxVolLabel').textContent=Math.round(sfxVolume*100)+'%';}catch(e){}applyFontSettings();}
 function saveSettings(){const s={unitMode:document.getElementById('settingUnitMode').value,fontSize:document.getElementById('settingFontSize').value,lineHeight:document.getElementById('settingLineHeight').value,letterSpacing:document.getElementById('settingLetterSpacing').value,sfxEnabled:document.getElementById('settingSfxEnabled').value,sfxStyle:document.getElementById('settingSfxStyle').value,sfxVolume:document.getElementById('settingSfxVolume').value};unitMode=s.unitMode;sfxEnabled=(s.sfxEnabled==='on');sfxStyle=s.sfxStyle;sfxVolume=parseInt(s.sfxVolume)/100;document.getElementById('sfxVolLabel').textContent=s.sfxVolume+'%';localStorage.setItem('webSettings',JSON.stringify(s));applyFontSettings();if(sfxEnabled&&SFX_URLS[sfxStyle])loadSfxBuffer(sfxStyle);}
 function applyFontSettings(){document.documentElement.style.setProperty('--pfs',document.getElementById('settingFontSize').value+'px');document.documentElement.style.setProperty('--plh',document.getElementById('settingLineHeight').value);document.documentElement.style.setProperty('--pls',document.getElementById('settingLetterSpacing').value+'px');}
 ['settingUnitMode','settingFontSize','settingLineHeight','settingLetterSpacing','settingSfxEnabled','settingSfxStyle','settingSfxVolume'].forEach(id=>{document.getElementById(id).addEventListener('change',saveSettings);document.getElementById(id).addEventListener('input',saveSettings);});
 
-/* #7: Text request UI */
-function updateTextRequestUI(){
-  document.getElementById('textRequestLogin').style.display=currentUser?'none':'';
-  document.getElementById('textRequestForm').style.display=currentUser?'':'none';
-  document.getElementById('pendingRequestsSection').style.display=isAdmin()?'':'none';
-}
-async function submitTextRequest(){
-  const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');
-  if(!fileInput.files.length){m.textContent='파일을 선택하세요.';return;}
-  const file=fileInput.files[0];
-  const text=await file.text();
-  const title=file.name.replace(/\.txt$/i,'').trim();
-  if(!text.trim()){m.textContent='파일이 비어 있습니다.';return;}
-  const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});
-  if(r?.ok){m.className='modal-msg success';m.textContent='신청 완료! 관리자 승인을 기다려 주세요.';fileInput.value='';}
-  else{m.className='modal-msg';m.textContent=r?.msg||'실패';}
-}
+/* Text request */
+function updateTextRequestUI(){document.getElementById('textRequestLogin').style.display=currentUser?'none':'';document.getElementById('textRequestForm').style.display=currentUser?'':'none';document.getElementById('pendingRequestsSection').style.display=isAdmin()?'':'none';}
+async function submitTextRequest(){const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');if(!fileInput.files.length){m.textContent='파일을 선택하세요.';return;}const file=fileInput.files[0],text=await file.text(),title=file.name.replace(/\.txt$/i,'').trim();if(!text.trim()){m.textContent='파일이 비어 있습니다.';return;}const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});if(r?.ok){m.className='modal-msg success';m.textContent='신청 완료! 관리자 승인을 기다려 주세요.';fileInput.value='';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
+
+/* FIX#4: Pending requests with comment input */
 async function loadPendingRequests(){
   const r=await api('/api/text-requests');if(!r?.ok)return;
   const list=document.getElementById('pendingRequestsList');
@@ -380,28 +386,26 @@ async function loadPendingRequests(){
   if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">승인 대기 중인 요청 없음</div>';return;}
   list.innerHTML=pending.map(req=>{
     const d=req.created_at?new Date(req.created_at).toLocaleString('ko'):'';
-    return '<div class="pending-item"><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">'+esc(req.title)+'</div><div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+'자 · '+d+'</div></div><div style="display:flex;gap:6px;flex-shrink:0"><button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">승인</button><button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">거절</button><a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center">다운로드</a></div></div>';
+    return '<div class="pending-item">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">'+esc(req.title)+'</div>'+
+        '<div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+'자 · '+d+'</div></div>'+
+        '<a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0">다운로드</a>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;align-items:center">'+
+        '<input type="text" id="reqComment'+req.id+'" placeholder="코멘트 (사유)" style="flex:1;padding:4px 8px;font-size:.8rem">'+
+        '<button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">승인</button>'+
+        '<button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">거절</button>'+
+      '</div></div>';
   }).join('');
 }
-async function approveRequest(id){if(!confirm('이 텍스트를 승인하시겠습니까?'))return;const r=await api('/api/text-requests/'+id+'/approve','POST');if(r?.ok){alert(r.msg||'승인 완료');loadPendingRequests();loadTexts();}else{alert(r?.msg||'실패');}}
-async function rejectRequest(id){if(!confirm('이 요청을 거절하시겠습니까?'))return;const r=await api('/api/text-requests/'+id+'/reject','POST');if(r?.ok){alert('거절 완료');loadPendingRequests();}else{alert(r?.msg||'실패');}}
+async function approveRequest(id){if(!confirm('이 텍스트를 승인하시겠습니까?'))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/approve','POST',{comment});if(r?.ok){alert(r.msg||'승인 완료');loadPendingRequests();loadTexts();}else{alert(r?.msg||'실패');}}
+async function rejectRequest(id){if(!confirm('이 요청을 거절하시겠습니까?'))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/reject','POST',{comment});if(r?.ok){alert('거절 완료');loadPendingRequests();}else{alert(r?.msg||'실패');}}
 
 /* Admin text management */
-async function refreshAdminTextList(){
-  const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;
-  const af=document.getElementById('adminLangFilter'),pv=af.value;
-  const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];
-  af.innerHTML='<option value="">전체</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;af.appendChild(o);});af.value=pv;renderAdminList();
-}
+async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;const af=document.getElementById('adminLangFilter'),pv=af.value;const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];af.innerHTML='<option value="">전체</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;af.appendChild(o);});af.value=pv;renderAdminList();}
 document.getElementById('adminLangFilter').addEventListener('change',renderAdminList);
-function renderAdminList(){
-  const lang=document.getElementById('adminLangFilter').value;
-  const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;
-  document.getElementById('adminTotalCount').textContent='(총 '+filtered.length+'개)';document.getElementById('adminSelCount').textContent='';
-  const l=document.getElementById('adminTextList');
-  if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">텍스트 없음</div>';return;}
-  l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');
-}
+function renderAdminList(){const lang=document.getElementById('adminLangFilter').value;const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;document.getElementById('adminTotalCount').textContent='(총 '+filtered.length+'개)';document.getElementById('adminSelCount').textContent='';const l=document.getElementById('adminTextList');if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">텍스트 없음</div>';return;}l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');}
 function adminSelectAll(checked){document.querySelectorAll('.admin-chk').forEach(c=>c.checked=checked);updateAdminSelCount();}
 function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?sel+'/'+total+'개 선택':'';}
 async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert('삭제할 텍스트를 선택하세요.');return;}if(!confirm(ids.length+'개의 텍스트를 삭제하시겠습니까?'))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
@@ -415,24 +419,86 @@ async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'" 삭제?'))r
 function doPause(manual=false,silent=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();if(!silent){document.getElementById('pauseOverlay').classList.add('active');}document.getElementById('pauseStatus').style.display='';}
 function doResume(){if(!paused)return;paused=false;manualPause=false;if(pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';if(lineInputs[currentLineIdx])lineInputs[currentLineIdx].focus();}
 
-/* #10: Line split — strip leading blanks from EVERY line */
+/* Line split + FIX#1 reflow */
 function splitTextToLines(content){
-  if(unitMode==='paragraph'){const p=content.split('\n').filter(l=>l.length>0).map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);return p.length>0?p:[stripLeadingBlanks(content)];}
-  const raw=content.split('\n').filter(l=>l.length>0).map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);
-  if(raw.length===0)return[stripLeadingBlanks(content)];
-  const m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';document.body.appendChild(m);const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;const result=[];for(const r of raw){if(!r)continue;let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}document.body.removeChild(m);return result.length>0?result:[content];}
+  rawParagraphs=content.split('\n').filter(l=>l.length>0).map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);
+  if(rawParagraphs.length===0)rawParagraphs=[stripLeadingBlanks(content)];
+  if(unitMode==='paragraph')return [...rawParagraphs];
+  return reflowLines();
+}
+function reflowLines(){
+  const m=document.createElement('div');
+  m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';
+  document.body.appendChild(m);
+  const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;
+  const result=[];
+  for(const r of rawParagraphs){if(!r)continue;let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}
+  document.body.removeChild(m);
+  return result.length>0?result:[''];
+}
+
+/* FIX#1: Window resize → reflow lines, preserve typed text + stats */
+let _resizeTimer=null;
+window.addEventListener('resize',()=>{
+  if(!practicing||!currentText||unitMode!=='line'||lines.length===0)return;
+  clearTimeout(_resizeTimer);
+  _resizeTimer=setTimeout(doReflow,200);
+});
+function doReflow(){
+  if(!practicing||!currentText||unitMode!=='line')return;
+  const allTyped=lineInputs.map(inp=>inp.value).join('');
+  const newLines=reflowLines();
+  if(newLines.join('')===lines.join(''))return; /* no change */
+  lines=newLines;
+  /* redistribute typed text across new lines */
+  const typedPerLine=[];let pos=0;
+  for(const ln of lines){typedPerLine.push(allTyped.slice(pos,pos+ln.length));pos+=ln.length;}
+  buildLineUI();
+  /* restore typed, highlights, completed */
+  for(let i=0;i<lines.length;i++){
+    if(typedPerLine[i]){
+      lineInputs[i].value=typedPerLine[i];
+      refreshHighlights(i,typedPerLine[i],lines[i],lineDisplays[i].children);
+      if(normalizeFullwidth(typedPerLine[i])===normalizeFullwidth(lines[i])&&typedPerLine[i].length===lines[i].length)
+        lineBlocks[i].classList.add('completed');
+    }
+  }
+  /* find correct current line */
+  let newCur=0;
+  for(let i=0;i<lines.length;i++){
+    if(lineInputs[i].value.length<lines[i].length&&!lineBlocks[i].classList.contains('completed')){newCur=i;break;}
+    if(i===lines.length-1)newCur=i;
+  }
+  activateLine(newCur);
+  if(started&&!paused)lineInputs[newCur].focus();
+}
 
 /* Practice */
 function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
 
+/* FIX#6: buildLineUI — NO disabled; class-based active/inactive; single active line */
 function buildLineUI(){const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
-lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}const inp=document.createElement('input');inp.type='text';inp.className='line-input';inp.autocomplete='off';inp.spellcheck=false;inp.disabled=(idx!==0);if(idx===0)inp.classList.add('active-line');block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
-inp.addEventListener('compositionstart',()=>{inp._composing=true;});inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
-/* #8: mousedown — allow click to any line freely */
-inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){doResume();return;}if(idx!==currentLineIdx){e.preventDefault();switchToLine(idx);}});});}
+lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}
+const inp=document.createElement('input');inp.type='text';inp.className='line-input'+(idx===0?' active-line':' inactive-line');inp.autocomplete='off';inp.spellcheck=false;
+block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
+inp.addEventListener('compositionstart',()=>{inp._composing=true;});
+inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});
+inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});
+inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
+/* FIX#6: click on input → switch to this line */
+inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){e.preventDefault();doResume();return;}if(idx!==currentLineIdx){e.preventDefault();switchToLine(idx);}});
+/* FIX#6: click on original text area → also switch */
+origDiv.addEventListener('mousedown',e=>{if(!practicing)return;e.preventDefault();if(paused){doResume();return;}if(idx!==currentLineIdx)switchToLine(idx);else inp.focus();});
+});}
 
-function switchToLine(toIdx){if(toIdx===currentLineIdx)return;lineInputs[currentLineIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);}
+/* FIX#6: activate exactly one line, deactivate all others */
+function activateLine(idx){
+  lineInputs.forEach(inp=>{inp.classList.remove('active-line');inp.classList.add('inactive-line');});
+  currentLineIdx=idx;
+  lineInputs[idx].classList.add('active-line');lineInputs[idx].classList.remove('inactive-line');
+}
+function switchToLine(toIdx){if(toIdx<0||toIdx>=lineInputs.length||toIdx===currentLineIdx)return;activateLine(toIdx);lineInputs[toIdx].focus();updateCursorDisplay(toIdx);}
 function updateCursorDisplay(idx){const spans=lineDisplays[idx].children,typed=lineInputs[idx].value;for(let i=0;i<spans.length;i++){spans[i].classList.remove('current');if(i===typed.length)spans[i].classList.add('current');}}
 
 document.getElementById('prepInput').addEventListener('keydown',e=>{
@@ -440,6 +506,8 @@ document.getElementById('prepInput').addEventListener('keydown',e=>{
 });
 
 function handleLineKeydown(e,idx){if(!practicing)return;
+/* FIX#6: typing in non-active line → switch first */
+if(idx!==currentLineIdx&&e.key!=='Escape'){e.preventDefault();switchToLine(idx);return;}
 if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(paused)doResume();else doPause(true);return;}
 if(paused){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock'];if(!ig.includes(e.key)){e.preventDefault();doResume();}return;}
 if(!started&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)){started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';}
@@ -452,9 +520,12 @@ if(e.key==='ArrowDown'){e.preventDefault();if(idx<lines.length-1)switchToLine(id
 if(e.key==='Backspace'&&lineInputs[idx].selectionStart===0&&lineInputs[idx].selectionEnd===0){if(idx>0){e.preventDefault();moveToLine(idx-1,idx);return;}}
 if(e.key==='Enter'){e.preventDefault();if(idx<lines.length-1)moveToLine(idx+1,idx,true);else stopPractice();return;}}
 
-function moveToLine(toIdx,fromIdx,markComplete=false){if(markComplete)lineBlocks[fromIdx].classList.add('completed');lineInputs[fromIdx].disabled=true;lineInputs[fromIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});}
+function moveToLine(toIdx,fromIdx,markComplete=false){if(markComplete)lineBlocks[fromIdx].classList.add('completed');activateLine(toIdx);lineInputs[toIdx].focus();updateCursorDisplay(toIdx);lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});}
 
-function handleLineInput(idx){if(!practicing||paused)return;const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
+function handleLineInput(idx){if(!practicing||paused)return;
+/* FIX#6: ignore input in non-active line */
+if(idx!==currentLineIdx){lineInputs[idx].value='';return;}
+const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
 if(typed.length>0&&/^[\s\u3000\u00A0]/.test(typed)){typed=stripLeadingBlanks(typed);inp.value=typed;}
 const target=lines[idx],spans=lineDisplays[idx].children;
 if(typed.length>target.length){const overflow=typed.slice(target.length);inp.value=typed.slice(0,target.length);typed=inp.value;refreshHighlights(idx,typed,target,spans);updateStats();if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);const next=overflow.replace(/^ /,'');if(next){lineInputs[idx+1].value=next;handleLineInput(idx+1);}}else{stopPractice();}return;}
@@ -463,28 +534,24 @@ if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(targ
 
 function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}}
 
-/* #6: doReset — keep lines/UI, only clear inputs + stats */
 function doReset(){
   if(!practicing||lines.length===0){fullReset();return;}
-  /* stop timer but keep lines */
   started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   keystrokes=0;currentLineIdx=0;
-  /* clear all inputs and highlights */
-  lineInputs.forEach((inp,i)=>{inp.value='';inp.disabled=(i!==0);inp.classList.remove('active-line');});
+  lineInputs.forEach(inp=>{inp.value='';inp.classList.remove('active-line');inp.classList.add('inactive-line');});
   lineBlocks.forEach(b=>b.classList.remove('completed'));
   lineDisplays.forEach((d,i)=>{const spans=d.children;for(let j=0;j<spans.length;j++){spans[j].className='ch';if(i===0&&j===0)spans[j].className='ch current';}});
-  if(lineInputs[0])lineInputs[0].classList.add('active-line');
+  lineInputs[0].classList.add('active-line');lineInputs[0].classList.remove('inactive-line');
   document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';
   document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';
   document.getElementById('prepArea').style.display='';document.getElementById('prepInput').value='';document.getElementById('prepInput').focus();
 }
-function fullReset(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
+function fullReset(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];rawParagraphs=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
 
-function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.disabled=true;i.classList.remove('active-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';showResults();}
+function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.classList.remove('active-line');i.classList.add('inactive-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';showResults();}
 
 function getElapsed(){if(!startTime)return 0;let pe=totalPausedMs;if(paused&&pauseStartTime)pe+=(Date.now()-pauseStartTime);return Math.max(0,(Date.now()-startTime-pe))/1000;}
-
 function updateStats(){const el=getElapsed(),mn=Math.floor(el/60),sc=Math.floor(el%60);document.getElementById('statTime').textContent=mn+':'+String(sc).padStart(2,'0');if(el<=0)return;let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);document.getElementById('statCpm').textContent=Math.round(tc/(el/60));document.getElementById('statKpm').textContent=Math.round(keystrokes/(el/60));document.getElementById('statAcc').textContent=(tco>0?Math.round(tc/tco*100):0)+'%';document.getElementById('statProgress').textContent=Math.min(ttg>0?Math.round(ttl/ttg*100):0,100)+'%';document.getElementById('statChars').textContent=ttl;document.getElementById('statKeys').textContent=keystrokes;}
 
 /* Focus pause/resume */
@@ -497,7 +564,6 @@ function showResults(){const el=getElapsed();let tc=0,tco=0,ttl=0;for(let i=0;i<
 const cpm=el>0?Math.round(tc/(el/60)):0,kpm=el>0?Math.round(keystrokes/(el/60)):0,acc=tco>0?Math.round(tc/tco*1000)/10:0,prog=ttg>0?Math.round(ttl/ttg*1000)/10:0;
 document.getElementById('resCpm').textContent=cpm;document.getElementById('resKpm').textContent=kpm;document.getElementById('resAcc').textContent=acc+'%';document.getElementById('resProgress').textContent=Math.min(prog,100)+'%';document.getElementById('resTime').textContent=el.toFixed(1)+'초';document.getElementById('resChars').textContent=ttl;
 window._lastResult={cpm,kpm,acc,progress:Math.min(prog,100),elapsed:el,chars:ttl,input_chars:ttl};document.getElementById('rankSubmitMsg').textContent='';if(currentUser)document.getElementById('rankSubmitArea').style.display='';openModal('resultsModal');}
-
 async function submitRanking(){if(!currentUser||!window._lastResult||!currentText)return;const tw=document.getElementById('resTypewriter').value.trim();if(!tw){document.getElementById('rankSubmitMsg').textContent="타자기 구분을 입력하세요.";return;}const bk=await sha1(currentText.content);const r=await api('/api/rankings','POST',{board_key:bk,board_name:currentText.title,typewriter:tw,cpm:window._lastResult.cpm,kpm:window._lastResult.kpm,acc:window._lastResult.acc,completion:window._lastResult.progress,chars:window._lastResult.chars,input_chars:window._lastResult.input_chars,elapsed:window._lastResult.elapsed,created_at:new Date().toLocaleString('sv-SE').replace('T',' '),created_ts:Math.floor(Date.now()/1000)});const m=document.getElementById('rankSubmitMsg');if(r?.ok){m.className='modal-msg success';m.textContent='등록 완료!';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
 async function sha1(t){const d=new TextEncoder().encode(t),h=await crypto.subtle.digest('SHA-1',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 
@@ -514,7 +580,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
 
 /* Init */
-(async function init(){loadSettings();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser)api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});await Promise.all([tp,rp]);})();
+(async function init(){loadSettings();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
 </script>
 </body>
 </html>
