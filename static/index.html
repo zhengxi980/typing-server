@@ -448,7 +448,7 @@ function doReflow(){
   if(!practicing||!currentText||unitMode!=='line')return;
   const allTyped=lineInputs.map(inp=>inp.value).join('');
   const newLines=reflowLines();
-  if(newLines.join('')===lines.join(''))return; /* no change */
+  if(newLines.length===lines.length&&newLines.every((l,i)=>l===lines[i]))return; /* truly no change */
   lines=newLines;
   /* redistribute typed text across new lines */
   const typedPerLine=[];let pos=0;
@@ -474,8 +474,10 @@ function doReflow(){
 }
 
 /* Practice */
-function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
-document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
+document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';
+lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
+document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
 
 /* FIX#6: buildLineUI — NO disabled; class-based active/inactive; single active line */
 function buildLineUI(){const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
