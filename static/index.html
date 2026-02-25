@@ -128,7 +128,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
 </div>
 <div class="practice-btn-row">
-<button class="btn-start" onclick="startPractice()">시작 (F10)</button>
+<button class="btn-start" onclick="if(!started)startPractice()">시작 (F10)</button>
 <button class="btn-reset" onclick="doReset()">초기화 (F11)</button>
 <button class="btn-stop" disabled onclick="if(practicing){stopPractice();}else if(this.textContent.includes('결과')){openModal('resultsModal');}">연습 종료 (F12)</button>
 </div>
@@ -475,7 +475,7 @@ function doReflow(){
 }
 
 /* Practice */
-function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();document.querySelector('.btn-start').disabled=true;document.querySelector('.btn-stop').disabled=false;document.querySelector('.btn-stop').textContent='연습 종료 (F12)';practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();document.querySelector('.btn-stop').textContent='연습 종료 (F12)';practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';
 lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
 document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
@@ -505,7 +505,7 @@ function switchToLine(toIdx){if(toIdx<0||toIdx>=lineInputs.length||toIdx===curre
 function updateCursorDisplay(idx){const spans=lineDisplays[idx].children,typed=lineInputs[idx].value;for(let i=0;i<spans.length;i++){spans[i].classList.remove('current');if(i===typed.length)spans[i].classList.add('current');}}
 
 document.getElementById('prepInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'||e.key==='ArrowDown'){e.preventDefault();if(!practicing)return;started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';if(lineInputs[0])lineInputs[0].focus();}
+  if(e.key==='Enter'||e.key==='ArrowDown'){e.preventDefault();if(!practicing)return;started=true;document.querySelector('.btn-start').disabled=true;document.querySelector('.btn-stop').disabled=false;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';if(lineInputs[0])lineInputs[0].focus();}
 });
 
 function handleLineKeydown(e,idx){if(!practicing)return;
@@ -513,7 +513,7 @@ function handleLineKeydown(e,idx){if(!practicing)return;
 if(idx!==currentLineIdx&&e.key!=='Escape'){e.preventDefault();switchToLine(idx);return;}
 if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(paused)doResume();else doPause(true);return;}
 if(paused){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock'];if(!ig.includes(e.key)){e.preventDefault();doResume();}return;}
-if(!started&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)){started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';}
+if(!started&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)){started=true;document.querySelector('.btn-start').disabled=true;document.querySelector('.btn-stop').disabled=false;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';}
 if((e.key===' '||e.code==='Space')&&lineInputs[idx].value.length===0){e.preventDefault();return;}
 if(e.key.length===1||e.key==='Backspace'||e.key==='Enter'||e.key==='Process'||e.keyCode===229){keystrokes++;playSfx();}
 if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();keystrokes++;if(idx<lines.length-1)moveToLine(idx+1,idx);return;}
@@ -580,7 +580,7 @@ document.addEventListener('keydown',e=>{
   if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){return;}
   if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
   if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
-  if(e.key==='F10'){e.preventDefault();if(!practicing)startPractice();}if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();if(document.querySelector('.btn-stop').disabled)return;if(practicing){stopPractice();}else if(document.querySelector('.btn-stop').textContent.includes('결과')){openModal('resultsModal');}}});
+  if(e.key==='F10'){e.preventDefault();if(!started)startPractice();}if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();if(document.querySelector('.btn-stop').disabled)return;if(practicing){stopPractice();}else if(document.querySelector('.btn-stop').textContent.includes('결과')){openModal('resultsModal');}}});
 
 /* Init */
 (async function init(){loadSettings();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
