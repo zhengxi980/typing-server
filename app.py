@@ -134,6 +134,14 @@ def init_db():
         END $$;
     """)
 
+    # v143: 기존 중복 랭킹 정리 — (nickname, created_at)이 동일한 기록 중 id가 가장 작은 것만 유지
+    cur.execute("""
+        DELETE FROM rankings
+        WHERE id NOT IN (
+            SELECT MIN(id) FROM rankings GROUP BY nickname, created_at
+        )
+    """)
+
     # 기본 샘플 텍스트 삽입 (비어있을 때만)
     cur.execute("SELECT COUNT(*) FROM texts")
     if cur.fetchone()[0] == 0:
@@ -523,6 +531,18 @@ def submit_ranking():
 
     conn = get_db()
     cur = conn.cursor()
+
+    # v143: 중복 방지 — (nickname, created_at)이 동일한 기록이 이미 있으면 등록 안 함
+    cur.execute("""
+        SELECT id FROM rankings
+        WHERE nickname = %s AND created_at = %s
+        LIMIT 1
+    """, (user["nickname"], now))
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        return jsonify({"ok": True, "msg": "이미 등록된 기록입니다.", "duplicate": True})
+
     cur.execute("""
         INSERT INTO rankings
             (board_key, board_name, user_id, nickname, typewriter,
