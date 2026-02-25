@@ -537,7 +537,8 @@ if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(targ
 function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}}
 
 function doReset(){
-  if(!practicing||lines.length===0){fullReset();return;}
+  if(!practicing&&lines.length===0){fullReset();return;}
+  if(!practicing&&lines.length>0){startPractice();return;}
   started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   keystrokes=0;currentLineIdx=0;
