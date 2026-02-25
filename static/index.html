@@ -4,13 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>禧禧打字網 - XixiTyping</title>
-<link rel="icon" href="/static/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+<!-- #1: Favicon -->
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48x48.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/static/android-chrome-192x192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/static/android-chrome-512x512.png">
 <link href="https://fonts.googleapis.com/css2?family=Iansui&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -33,7 +30,6 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .practice-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;justify-content:center}
 .practice-controls select{min-width:120px}.practice-controls #textSelect{min-width:200px}
 .btn-start{background:#2563eb;color:#fff}.btn-reset{background:#64748b;color:#fff}.btn-stop{background:#dc2626;color:#fff}
-/* #2: stats bar sticky */
 .stats-bar{display:flex;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:.85rem;justify-content:center;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .stat-item{display:flex;align-items:center;gap:4px}.stat-label{color:#64748b;font-weight:500}.stat-value{color:#1e293b;font-weight:700;font-variant-numeric:tabular-nums}
 .pause-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center;font-size:1.4rem;color:#fff;font-weight:700}
@@ -86,13 +82,14 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 .result-card .r-label{font-size:.8rem;color:#64748b;margin-bottom:4px}
 .result-card .r-value{font-size:1.4rem;font-weight:700;color:#1e293b}.result-card .r-value.highlight{color:#2563eb}
 .footer{text-align:center;padding:16px;color:#94a3b8;font-size:.8rem;border-top:1px solid #e2e8f0}
-/* Scroll buttons - #10: prevent focus steal */
 .scroll-btn{position:fixed;right:12px;z-index:50;width:40px;height:40px;border-radius:50%;background:#334155;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:.6;transition:opacity .2s}
 .scroll-btn:hover{opacity:1}
 .scroll-btn.up{bottom:68px}.scroll-btn.down{bottom:20px}
 .admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .admin-controls select{min-width:100px}
 .admin-count{font-size:.85rem;color:#475569;font-weight:500}
+.pending-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:8px}
+.pending-item:last-child{border-bottom:none}.pending-item:hover{background:#f8fafc}
 @media(max-width:600px){.header{padding:10px 14px}.main{padding:12px}.stats-bar{gap:8px;padding:8px 10px;font-size:.78rem}.tab-btn{padding:8px 14px;font-size:.8rem}.prep-area{flex-direction:column;gap:6px}}
 </style>
 </head>
@@ -103,6 +100,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <button id="btnSignup" onclick="showSignupModal()">회원가입</button>
 <button id="btnLogout" style="display:none" onclick="doLogout()">로그아웃</button></div></div>
 
+<!-- #3: Tab order: 연습, 설정, 랭킹, 계정, 관리 -->
 <div class="tabs" id="tabBar">
 <button class="tab-btn active" data-tab="practice">연습</button>
 <button class="tab-btn" data-tab="settings">설정</button>
@@ -114,14 +112,14 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="main">
 <!-- Practice -->
 <div class="tab-panel active" id="panel-practice">
+<!-- #5: F12 stop button -->
 <div class="practice-controls">
 <select id="langSelect"><option value="">전체</option></select>
 <select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
 <button class="btn-start" onclick="startPractice()">시작 (F10)</button>
-<button class="btn-reset" onclick="resetPractice()">초기화 (F11)</button>
+<button class="btn-reset" onclick="doReset()">초기화 (F11)</button>
 <button class="btn-stop" onclick="stopPractice()">연습 종료 (F12)</button>
 </div>
-<!-- #2: stats bar with extra stats, sticky -->
 <div class="stats-bar" id="statsBar" style="display:none">
 <div class="stat-item"><span class="stat-label">시간</span><span class="stat-value" id="statTime">0:00</span></div>
 <div class="stat-item"><span class="stat-label">CPM</span><span class="stat-value" id="statCpm">0</span></div>
@@ -140,16 +138,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="practice-msg" id="practiceMsg">위에서 텍스트를 선택하고 <strong>시작</strong>을 누르세요.</div>
 </div>
 
-<!-- Ranking -->
-<div class="tab-panel" id="panel-ranking">
-<div class="ranking-controls"><select id="rankBoardSelect"><option value="">전체</option></select>
-<button class="btn-primary" onclick="loadRankings()" style="padding:6px 14px;font-size:.85rem">새로고침</button></div>
-<div class="ranking-table-wrap"><table class="ranking-table">
-<thead><tr><th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th><th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th></tr></thead>
-<tbody id="rankBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">로딩 중...</td></tr></tbody>
-</table></div></div>
-
-<!-- Settings -->
+<!-- Settings (moved before Ranking per #3) -->
 <div class="tab-panel" id="panel-settings">
 <div class="settings-section"><h3>연습 단위</h3>
 <div class="settings-row"><label>표시 형식</label>
@@ -161,7 +150,6 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="settings-row"><label>line-height</label><input type="number" id="settingLineHeight" value="2" min="1.2" max="3" step="0.1" style="width:80px"></div></div>
 <div class="settings-section"><h3>자간</h3>
 <div class="settings-row"><label>letter-spacing</label><input type="number" id="settingLetterSpacing" value="0.5" min="0" max="5" step="0.1" style="width:80px"><span style="font-size:.85rem;color:#94a3b8">px</span></div></div>
-<!-- #3: SFX settings matching PC version -->
 <div class="settings-section"><h3>키 입력 효과음</h3>
 <div class="settings-row"><label>효과음</label>
 <select id="settingSfxEnabled"><option value="on">켜기</option><option value="off">끄기</option></select></div>
@@ -169,37 +157,33 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <select id="settingSfxStyle"><option value="typewriter">전통 타자기</option><option value="retro">레트로</option><option value="analog">아날로그</option><option value="mechanical">기계음</option><option value="soft">소프트</option></select></div>
 <div class="settings-row"><label>음량</label><input type="range" id="settingSfxVolume" min="0" max="100" value="50" style="width:160px"><span id="sfxVolLabel" style="font-size:.85rem;color:#94a3b8;min-width:35px">50%</span></div>
 </div>
-
-<div class="settings-section" id="textRequestSection" style="display:none">
-  <h3>더 많은 타자 연습 텍스트 신청</h3>
-  <p style="font-size:.8rem;color:#94a3b8;margin-bottom:10px">※ 로그인한 사용자만 신청할 수 있습니다. 업로드한 텍스트는 관리자 승인 후 등록됩니다.</p>
-  <div class="settings-row">
-    <label>.txt 파일</label>
-    <input type="file" id="textRequestFile" accept=".txt" style="flex:1">
-  </div>
-  <div class="settings-row">
-    <label>언어</label>
-    <select id="textRequestLang" style="min-width:140px"></select>
-  </div>
-  <div class="settings-row" style="align-items:flex-start">
-    <label></label>
-    <button class="btn-primary" onclick="submitTextRequestFile()">업로드</button>
-    <span id="textRequestMsg" style="font-size:.85rem;color:#475569"></span>
-  </div>
+<!-- #7: Text request -->
+<div class="settings-section"><h3>더 많은 타자 연습 텍스트 신청</h3>
+<p style="font-size:.85rem;color:#64748b;margin-bottom:12px">새 텍스트를 등록하고 싶다면 .txt 파일을 선택해서 업로드하세요. 관리자 승인 후 등록됩니다.</p>
+<div id="textRequestLogin" style="display:none"><p style="color:#dc2626;font-size:.85rem">로그인 후 이용할 수 있습니다.</p></div>
+<div id="textRequestForm" style="display:none">
+<div class="settings-row"><label>텍스트 파일</label><input type="file" id="reqTextFile" accept=".txt"></div>
+<div class="settings-row"><label>언어</label><select id="reqTextLang"><option>한국어</option><option>中文</option><option>영어</option><option>日本語</option></select></div>
+<button class="btn-primary" onclick="submitTextRequest()" style="font-size:.85rem;padding:6px 14px">신청하기</button>
+<div class="modal-msg" id="reqTextMsg"></div>
+</div>
+</div>
+<!-- #7: Admin pending text requests (only visible to admin) -->
+<div class="settings-section" id="pendingRequestsSection" style="display:none">
+<h3>승인 대기 텍스트 목록</h3>
+<button class="btn-secondary" onclick="loadPendingRequests()" style="margin-bottom:10px;font-size:.85rem;padding:5px 12px">새로고침</button>
+<div id="pendingRequestsList" style="max-height:400px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px"><div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div></div>
+</div>
 </div>
 
-<div class="settings-section" id="pendingTextSection" style="display:none">
-  <h3>승인 대기 텍스트 목록 (관리자) <span class="admin-count" id="pendingCount"></span></h3>
-  <div class="settings-row">
-    <button class="btn-secondary" onclick="loadPendingTextRequests()" style="padding:6px 14px;font-size:.85rem">새로고침</button>
-    <span style="font-size:.8rem;color:#94a3b8">※ 다운로드 후, 필요하면 ‘승인’하여 서버 텍스트로 등록할 수 있습니다.</span>
-  </div>
-  <div class="admin-text-list" id="pendingTextList">
-    <div style="padding:20px;text-align:center;color:#94a3b8">로그인 후 확인할 수 있습니다.</div>
-  </div>
-</div>
-
-</div>
+<!-- Ranking -->
+<div class="tab-panel" id="panel-ranking">
+<div class="ranking-controls"><select id="rankBoardSelect"><option value="">전체</option></select>
+<button class="btn-primary" onclick="loadRankings()" style="padding:6px 14px;font-size:.85rem">새로고침</button></div>
+<div class="ranking-table-wrap"><table class="ranking-table">
+<thead><tr><th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th><th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th></tr></thead>
+<tbody id="rankBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">로딩 중...</td></tr></tbody>
+</table></div></div>
 
 <!-- Account -->
 <div class="tab-panel" id="panel-account">
@@ -214,7 +198,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <button class="btn-secondary" onclick="showResetPwModal()">비밀번호 재설정</button>
 <button class="btn-danger" onclick="showDeleteAccountModal()">회원탈퇴</button></div></div></div></div>
 
-<!-- #6: Admin with count display -->
+<!-- Admin -->
 <div class="tab-panel" id="panel-admin">
 <div class="settings-section"><h3>서버 텍스트 관리 <span class="admin-count" id="adminTotalCount"></span></h3>
 <div class="admin-controls">
@@ -231,7 +215,6 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 
 <div class="footer">禧禧打字網 (XixiTyping) — 웹 버전</div>
 
-<!-- #10: scroll buttons with onmousedown preventDefault to not steal focus -->
 <button class="scroll-btn up" onmousedown="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})" title="맨 위로">▲</button>
 <button class="scroll-btn down" onmousedown="event.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="맨 아래로">▼</button>
 
@@ -307,50 +290,18 @@ let lines=[],currentLineIdx=0,lineInputs=[],lineDisplays=[],lineBlocks=[];
 let unitMode='line',manualPause=false;
 let adminAllTexts=[];
 
-/* #3: SFX — use actual WAV files served from /static/sfx/ */
+/* SFX */
 let sfxEnabled=false, sfxStyle='typewriter', sfxVolume=0.5;
 const sfxBuffers={};
 let sfxCtx=null;
-const SFX_URLS={
-  typewriter:'/static/sfx/sfx_typewriter.wav',
-  retro:'/static/sfx/sfx_retro.wav',
-  analog:'/static/sfx/sfx_analog.wav',
-  mechanical:'/static/sfx/sfx_mechanical.wav'
-};
-async function loadSfxBuffer(key){
-  if(sfxBuffers[key])return;
-  try{
-    if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();
-    const url=SFX_URLS[key];if(!url)return;
-    const resp=await fetch(url);const ab=await resp.arrayBuffer();
-    sfxBuffers[key]=await sfxCtx.decodeAudioData(ab);
-  }catch(e){}
-}
-function playSfx(){
-  if(!sfxEnabled)return;
-  try{
-    if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();
-    /* "soft" uses synthesized sound; others use WAV buffers */
-    if(sfxStyle==='soft'){
-      const o=sfxCtx.createOscillator(),g=sfxCtx.createGain();
-      o.connect(g);g.connect(sfxCtx.destination);const t=sfxCtx.currentTime;
-      o.type='sine';o.frequency.setValueAtTime(600,t);
-      g.gain.setValueAtTime(sfxVolume*0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);
-      o.start(t);o.stop(t+0.04);return;
-    }
-    const buf=sfxBuffers[sfxStyle];
-    if(!buf){loadSfxBuffer(sfxStyle);return;}
-    const src=sfxCtx.createBufferSource(),g=sfxCtx.createGain();
-    src.buffer=buf;src.connect(g);g.connect(sfxCtx.destination);
-    g.gain.value=sfxVolume;src.start(0);
-  }catch(e){}
-}
-/* preload all SFX buffers */
+const SFX_URLS={typewriter:'/static/sfx/sfx_typewriter.wav',retro:'/static/sfx/sfx_retro.wav',analog:'/static/sfx/sfx_analog.wav',mechanical:'/static/sfx/sfx_mechanical.wav'};
+async function loadSfxBuffer(key){if(sfxBuffers[key])return;try{if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();const url=SFX_URLS[key];if(!url)return;const resp=await fetch(url);const ab=await resp.arrayBuffer();sfxBuffers[key]=await sfxCtx.decodeAudioData(ab);}catch(e){}}
+function playSfx(){if(!sfxEnabled)return;try{if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();if(sfxStyle==='soft'){const o=sfxCtx.createOscillator(),g=sfxCtx.createGain();o.connect(g);g.connect(sfxCtx.destination);const t=sfxCtx.currentTime;o.type='sine';o.frequency.setValueAtTime(600,t);g.gain.setValueAtTime(sfxVolume*0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);o.start(t);o.stop(t+0.04);return;}const buf=sfxBuffers[sfxStyle];if(!buf){loadSfxBuffer(sfxStyle);return;}const src=sfxCtx.createBufferSource(),g=sfxCtx.createGain();src.buffer=buf;src.connect(g);g.connect(sfxCtx.destination);g.gain.value=sfxVolume;src.start(0);}catch(e){}}
 function preloadAllSfx(){for(const k of Object.keys(SFX_URLS))loadSfxBuffer(k);}
 
 function normalizeFullwidth(s){let o='';for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c>=0xFF10&&c<=0xFF19)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF21&&c<=0xFF3A)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF41&&c<=0xFF5A)o+=String.fromCharCode(c-0xFEE0);else o+=s[i];}return o;}
 
-/* #9: strip leading whitespace (full-width space, half-width space, tab, NBSP, etc.) */
+/* #10: strip ALL leading whitespace from a line */
 function stripLeadingBlanks(s){return s.replace(/^[\s\u3000\u00A0\t\u0020]+/,'');}
 
 async function api(ep,method='GET',data=null){const o={method,headers:{'Content-Type':'application/json'}};if(currentUser?.token)o.headers['Authorization']='Bearer '+currentUser.token;if(data)o.body=JSON.stringify(data);try{const r=await fetch(API+ep,o);return await r.json();}catch(e){return null;}}
@@ -360,17 +311,17 @@ document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=
   const prevTab=document.querySelector('.tab-btn.active')?.dataset.tab;
   document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  document.getElementById('panel-'+b.dataset.tab).classList.add('active');
+  b.classList.add('active');document.getElementById('panel-'+b.dataset.tab).classList.add('active');
   if(b.dataset.tab==='ranking')loadRankings();
   if(b.dataset.tab==='admin')refreshAdminTextList();
+  if(b.dataset.tab==='settings'){updateTextRequestUI();if(isAdmin())loadPendingRequests();}
   if(prevTab==='practice'&&b.dataset.tab!=='practice'&&practicing&&started&&!paused){doPause(false,true);}
   if(b.dataset.tab==='practice'&&paused&&practicing){document.getElementById('pauseOverlay').classList.add('active');}
 });});
 
 /* Auth */
 function isAdmin(){return currentUser?.user_id===ADMIN_ID;}
-function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+' 님';document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent='로그인하지 않음';document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';updateTextRequestUI();if(isAdmin())loadPendingTextRequests();}
+function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+' 님';document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent='로그인하지 않음';document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';updateTextRequestUI();}
 function showLoginModal(){openModal('loginModal');document.getElementById('loginId').focus();}
 function showSignupModal(){openModal('signupModal');document.getElementById('signupId').focus();}
 function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
@@ -391,53 +342,69 @@ document.getElementById('loginPw')?.addEventListener('keydown',e=>{if(e.key==='E
 document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
 
 /* Texts + Language filter */
-function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">전체</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;ls.appendChild(o);});ls.value=pv;filterTexts();updateTextRequestUI();}
+function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">전체</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;ls.appendChild(o);});ls.value=pv;filterTexts();}
 function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">텍스트를 선택해 주세요</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+'자)';s.appendChild(o);});if(pv)s.value=pv;}
 document.getElementById('langSelect').addEventListener('change',filterTexts);
-/* #4: auto-start when text selected */
 document.getElementById('textSelect').addEventListener('change',function(){if(this.value)startPractice();});
 async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
 
 /* Settings */
 function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;
-sfxEnabled=(s.sfxEnabled==='on');document.getElementById('settingSfxEnabled').value=sfxEnabled?'on':'off';
-sfxStyle=s.sfxStyle||'typewriter';document.getElementById('settingSfxStyle').value=sfxStyle;
-sfxVolume=s.sfxVolume!=null?parseFloat(s.sfxVolume)/100:0.5;document.getElementById('settingSfxVolume').value=Math.round(sfxVolume*100);document.getElementById('sfxVolLabel').textContent=Math.round(sfxVolume*100)+'%';
+sfxEnabled=(s.sfxEnabled==='on');document.getElementById('settingSfxEnabled').value=sfxEnabled?'on':'off';sfxStyle=s.sfxStyle||'typewriter';document.getElementById('settingSfxStyle').value=sfxStyle;sfxVolume=s.sfxVolume!=null?parseFloat(s.sfxVolume)/100:0.5;document.getElementById('settingSfxVolume').value=Math.round(sfxVolume*100);document.getElementById('sfxVolLabel').textContent=Math.round(sfxVolume*100)+'%';
 }catch(e){}applyFontSettings();}
 function saveSettings(){const s={unitMode:document.getElementById('settingUnitMode').value,fontSize:document.getElementById('settingFontSize').value,lineHeight:document.getElementById('settingLineHeight').value,letterSpacing:document.getElementById('settingLetterSpacing').value,sfxEnabled:document.getElementById('settingSfxEnabled').value,sfxStyle:document.getElementById('settingSfxStyle').value,sfxVolume:document.getElementById('settingSfxVolume').value};unitMode=s.unitMode;sfxEnabled=(s.sfxEnabled==='on');sfxStyle=s.sfxStyle;sfxVolume=parseInt(s.sfxVolume)/100;document.getElementById('sfxVolLabel').textContent=s.sfxVolume+'%';localStorage.setItem('webSettings',JSON.stringify(s));applyFontSettings();if(sfxEnabled&&SFX_URLS[sfxStyle])loadSfxBuffer(sfxStyle);}
 function applyFontSettings(){document.documentElement.style.setProperty('--pfs',document.getElementById('settingFontSize').value+'px');document.documentElement.style.setProperty('--plh',document.getElementById('settingLineHeight').value);document.documentElement.style.setProperty('--pls',document.getElementById('settingLetterSpacing').value+'px');}
 ['settingUnitMode','settingFontSize','settingLineHeight','settingLetterSpacing','settingSfxEnabled','settingSfxStyle','settingSfxVolume'].forEach(id=>{document.getElementById(id).addEventListener('change',saveSettings);document.getElementById(id).addEventListener('input',saveSettings);});
 
-/* #6: Admin text management with count display */
+/* #7: Text request UI */
+function updateTextRequestUI(){
+  document.getElementById('textRequestLogin').style.display=currentUser?'none':'';
+  document.getElementById('textRequestForm').style.display=currentUser?'':'none';
+  document.getElementById('pendingRequestsSection').style.display=isAdmin()?'':'none';
+}
+async function submitTextRequest(){
+  const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');
+  if(!fileInput.files.length){m.textContent='파일을 선택하세요.';return;}
+  const file=fileInput.files[0];
+  const text=await file.text();
+  const title=file.name.replace(/\.txt$/i,'').trim();
+  if(!text.trim()){m.textContent='파일이 비어 있습니다.';return;}
+  const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});
+  if(r?.ok){m.className='modal-msg success';m.textContent='신청 완료! 관리자 승인을 기다려 주세요.';fileInput.value='';}
+  else{m.className='modal-msg';m.textContent=r?.msg||'실패';}
+}
+async function loadPendingRequests(){
+  const r=await api('/api/text-requests');if(!r?.ok)return;
+  const list=document.getElementById('pendingRequestsList');
+  const pending=(r.requests||[]).filter(x=>x.status==='pending');
+  if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">승인 대기 중인 요청 없음</div>';return;}
+  list.innerHTML=pending.map(req=>{
+    const d=req.created_at?new Date(req.created_at).toLocaleString('ko'):'';
+    return '<div class="pending-item"><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">'+esc(req.title)+'</div><div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+'자 · '+d+'</div></div><div style="display:flex;gap:6px;flex-shrink:0"><button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">승인</button><button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">거절</button><a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center">다운로드</a></div></div>';
+  }).join('');
+}
+async function approveRequest(id){if(!confirm('이 텍스트를 승인하시겠습니까?'))return;const r=await api('/api/text-requests/'+id+'/approve','POST');if(r?.ok){alert(r.msg||'승인 완료');loadPendingRequests();loadTexts();}else{alert(r?.msg||'실패');}}
+async function rejectRequest(id){if(!confirm('이 요청을 거절하시겠습니까?'))return;const r=await api('/api/text-requests/'+id+'/reject','POST');if(r?.ok){alert('거절 완료');loadPendingRequests();}else{alert(r?.msg||'실패');}}
+
+/* Admin text management */
 async function refreshAdminTextList(){
-  const r=await api('/api/texts');if(!r?.ok)return;
-  adminAllTexts=r.texts;
+  const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;
   const af=document.getElementById('adminLangFilter'),pv=af.value;
   const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];
-  af.innerHTML='<option value="">전체</option>';
-  langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;af.appendChild(o);});
-  af.value=pv;
-  renderAdminList();
+  af.innerHTML='<option value="">전체</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;af.appendChild(o);});af.value=pv;renderAdminList();
 }
 document.getElementById('adminLangFilter').addEventListener('change',renderAdminList);
 function renderAdminList(){
   const lang=document.getElementById('adminLangFilter').value;
   const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;
-  document.getElementById('adminTotalCount').textContent='(총 '+filtered.length+'개)';
-  document.getElementById('adminSelCount').textContent='';
+  document.getElementById('adminTotalCount').textContent='(총 '+filtered.length+'개)';document.getElementById('adminSelCount').textContent='';
   const l=document.getElementById('adminTextList');
   if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">텍스트 없음</div>';return;}
   l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');
 }
 function adminSelectAll(checked){document.querySelectorAll('.admin-chk').forEach(c=>c.checked=checked);updateAdminSelCount();}
 function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?sel+'/'+total+'개 선택':'';}
-async function adminDeleteSelected(){
-  const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));
-  if(ids.length===0){alert('삭제할 텍스트를 선택하세요.');return;}
-  if(!confirm(ids.length+'개의 텍스트를 삭제하시겠습니까?'))return;
-  for(const id of ids){await api('/api/texts/'+id,'DELETE');}
-  await loadTexts();refreshAdminTextList();
-}
+async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert('삭제할 텍스트를 선택하세요.');return;}if(!confirm(ids.length+'개의 텍스트를 삭제하시겠습니까?'))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
 function showAddTextModal(){document.getElementById('editTextTitle').textContent='새 텍스트 추가';document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
 function showEditTextModal(id){const t=allTexts.find(x=>x.id===id)||adminAllTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent='텍스트 편집';document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
 async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent='제목과 내용 필요';return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent='저장 완료!';await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
@@ -445,203 +412,84 @@ async function doDeleteText(){const id=document.getElementById('editTextId').val
 async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'" 삭제?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
 
 /* Pause */
-function doPause(manual=false,silent=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();
-  if(!silent){document.getElementById('pauseOverlay').classList.add('active');}
-  document.getElementById('pauseStatus').style.display='';}
+function doPause(manual=false,silent=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();if(!silent){document.getElementById('pauseOverlay').classList.add('active');}document.getElementById('pauseStatus').style.display='';}
 function doResume(){if(!paused)return;paused=false;manualPause=false;if(pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';if(lineInputs[currentLineIdx])lineInputs[currentLineIdx].focus();}
 
-/* #9: Line split — strip leading blanks from EACH line */
+/* #10: Line split — strip leading blanks from EVERY line */
 function splitTextToLines(content){
-  const src=String(content||'');
-  const raw=src.split('
-').map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);
-  if(unitMode==='paragraph'){
-    return raw.length>0?raw:[stripLeadingBlanks(src)];
-  }
-  if(raw.length===0) return [stripLeadingBlanks(src)];
-  const m=document.createElement('div');
-  m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';
-  document.body.appendChild(m);
-  const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;
-  const result=[];
-  for(const r of raw){
-    if(!r) continue;
-    let ln='';
-    for(let i=0;i<r.length;i++){
-      const t=ln+r[i];
-      m.textContent=t;
-      if(m.offsetWidth>maxW && ln.length>0){
-        result.push(ln);
-        ln=r[i];
-      }else{
-        ln=t;
-      }
-    }
-    if(ln) result.push(ln);
-  }
-  document.body.removeChild(m);
-  return result.length>0?result:[stripLeadingBlanks(src)];
-}
+  if(unitMode==='paragraph'){const p=content.split('\n').filter(l=>l.length>0).map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);return p.length>0?p:[stripLeadingBlanks(content)];}
+  const raw=content.split('\n').filter(l=>l.length>0).map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);
+  if(raw.length===0)return[stripLeadingBlanks(content)];
+  const m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';document.body.appendChild(m);const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;const result=[];for(const r of raw){if(!r)continue;let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}document.body.removeChild(m);return result.length>0?result:[content];}
 
 /* Practice */
-function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;resetPractice(true);practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
-lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}const inp=document.createElement('input');inp.type='text';inp.className='line-input';inp.autocomplete='off';inp.spellcheck=false;inp.readOnly=(idx!==0);if(idx===0)inp.classList.add('active-line');block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
-inp.addEventListener('compositionstart',()=>{inp._composing=true;});inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
-inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){doResume();e.preventDefault();return;}if(idx!==currentLineIdx){switchToLine(idx);e.preventDefault();}});});
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
 
-function switchToLine(toIdx){
-  if(toIdx===currentLineIdx) return;
-  if(lineInputs[currentLineIdx]){
-    lineInputs[currentLineIdx].readOnly=true;
-    lineInputs[currentLineIdx].classList.remove('active-line');
-  }
-  currentLineIdx=toIdx;
-  if(lineInputs[toIdx]){
-    lineInputs[toIdx].readOnly=false;
-    lineInputs[toIdx].classList.add('active-line');
-    lineInputs[toIdx].focus();
-  }
-  updateCursorDisplay(toIdx);
-}
+function buildLineUI(){const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
+lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}const inp=document.createElement('input');inp.type='text';inp.className='line-input';inp.autocomplete='off';inp.spellcheck=false;inp.disabled=(idx!==0);if(idx===0)inp.classList.add('active-line');block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
+inp.addEventListener('compositionstart',()=>{inp._composing=true;});inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
+/* #8: mousedown — allow click to any line freely */
+inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){doResume();return;}if(idx!==currentLineIdx){e.preventDefault();switchToLine(idx);}});});}
+
+function switchToLine(toIdx){if(toIdx===currentLineIdx)return;lineInputs[currentLineIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);}
 function updateCursorDisplay(idx){const spans=lineDisplays[idx].children,typed=lineInputs[idx].value;for(let i=0;i<spans.length;i++){spans[i].classList.remove('current');if(i===typed.length)spans[i].classList.add('current');}}
 
-/* #7: prepInput — Enter or ArrowDown starts timing */
 document.getElementById('prepInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'||e.key==='ArrowDown'){
-    e.preventDefault();if(!practicing)return;
-    started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);
-    document.getElementById('prepArea').style.display='none';
-    if(lineInputs[0])lineInputs[0].focus();
-  }
+  if(e.key==='Enter'||e.key==='ArrowDown'){e.preventDefault();if(!practicing)return;started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';if(lineInputs[0])lineInputs[0].focus();}
 });
 
-/* #8: handleLineKeydown — ESC pause fixed with stopPropagation */
 function handleLineKeydown(e,idx){if(!practicing)return;
 if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(paused)doResume();else doPause(true);return;}
 if(paused){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock'];if(!ig.includes(e.key)){e.preventDefault();doResume();}return;}
-/* auto-start */
 if(!started&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!['F10','F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)){started=true;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';}
-/* block leading space */
 if((e.key===' '||e.code==='Space')&&lineInputs[idx].value.length===0){e.preventDefault();return;}
-/* SFX + keystroke count */
 if(e.key.length===1||e.key==='Backspace'||e.key==='Enter'||e.key==='Process'||e.keyCode===229){keystrokes++;playSfx();}
-/* Tab */
 if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();keystrokes++;if(idx<lines.length-1)moveToLine(idx+1,idx);return;}
 if(e.key==='Tab'&&e.shiftKey){e.preventDefault();keystrokes++;if(idx>0)moveToLine(idx-1,idx);return;}
-/* Arrow up/down */
 if(e.key==='ArrowUp'){e.preventDefault();if(idx>0)switchToLine(idx-1);return;}
 if(e.key==='ArrowDown'){e.preventDefault();if(idx<lines.length-1)switchToLine(idx+1);return;}
-/* BackSpace at beginning */
 if(e.key==='Backspace'&&lineInputs[idx].selectionStart===0&&lineInputs[idx].selectionEnd===0){if(idx>0){e.preventDefault();moveToLine(idx-1,idx);return;}}
-/* Enter */
 if(e.key==='Enter'){e.preventDefault();if(idx<lines.length-1)moveToLine(idx+1,idx,true);else stopPractice();return;}}
 
-function moveToLine(toIdx,fromIdx,markComplete=false){
-  if(markComplete) lineBlocks[fromIdx].classList.add('completed');
-  if(lineInputs[fromIdx]){
-    lineInputs[fromIdx].readOnly=true;
-    lineInputs[fromIdx].classList.remove('active-line');
-  }
-  currentLineIdx=toIdx;
-  if(lineInputs[toIdx]){
-    lineInputs[toIdx].readOnly=false;
-    lineInputs[toIdx].classList.add('active-line');
-    lineInputs[toIdx].focus();
-  }
-  updateCursorDisplay(toIdx);
-  if(lineBlocks[toIdx]) lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});
-});}
+function moveToLine(toIdx,fromIdx,markComplete=false){if(markComplete)lineBlocks[fromIdx].classList.add('completed');lineInputs[fromIdx].disabled=true;lineInputs[fromIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});}
 
 function handleLineInput(idx){if(!practicing||paused)return;const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
-/* #9: strip leading blanks on every input */
 if(typed.length>0&&/^[\s\u3000\u00A0]/.test(typed)){typed=stripLeadingBlanks(typed);inp.value=typed;}
 const target=lines[idx],spans=lineDisplays[idx].children;
-/* auto advance on overflow */
-if(typed.length>target.length){
-  const overflow=typed.slice(target.length);
-  inp.value=typed.slice(0,target.length);typed=inp.value;
-  refreshHighlights(idx,typed,target,spans);updateStats();
-  if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);
-    const next=overflow.replace(/^ /,'');
-    if(next){lineInputs[idx+1].value=next;handleLineInput(idx+1);}
-  }else{stopPractice();}
-  return;
-}
+if(typed.length>target.length){const overflow=typed.slice(target.length);inp.value=typed.slice(0,target.length);typed=inp.value;refreshHighlights(idx,typed,target,spans);updateStats();if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);const next=overflow.replace(/^ /,'');if(next){lineInputs[idx+1].value=next;handleLineInput(idx+1);}}else{stopPractice();}return;}
 refreshHighlights(idx,typed,target,spans);updateStats();
 if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(target);if(tN===gN&&idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);}}}
 
 function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}}
 
-function resetPractice(clearText=false){
-  const hadText = (lines && lines.length>0 && lineInputs && lineInputs.length>0);
-  // stop timer
+/* #6: doReset — keep lines/UI, only clear inputs + stats */
+function doReset(){
+  if(!practicing||lines.length===0){fullReset();return;}
+  /* stop timer but keep lines */
   started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
-  keystrokes=0;
-  // reset stats UI
-  document.getElementById('statTime').textContent='0:00';
-  document.getElementById('statCpm').textContent='0';
-  document.getElementById('statKpm').textContent='0';
-  document.getElementById('statAcc').textContent='0%';
-  document.getElementById('statProgress').textContent='0%';
-  document.getElementById('statChars').textContent='0';
-  document.getElementById('statKeys').textContent='0';
-  document.getElementById('pauseOverlay').classList.remove('active');
-  document.getElementById('pauseStatus').style.display='none';
-
-  if(clearText || !hadText){
-    practicing=false;
-    currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];
-    document.getElementById('linePracticeArea').innerHTML='';
-    document.getElementById('practiceArea').style.display='none';
-    document.getElementById('practiceMsg').style.display='';
-    document.getElementById('statsBar').style.display='none';
-    document.getElementById('prepArea').style.display='none';
-    return;
-  }
-
-  // keep text UI: clear only input
-  practicing=true;
-  currentLineIdx=0;
+  keystrokes=0;currentLineIdx=0;
+  /* clear all inputs and highlights */
+  lineInputs.forEach((inp,i)=>{inp.value='';inp.disabled=(i!==0);inp.classList.remove('active-line');});
   lineBlocks.forEach(b=>b.classList.remove('completed'));
-  for(let i=0;i<lineInputs.length;i++){
-    const inp=lineInputs[i];
-    inp.disabled=false;
-    inp.value='';
-    inp.readOnly=(i!==0);
-    inp.classList.toggle('active-line', i===0);
-  }
-  for(let i=0;i<lineDisplays.length;i++){
-    const spans=lineDisplays[i].children;
-    for(let j=0;j<spans.length;j++){
-      spans[j].className='ch';
-      if(i===0 && j===0) spans[j].classList.add('current');
-    }
-  }
-  document.getElementById('practiceArea').style.display='';
-  document.getElementById('practiceMsg').style.display='none';
-  document.getElementById('statsBar').style.display='';
-  document.getElementById('prepArea').style.display='';
-  const pr=document.getElementById('prepInput');
-  pr.value='';pr.focus();
-}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
+  lineDisplays.forEach((d,i)=>{const spans=d.children;for(let j=0;j<spans.length;j++){spans[j].className='ch';if(i===0&&j===0)spans[j].className='ch current';}});
+  if(lineInputs[0])lineInputs[0].classList.add('active-line');
+  document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';
+  document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';
+  document.getElementById('prepArea').style.display='';document.getElementById('prepInput').value='';document.getElementById('prepInput').focus();
+}
+function fullReset(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
 
 function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.disabled=true;i.classList.remove('active-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';showResults();}
 
 function getElapsed(){if(!startTime)return 0;let pe=totalPausedMs;if(paused&&pauseStartTime)pe+=(Date.now()-pauseStartTime);return Math.max(0,(Date.now()-startTime-pe))/1000;}
 
-/* #2: updateStats with total chars + total keystrokes */
 function updateStats(){const el=getElapsed(),mn=Math.floor(el/60),sc=Math.floor(el%60);document.getElementById('statTime').textContent=mn+':'+String(sc).padStart(2,'0');if(el<=0)return;let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);document.getElementById('statCpm').textContent=Math.round(tc/(el/60));document.getElementById('statKpm').textContent=Math.round(keystrokes/(el/60));document.getElementById('statAcc').textContent=(tco>0?Math.round(tc/tco*100):0)+'%';document.getElementById('statProgress').textContent=Math.min(ttg>0?Math.round(ttl/ttg*100):0,100)+'%';document.getElementById('statChars').textContent=ttl;document.getElementById('statKeys').textContent=keystrokes;}
 
-/* Focus pause/resume — #10: scroll buttons don't steal focus */
+/* Focus pause/resume */
 document.addEventListener('focusin',e=>{if(!practicing||!started)return;if(paused&&!manualPause&&lineInputs.includes(e.target))doResume();});
-document.addEventListener('focusout',e=>{if(!practicing||!started||paused)return;setTimeout(()=>{if(!practicing||!started||paused)return;const a=document.activeElement;if(lineInputs.includes(a)||a===document.getElementById('prepInput'))return;
-const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;
-if(activeTab!=='practice')return;
-/* #10: check if focus went to scroll btn or body (scroll buttons use preventDefault) */
-if(a===document.body||a.classList.contains('scroll-btn'))return;
-doPause(false);},200);});
+document.addEventListener('focusout',e=>{if(!practicing||!started||paused)return;setTimeout(()=>{if(!practicing||!started||paused)return;const a=document.activeElement;if(lineInputs.includes(a)||a===document.getElementById('prepInput'))return;const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;if(activeTab!=='practice')return;if(a===document.body||a.classList.contains('scroll-btn'))return;doPause(false);},200);});
 document.getElementById('pauseOverlay').addEventListener('click',()=>{if(paused)doResume();});
 
 /* Results */
@@ -658,122 +506,12 @@ async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)retur
 document.getElementById('rankBoardSelect').addEventListener('change',loadRankings);
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
-/* #8: Global hotkeys — ESC fixed */
+/* Global hotkeys */
 document.addEventListener('keydown',e=>{
-  if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){
-    if(e.key==='Enter'&&document.getElementById('resultsModal').classList.contains('active')){closeModal('resultsModal');e.preventDefault();}return;}
+  if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){if(e.key==='Enter'&&document.getElementById('resultsModal').classList.contains('active')){closeModal('resultsModal');e.preventDefault();}return;}
   if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
   if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
-  if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();resetPractice();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
-
-
-/* Text request (upload .txt) */
-function populateTextRequestLangOptions(){
-  const sel=document.getElementById('textRequestLang');
-  if(!sel) return;
-  const cur=sel.value;
-  const base=['한국어','中文','영어','日本語'];
-  const opts=[...new Set([...base,...(languages||[]).filter(x=>x)])];
-  sel.innerHTML='';
-  opts.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
-  if(cur && opts.includes(cur)) sel.value=cur;
-  else sel.value = opts.includes('한국어') ? '한국어' : (opts[0]||'한국어');
-}
-function updateTextRequestUI(){
-  const sec=document.getElementById('textRequestSection');
-  const pend=document.getElementById('pendingTextSection');
-  if(sec) sec.style.display = currentUser ? '' : 'none';
-  if(pend) pend.style.display = isAdmin() ? '' : 'none';
-  populateTextRequestLangOptions();
-}
-async function submitTextRequestFile(){
-  if(!currentUser){alert('로그인이 필요합니다.');return;}
-  const fileInput=document.getElementById('textRequestFile');
-  const langSel=document.getElementById('textRequestLang');
-  const msg=document.getElementById('textRequestMsg');
-  if(msg) msg.textContent='';
-  const f=fileInput?.files?.[0];
-  if(!f){if(msg) msg.textContent='업로드할 .txt 파일을 선택해 주세요.';return;}
-  if(!/\.txt$/i.test(f.name)){if(msg) msg.textContent='.txt 파일만 업로드할 수 있습니다.';return;}
-  const lang=langSel?.value||'한국어';
-  const title=f.name.replace(/\.txt$/i,'').trim();
-  try{
-    const content=await new Promise((resolve,reject)=>{
-      const r=new FileReader();
-      r.onload=()=>resolve(String(r.result||''));
-      r.onerror=()=>reject(r.error||new Error('read fail'));
-      r.readAsText(f,'utf-8');
-    });
-    const res=await api('/api/text-requests','POST',{title,content,language:lang});
-    if(res?.ok){
-      if(msg){msg.style.color='#16a34a';msg.textContent=res.msg||'요청이 등록되었습니다.';}
-      if(fileInput) fileInput.value='';
-      if(isAdmin()) loadPendingTextRequests();
-    }else{
-      if(msg){msg.style.color='#dc2626';msg.textContent=res?.msg||'요청 실패';}
-    }
-  }catch(e){
-    if(msg){msg.style.color='#dc2626';msg.textContent='파일 읽기/업로드 실패';}
-  }
-}
-function _downloadTextAsFile(filename, content){
-  const blob=new Blob([content||''], {type:'text/plain;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download=filename||'text.txt';
-  document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 1500);
-}
-async function loadPendingTextRequests(){
-  if(!isAdmin()) return;
-  const list=document.getElementById('pendingTextList');
-  const count=document.getElementById('pendingCount');
-  if(list) list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div>';
-  const r=await api('/api/text-requests');
-  if(!r?.ok){if(list) list.innerHTML='<div style="padding:20px;text-align:center;color:#dc2626">불러오기 실패</div>';return;}
-  const pending=(r.requests||[]).filter(x=>String(x.status||'')==='pending');
-  if(count) count.textContent = pending.length ? `(${pending.length}개)` : '(0개)';
-  if(!list) return;
-  if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">승인 대기 텍스트가 없습니다.</div>';return;}
-  list.innerHTML=pending.map(req=>{
-    const title=esc(req.title||'');
-    const meta=esc((req.language||'')+' · '+(req.user_id||'')+' · '+(req.created_at||''));
-    return `<div class="admin-text-item">
-      <div class="admin-text-info">
-        <div class="admin-text-title">${title}</div>
-        <div class="admin-text-meta">${meta}</div>
-      </div>
-      <div class="admin-text-actions">
-        <button class="btn-secondary" onclick="downloadPendingText(${req.id})">다운로드</button>
-        <button class="btn-primary" onclick="approvePendingText(${req.id})">승인</button>
-        <button class="btn-danger" onclick="rejectPendingText(${req.id})">거절</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-async function downloadPendingText(id){
-  if(!isAdmin()) return;
-  const r=await api('/api/text-requests');
-  if(!r?.ok) return;
-  const req=(r.requests||[]).find(x=>Number(x.id)===Number(id));
-  if(!req) return;
-  const fn=(String(req.title||'text').trim()||'text')+'.txt';
-  _downloadTextAsFile(fn, req.content||'');
-}
-async function approvePendingText(id){
-  if(!isAdmin()) return;
-  if(!confirm('이 요청을 승인하여 서버 텍스트로 등록할까요?')) return;
-  const res=await api(`/api/text-requests/${id}/approve`,'POST',{});
-  if(res?.ok){await loadTexts();await loadPendingTextRequests();alert(res.msg||'승인 완료');}
-  else alert(res?.msg||'승인 실패');
-}
-async function rejectPendingText(id){
-  if(!isAdmin()) return;
-  if(!confirm('이 요청을 거절할까요?')) return;
-  const res=await api(`/api/text-requests/${id}/reject`,'POST',{});
-  if(res?.ok){await loadPendingTextRequests();alert(res.msg||'거절 완료');}
-  else alert(res?.msg||'거절 실패');
-}
+  if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
 
 /* Init */
 (async function init(){loadSettings();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser)api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});await Promise.all([tp,rp]);})();
