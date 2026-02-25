@@ -142,6 +142,24 @@ def init_db():
         )
     """)
 
+    # v144: 앱 메타 정보 테이블 (버전 관리 등)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS app_meta (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL DEFAULT ''
+        )
+    """)
+    # 초기 버전 정보 (없을 때만)
+    cur.execute("SELECT 1 FROM app_meta WHERE key = 'latest_version'")
+    if not cur.fetchone():
+        cur.execute("INSERT INTO app_meta (key, value) VALUES ('latest_version', 'v144')")
+    cur.execute("SELECT 1 FROM app_meta WHERE key = 'download_url'")
+    if not cur.fetchone():
+        cur.execute("INSERT INTO app_meta (key, value) VALUES ('download_url', '')")
+    cur.execute("SELECT 1 FROM app_meta WHERE key = 'update_message'")
+    if not cur.fetchone():
+        cur.execute("INSERT INTO app_meta (key, value) VALUES ('update_message', '')")
+
     # 기본 샘플 텍스트 삽입 (비어있을 때만)
     cur.execute("SELECT COUNT(*) FROM texts")
     if cur.fetchone()[0] == 0:
@@ -925,6 +943,59 @@ def ack_text_request_notifications():
     cur.close()
     conn.close()
     return jsonify({"ok": True})
+
+
+# ============================================================
+# API: 앱 버전 확인 (공개)
+# ============================================================
+@app.route("/api/version", methods=["GET"])
+def get_version():
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT key, value FROM app_meta WHERE key IN ('latest_version', 'download_url', 'update_message')")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        result = {}
+        for r in rows:
+            result[r["key"]] = r["value"]
+        return jsonify({
+            "ok": True,
+            "latest_version": result.get("latest_version", ""),
+            "download_url": result.get("download_url", ""),
+            "update_message": result.get("update_message", ""),
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+# ============================================================
+# API: 앱 버전 업데이트 (관리자 전용)
+# ============================================================
+@app.route("/api/version", methods=["POST"])
+def update_version():
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 가능합니다."}), 403
+
+    data = request.get_json(force=True, silent=True) or {}
+    conn = get_db()
+    cur = conn.cursor()
+
+    for key in ("latest_version", "download_url", "update_message"):
+        if key in data:
+            val = str(data[key] or "").strip()
+            cur.execute("""
+                INSERT INTO app_meta (key, value) VALUES (%s, %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+            """, (key, val))
+
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "msg": "버전 정보가 업데이트되었습니다."})
 
 
 # ============================================================
