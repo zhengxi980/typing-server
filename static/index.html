@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>禧禧打字網 - XixiTyping</title>
+<link rel="icon" href="/static/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48x48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/static/android-chrome-512x512.png">
 <link href="https://fonts.googleapis.com/css2?family=Iansui&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -98,8 +105,8 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 
 <div class="tabs" id="tabBar">
 <button class="tab-btn active" data-tab="practice">연습</button>
-<button class="tab-btn" data-tab="ranking">랭킹</button>
 <button class="tab-btn" data-tab="settings">설정</button>
+<button class="tab-btn" data-tab="ranking">랭킹</button>
 <button class="tab-btn" data-tab="account">계정</button>
 <button class="tab-btn" data-tab="admin" id="tabAdmin" style="display:none">관리</button>
 </div>
@@ -112,6 +119,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
 <button class="btn-start" onclick="startPractice()">시작 (F10)</button>
 <button class="btn-reset" onclick="resetPractice()">초기화 (F11)</button>
+<button class="btn-stop" onclick="stopPractice()">연습 종료 (F12)</button>
 </div>
 <!-- #2: stats bar with extra stats, sticky -->
 <div class="stats-bar" id="statsBar" style="display:none">
@@ -161,6 +169,36 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <select id="settingSfxStyle"><option value="typewriter">전통 타자기</option><option value="retro">레트로</option><option value="analog">아날로그</option><option value="mechanical">기계음</option><option value="soft">소프트</option></select></div>
 <div class="settings-row"><label>음량</label><input type="range" id="settingSfxVolume" min="0" max="100" value="50" style="width:160px"><span id="sfxVolLabel" style="font-size:.85rem;color:#94a3b8;min-width:35px">50%</span></div>
 </div>
+
+<div class="settings-section" id="textRequestSection" style="display:none">
+  <h3>더 많은 타자 연습 텍스트 신청</h3>
+  <p style="font-size:.8rem;color:#94a3b8;margin-bottom:10px">※ 로그인한 사용자만 신청할 수 있습니다. 업로드한 텍스트는 관리자 승인 후 등록됩니다.</p>
+  <div class="settings-row">
+    <label>.txt 파일</label>
+    <input type="file" id="textRequestFile" accept=".txt" style="flex:1">
+  </div>
+  <div class="settings-row">
+    <label>언어</label>
+    <select id="textRequestLang" style="min-width:140px"></select>
+  </div>
+  <div class="settings-row" style="align-items:flex-start">
+    <label></label>
+    <button class="btn-primary" onclick="submitTextRequestFile()">업로드</button>
+    <span id="textRequestMsg" style="font-size:.85rem;color:#475569"></span>
+  </div>
+</div>
+
+<div class="settings-section" id="pendingTextSection" style="display:none">
+  <h3>승인 대기 텍스트 목록 (관리자) <span class="admin-count" id="pendingCount"></span></h3>
+  <div class="settings-row">
+    <button class="btn-secondary" onclick="loadPendingTextRequests()" style="padding:6px 14px;font-size:.85rem">새로고침</button>
+    <span style="font-size:.8rem;color:#94a3b8">※ 다운로드 후, 필요하면 ‘승인’하여 서버 텍스트로 등록할 수 있습니다.</span>
+  </div>
+  <div class="admin-text-list" id="pendingTextList">
+    <div style="padding:20px;text-align:center;color:#94a3b8">로그인 후 확인할 수 있습니다.</div>
+  </div>
+</div>
+
 </div>
 
 <!-- Account -->
@@ -332,7 +370,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=
 
 /* Auth */
 function isAdmin(){return currentUser?.user_id===ADMIN_ID;}
-function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+' 님';document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent='로그인하지 않음';document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';}
+function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+' 님';document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent='로그인하지 않음';document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';updateTextRequestUI();if(isAdmin())loadPendingTextRequests();}
 function showLoginModal(){openModal('loginModal');document.getElementById('loginId').focus();}
 function showSignupModal(){openModal('signupModal');document.getElementById('signupId').focus();}
 function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
@@ -353,7 +391,7 @@ document.getElementById('loginPw')?.addEventListener('keydown',e=>{if(e.key==='E
 document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
 
 /* Texts + Language filter */
-function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">전체</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;ls.appendChild(o);});ls.value=pv;filterTexts();}
+function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">전체</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;ls.appendChild(o);});ls.value=pv;filterTexts();updateTextRequestUI();}
 function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">텍스트를 선택해 주세요</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+'자)';s.appendChild(o);});if(pv)s.value=pv;}
 document.getElementById('langSelect').addEventListener('change',filterTexts);
 /* #4: auto-start when text selected */
@@ -414,20 +452,58 @@ function doResume(){if(!paused)return;paused=false;manualPause=false;if(pauseSta
 
 /* #9: Line split — strip leading blanks from EACH line */
 function splitTextToLines(content){
-  if(unitMode==='paragraph'){const p=content.split('\n').filter(l=>l.length>0);if(p.length>0){p[0]=stripLeadingBlanks(p[0]);return p.filter(l=>l.length>0);}return[stripLeadingBlanks(content)];}
-  const raw=content.split('\n').filter(l=>l.length>0);if(raw.length===0)return[stripLeadingBlanks(content)];
-  /* strip leading blanks from first raw line */
-  raw[0]=stripLeadingBlanks(raw[0]);
-  const m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';document.body.appendChild(m);const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;const result=[];for(const r of raw){if(!r)continue;let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}document.body.removeChild(m);return result.length>0?result:[content];}
+  const src=String(content||'');
+  const raw=src.split('
+').map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);
+  if(unitMode==='paragraph'){
+    return raw.length>0?raw:[stripLeadingBlanks(src)];
+  }
+  if(raw.length===0) return [stripLeadingBlanks(src)];
+  const m=document.createElement('div');
+  m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';
+  document.body.appendChild(m);
+  const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;
+  const result=[];
+  for(const r of raw){
+    if(!r) continue;
+    let ln='';
+    for(let i=0;i<r.length;i++){
+      const t=ln+r[i];
+      m.textContent=t;
+      if(m.offsetWidth>maxW && ln.length>0){
+        result.push(ln);
+        ln=r[i];
+      }else{
+        ln=t;
+      }
+    }
+    if(ln) result.push(ln);
+  }
+  document.body.removeChild(m);
+  return result.length>0?result:[stripLeadingBlanks(src)];
+}
 
 /* Practice */
-function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;resetPractice();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
-lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}const inp=document.createElement('input');inp.type='text';inp.className='line-input';inp.autocomplete='off';inp.spellcheck=false;inp.disabled=(idx!==0);if(idx===0)inp.classList.add('active-line');block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;resetPractice(true);practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;lines=splitTextToLines(currentText.content);currentLineIdx=0;const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
+lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}const inp=document.createElement('input');inp.type='text';inp.className='line-input';inp.autocomplete='off';inp.spellcheck=false;inp.readOnly=(idx!==0);if(idx===0)inp.classList.add('active-line');block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
 inp.addEventListener('compositionstart',()=>{inp._composing=true;});inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
 inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){doResume();e.preventDefault();return;}if(idx!==currentLineIdx){switchToLine(idx);e.preventDefault();}});});
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
 
-function switchToLine(toIdx){if(toIdx===currentLineIdx)return;lineInputs[currentLineIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);}
+function switchToLine(toIdx){
+  if(toIdx===currentLineIdx) return;
+  if(lineInputs[currentLineIdx]){
+    lineInputs[currentLineIdx].readOnly=true;
+    lineInputs[currentLineIdx].classList.remove('active-line');
+  }
+  currentLineIdx=toIdx;
+  if(lineInputs[toIdx]){
+    lineInputs[toIdx].readOnly=false;
+    lineInputs[toIdx].classList.add('active-line');
+    lineInputs[toIdx].focus();
+  }
+  updateCursorDisplay(toIdx);
+}
 function updateCursorDisplay(idx){const spans=lineDisplays[idx].children,typed=lineInputs[idx].value;for(let i=0;i<spans.length;i++){spans[i].classList.remove('current');if(i===typed.length)spans[i].classList.add('current');}}
 
 /* #7: prepInput — Enter or ArrowDown starts timing */
@@ -461,7 +537,21 @@ if(e.key==='Backspace'&&lineInputs[idx].selectionStart===0&&lineInputs[idx].sele
 /* Enter */
 if(e.key==='Enter'){e.preventDefault();if(idx<lines.length-1)moveToLine(idx+1,idx,true);else stopPractice();return;}}
 
-function moveToLine(toIdx,fromIdx,markComplete=false){if(markComplete)lineBlocks[fromIdx].classList.add('completed');lineInputs[fromIdx].disabled=true;lineInputs[fromIdx].classList.remove('active-line');currentLineIdx=toIdx;lineInputs[toIdx].disabled=false;lineInputs[toIdx].classList.add('active-line');lineInputs[toIdx].focus();updateCursorDisplay(toIdx);lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});}
+function moveToLine(toIdx,fromIdx,markComplete=false){
+  if(markComplete) lineBlocks[fromIdx].classList.add('completed');
+  if(lineInputs[fromIdx]){
+    lineInputs[fromIdx].readOnly=true;
+    lineInputs[fromIdx].classList.remove('active-line');
+  }
+  currentLineIdx=toIdx;
+  if(lineInputs[toIdx]){
+    lineInputs[toIdx].readOnly=false;
+    lineInputs[toIdx].classList.add('active-line');
+    lineInputs[toIdx].focus();
+  }
+  updateCursorDisplay(toIdx);
+  if(lineBlocks[toIdx]) lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});
+});}
 
 function handleLineInput(idx){if(!practicing||paused)return;const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
 /* #9: strip leading blanks on every input */
@@ -483,7 +573,59 @@ if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(targ
 
 function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}}
 
-function resetPractice(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
+function resetPractice(clearText=false){
+  const hadText = (lines && lines.length>0 && lineInputs && lineInputs.length>0);
+  // stop timer
+  started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  keystrokes=0;
+  // reset stats UI
+  document.getElementById('statTime').textContent='0:00';
+  document.getElementById('statCpm').textContent='0';
+  document.getElementById('statKpm').textContent='0';
+  document.getElementById('statAcc').textContent='0%';
+  document.getElementById('statProgress').textContent='0%';
+  document.getElementById('statChars').textContent='0';
+  document.getElementById('statKeys').textContent='0';
+  document.getElementById('pauseOverlay').classList.remove('active');
+  document.getElementById('pauseStatus').style.display='none';
+
+  if(clearText || !hadText){
+    practicing=false;
+    currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];
+    document.getElementById('linePracticeArea').innerHTML='';
+    document.getElementById('practiceArea').style.display='none';
+    document.getElementById('practiceMsg').style.display='';
+    document.getElementById('statsBar').style.display='none';
+    document.getElementById('prepArea').style.display='none';
+    return;
+  }
+
+  // keep text UI: clear only input
+  practicing=true;
+  currentLineIdx=0;
+  lineBlocks.forEach(b=>b.classList.remove('completed'));
+  for(let i=0;i<lineInputs.length;i++){
+    const inp=lineInputs[i];
+    inp.disabled=false;
+    inp.value='';
+    inp.readOnly=(i!==0);
+    inp.classList.toggle('active-line', i===0);
+  }
+  for(let i=0;i<lineDisplays.length;i++){
+    const spans=lineDisplays[i].children;
+    for(let j=0;j<spans.length;j++){
+      spans[j].className='ch';
+      if(i===0 && j===0) spans[j].classList.add('current');
+    }
+  }
+  document.getElementById('practiceArea').style.display='';
+  document.getElementById('practiceMsg').style.display='none';
+  document.getElementById('statsBar').style.display='';
+  document.getElementById('prepArea').style.display='';
+  const pr=document.getElementById('prepInput');
+  pr.value='';pr.focus();
+}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
 
 function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.disabled=true;i.classList.remove('active-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';showResults();}
 
@@ -523,6 +665,115 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
   if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
   if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();resetPractice();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
+
+
+/* Text request (upload .txt) */
+function populateTextRequestLangOptions(){
+  const sel=document.getElementById('textRequestLang');
+  if(!sel) return;
+  const cur=sel.value;
+  const base=['한국어','中文','영어','日本語'];
+  const opts=[...new Set([...base,...(languages||[]).filter(x=>x)])];
+  sel.innerHTML='';
+  opts.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
+  if(cur && opts.includes(cur)) sel.value=cur;
+  else sel.value = opts.includes('한국어') ? '한국어' : (opts[0]||'한국어');
+}
+function updateTextRequestUI(){
+  const sec=document.getElementById('textRequestSection');
+  const pend=document.getElementById('pendingTextSection');
+  if(sec) sec.style.display = currentUser ? '' : 'none';
+  if(pend) pend.style.display = isAdmin() ? '' : 'none';
+  populateTextRequestLangOptions();
+}
+async function submitTextRequestFile(){
+  if(!currentUser){alert('로그인이 필요합니다.');return;}
+  const fileInput=document.getElementById('textRequestFile');
+  const langSel=document.getElementById('textRequestLang');
+  const msg=document.getElementById('textRequestMsg');
+  if(msg) msg.textContent='';
+  const f=fileInput?.files?.[0];
+  if(!f){if(msg) msg.textContent='업로드할 .txt 파일을 선택해 주세요.';return;}
+  if(!/\.txt$/i.test(f.name)){if(msg) msg.textContent='.txt 파일만 업로드할 수 있습니다.';return;}
+  const lang=langSel?.value||'한국어';
+  const title=f.name.replace(/\.txt$/i,'').trim();
+  try{
+    const content=await new Promise((resolve,reject)=>{
+      const r=new FileReader();
+      r.onload=()=>resolve(String(r.result||''));
+      r.onerror=()=>reject(r.error||new Error('read fail'));
+      r.readAsText(f,'utf-8');
+    });
+    const res=await api('/api/text-requests','POST',{title,content,language:lang});
+    if(res?.ok){
+      if(msg){msg.style.color='#16a34a';msg.textContent=res.msg||'요청이 등록되었습니다.';}
+      if(fileInput) fileInput.value='';
+      if(isAdmin()) loadPendingTextRequests();
+    }else{
+      if(msg){msg.style.color='#dc2626';msg.textContent=res?.msg||'요청 실패';}
+    }
+  }catch(e){
+    if(msg){msg.style.color='#dc2626';msg.textContent='파일 읽기/업로드 실패';}
+  }
+}
+function _downloadTextAsFile(filename, content){
+  const blob=new Blob([content||''], {type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename||'text.txt';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+async function loadPendingTextRequests(){
+  if(!isAdmin()) return;
+  const list=document.getElementById('pendingTextList');
+  const count=document.getElementById('pendingCount');
+  if(list) list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div>';
+  const r=await api('/api/text-requests');
+  if(!r?.ok){if(list) list.innerHTML='<div style="padding:20px;text-align:center;color:#dc2626">불러오기 실패</div>';return;}
+  const pending=(r.requests||[]).filter(x=>String(x.status||'')==='pending');
+  if(count) count.textContent = pending.length ? `(${pending.length}개)` : '(0개)';
+  if(!list) return;
+  if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">승인 대기 텍스트가 없습니다.</div>';return;}
+  list.innerHTML=pending.map(req=>{
+    const title=esc(req.title||'');
+    const meta=esc((req.language||'')+' · '+(req.user_id||'')+' · '+(req.created_at||''));
+    return `<div class="admin-text-item">
+      <div class="admin-text-info">
+        <div class="admin-text-title">${title}</div>
+        <div class="admin-text-meta">${meta}</div>
+      </div>
+      <div class="admin-text-actions">
+        <button class="btn-secondary" onclick="downloadPendingText(${req.id})">다운로드</button>
+        <button class="btn-primary" onclick="approvePendingText(${req.id})">승인</button>
+        <button class="btn-danger" onclick="rejectPendingText(${req.id})">거절</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function downloadPendingText(id){
+  if(!isAdmin()) return;
+  const r=await api('/api/text-requests');
+  if(!r?.ok) return;
+  const req=(r.requests||[]).find(x=>Number(x.id)===Number(id));
+  if(!req) return;
+  const fn=(String(req.title||'text').trim()||'text')+'.txt';
+  _downloadTextAsFile(fn, req.content||'');
+}
+async function approvePendingText(id){
+  if(!isAdmin()) return;
+  if(!confirm('이 요청을 승인하여 서버 텍스트로 등록할까요?')) return;
+  const res=await api(`/api/text-requests/${id}/approve`,'POST',{});
+  if(res?.ok){await loadTexts();await loadPendingTextRequests();alert(res.msg||'승인 완료');}
+  else alert(res?.msg||'승인 실패');
+}
+async function rejectPendingText(id){
+  if(!isAdmin()) return;
+  if(!confirm('이 요청을 거절할까요?')) return;
+  const res=await api(`/api/text-requests/${id}/reject`,'POST',{});
+  if(res?.ok){await loadPendingTextRequests();alert(res.msg||'거절 완료');}
+  else alert(res?.msg||'거절 실패');
+}
 
 /* Init */
 (async function init(){loadSettings();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser)api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});await Promise.all([tp,rp]);})();
