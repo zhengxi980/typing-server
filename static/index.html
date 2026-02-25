@@ -129,7 +129,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="practice-btn-row">
 <button class="btn-start" onclick="startPractice()">시작 (F10)</button>
 <button class="btn-reset" onclick="doReset()">초기화 (F11)</button>
-<button class="btn-stop" onclick="stopPractice()">연습 종료 (F12)</button>
+<button class="btn-stop" onclick="if(practicing){stopPractice();}else if(this.textContent.includes('결과')){openModal('resultsModal');}">연습 종료 (F12)</button>
 </div>
 <div class="stats-bar" id="statsBar" style="display:none">
 <div class="stat-item"><span class="stat-label">시간</span><span class="stat-value" id="statTime">0:00</span></div>
@@ -251,7 +251,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="modal-field"><label>타자기 구분</label><input id="resTypewriter" placeholder="예) 한글 두벌식, 倉頡, 嘸蝦米"></div>
 <button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%">랭킹에 등록</button>
 <div class="modal-msg" id="rankSubmitMsg"></div></div>
-<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resultsModal')">닫기 (Enter)</button></div></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resultsModal')">닫기</button></div></div></div>
 
 <div class="modal-overlay" id="findIdModal"><div class="modal"><h2>아이디 찾기</h2>
 <div class="modal-field"><label>이메일</label><input id="findIdEmail" type="email"></div>
@@ -474,7 +474,7 @@ function doReflow(){
 }
 
 /* Practice */
-function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();document.querySelector('.btn-stop').textContent='연습 종료 (F12)';practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';
 lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
 document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
@@ -551,7 +551,7 @@ function doReset(){
 }
 function fullReset(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];rawParagraphs=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';}
 
-function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.classList.remove('active-line');i.classList.add('inactive-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';showResults();}
+function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.classList.remove('active-line');i.classList.add('inactive-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';document.querySelector('.btn-stop').textContent='결과 확인 (F12)';showResults();}
 
 function getElapsed(){if(!startTime)return 0;let pe=totalPausedMs;if(paused&&pauseStartTime)pe+=(Date.now()-pauseStartTime);return Math.max(0,(Date.now()-startTime-pe))/1000;}
 function updateStats(){const el=getElapsed(),mn=Math.floor(el/60),sc=Math.floor(el%60);document.getElementById('statTime').textContent=mn+':'+String(sc).padStart(2,'0');if(el<=0)return;let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);document.getElementById('statCpm').textContent=Math.round(tc/(el/60));document.getElementById('statKpm').textContent=Math.round(keystrokes/(el/60));document.getElementById('statAcc').textContent=(tco>0?Math.round(tc/tco*100):0)+'%';document.getElementById('statProgress').textContent=Math.min(ttg>0?Math.round(ttl/ttg*100):0,100)+'%';document.getElementById('statChars').textContent=ttl;document.getElementById('statKeys').textContent=keystrokes;}
@@ -576,10 +576,10 @@ function esc(s){const d=document.createElement('div');d.textContent=s||'';return
 
 /* Global hotkeys */
 document.addEventListener('keydown',e=>{
-  if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){if(e.key==='Enter'&&document.getElementById('resultsModal').classList.contains('active')){closeModal('resultsModal');e.preventDefault();}return;}
+  if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){return;}
   if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
   if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
-  if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();stopPractice();}});
+  if(e.key==='F10'){e.preventDefault();startPractice();}if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();if(practicing){stopPractice();}else if(document.querySelector('.btn-stop').textContent.includes('결과')){openModal('resultsModal');}}});
 
 /* Init */
 (async function init(){loadSettings();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
