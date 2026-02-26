@@ -238,15 +238,15 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 </div>
 
 <div class="footer">禧禧打字網 (XixiTyping) — <span id="footerWebVer">웹 버전</span></div>
-<button class="scroll-btn up" onmousedown="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})" title="맨 위로">▲</button>
-<button class="scroll-btn down" onmousedown="event.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="맨 아래로">▼</button>
+<button class="scroll-btn up" onmousedown="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})" id="scrollTopBtn" title="맨 위로">▲</button>
+<button class="scroll-btn down" onmousedown="event.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" id="scrollBottomBtn" title="맨 아래로">▼</button>
 
 <!-- Modals -->
 <div class="modal-overlay" id="loginModal"><div class="modal"><h2>로그인</h2>
-<div class="modal-field"><label>ID</label><input id="loginId" autocomplete="username"></div>
-<div class="modal-field"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
+<div class="modal-field"><label id="loginIdLabel">ID</label><input id="loginId" autocomplete="username"></div>
+<div class="modal-field"><label id="loginPwLabel">비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
 <div class="modal-msg" id="loginMsg"></div>
-<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('loginModal')">취소</button><button class="btn-primary" onclick="doLogin()">로그인</button></div></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('loginModal')" id="loginBtnCancel">취소</button><button class="btn-primary" onclick="doLogin()" id="loginBtnSubmit">로그인</button></div></div></div>
 
 <div class="modal-overlay" id="signupModal"><div class="modal"><h2>회원가입</h2>
 <div class="modal-field"><label>ID (3자 이상)</label><input id="signupId" autocomplete="username"></div>
@@ -258,48 +258,48 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 
 <div class="modal-overlay" id="resultsModal"><div class="modal"><h2>연습 결과</h2>
 <div class="results-grid">
-<div class="result-card"><div class="r-label">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
-<div class="result-card"><div class="r-label">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
-<div class="result-card"><div class="r-label">정확도</div><div class="r-value" id="resAcc">0%</div></div>
-<div class="result-card"><div class="r-label">진행률</div><div class="r-value" id="resProgress">0%</div></div>
-<div class="result-card"><div class="r-label">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
-<div class="result-card"><div class="r-label">총 글자</div><div class="r-value" id="resChars">0</div></div></div>
+<div class="result-card"><div class="r-label" id="resCpmLabel">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
+<div class="result-card"><div class="r-label" id="resKpmLabel">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
+<div class="result-card"><div class="r-label" id="resAccLabel">정확도</div><div class="r-value" id="resAcc">0%</div></div>
+<div class="result-card"><div class="r-label" id="resProgressLabel">진행률</div><div class="r-value" id="resProgress">0%</div></div>
+<div class="result-card"><div class="r-label" id="resTimeLabel">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
+<div class="result-card"><div class="r-label" id="resCharsLabel">총 글자</div><div class="r-value" id="resChars">0</div></div></div>
 <div id="rankSubmitArea" style="display:none">
-<div class="modal-field"><label>타자기 구분</label><input id="resTypewriter" placeholder="예) 한글 두벌식, 倉頡, 嘸蝦米"></div>
-<button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%">랭킹에 등록</button>
+<div class="modal-field"><label id="resTypewriterLabel">타자기 구분</label><input id="resTypewriter" placeholder="예) 한글 두벌식, 倉頡, 嘸蝦米"></div>
+<button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%" id="btnSubmitRank">랭킹에 등록</button>
 <div class="modal-msg" id="rankSubmitMsg"></div></div>
-<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resultsModal')">닫기</button></div></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resultsModal')" id="btnResultClose">닫기</button></div></div></div>
 
 <div class="modal-overlay" id="findIdModal"><div class="modal"><h2>아이디 찾기</h2>
-<div class="modal-field"><label>이메일</label><input id="findIdEmail" type="email"></div>
+<div class="modal-field"><label id="findIdEmailLabel">이메일</label><input id="findIdEmail" type="email"></div>
 <div class="modal-msg" id="findIdMsg"></div>
-<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('findIdModal')">닫기</button><button class="btn-primary" onclick="doFindId()">찾기</button></div></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('findIdModal')" id="findIdBtnClose">닫기</button><button class="btn-primary" onclick="doFindId()" id="findIdBtnFind">찾기</button></div></div></div>
 
-<div class="modal-overlay" id="resetPwModal"><div class="modal"><h2>비밀번호 재설정</h2>
+<div class="modal-overlay" id="resetPwModal"><div class="modal"><h2 id="resetPwTitle">비밀번호 재설정</h2>
 <div class="modal-field"><label>ID</label><input id="resetPwId"></div>
-<div class="modal-field"><label>이메일</label><input id="resetPwEmail" type="email"></div>
-<div class="modal-field"><label>새 비밀번호</label><input id="resetPwNew" type="password"></div>
-<div class="modal-field"><label>확인</label><input id="resetPwConfirm" type="password"></div>
+<div class="modal-field"><label id="resetPwEmailLabel">이메일</label><input id="resetPwEmail" type="email"></div>
+<div class="modal-field"><label id="resetPwNewLabel">새 비밀번호</label><input id="resetPwNew" type="password"></div>
+<div class="modal-field"><label id="resetPwConfirmLabel">확인</label><input id="resetPwConfirm" type="password"></div>
 <div class="modal-msg" id="resetPwMsg"></div>
-<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resetPwModal')">닫기</button><button class="btn-primary" onclick="doResetPw()">재설정</button></div></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resetPwModal')" id="resetPwBtnClose">닫기</button><button class="btn-primary" onclick="doResetPw()" id="resetPwBtnReset">재설정</button></div></div></div>
 
 <div class="modal-overlay" id="deleteAccountModal"><div class="modal"><h2>회원탈퇴</h2>
 <p style="color:#dc2626;font-weight:600;margin-bottom:16px">계정과 랭킹이 모두 삭제됩니다.</p>
 <div class="modal-field"><label>비밀번호</label><input id="delAcctPw" type="password"></div>
 <div class="modal-field"><label>'탈퇴' 입력</label><input id="delAcctConfirm"></div>
 <div class="modal-msg" id="delAcctMsg"></div>
-<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('deleteAccountModal')">취소</button><button class="btn-danger" onclick="doDeleteAccount()">탈퇴</button></div></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('deleteAccountModal')" id="delAcctBtnCancel">취소</button><button class="btn-danger" onclick="doDeleteAccount()" id="delAcctBtnDelete">탈퇴</button></div></div></div>
 
 <div class="modal-overlay" id="editTextModal"><div class="modal" style="max-width:640px"><h2 id="editTextTitle">텍스트 편집</h2>
 <input type="hidden" id="editTextId">
-<div class="modal-field"><label>제목</label><input id="editTextName"></div>
-<div class="modal-field"><label>언어</label><select id="editTextLang"><option value="한국어">한국어</option><option value="中文">중국어</option><option value="영어">영어</option><option value="日本語">일본어</option></select></div>
+<div class="modal-field"><label id="editTextNameLabel">제목</label><input id="editTextName"></div>
+<div class="modal-field"><label id="editTextLangLabel">언어</label><select id="editTextLang"><option value="한국어">한국어</option><option value="中文">중국어</option><option value="영어">영어</option><option value="日本語">일본어</option></select></div>
 <div class="modal-field"><label>내용</label><textarea id="editTextContent" rows="12" style="font-family:var(--pf);font-size:.85rem;line-height:1.6"></textarea></div>
 <div class="modal-msg" id="editTextMsg"></div>
 <div class="modal-actions">
 <button class="btn-danger" id="btnDeleteText" onclick="doDeleteText()" style="margin-right:auto">삭제</button>
-<button class="btn-secondary" onclick="closeModal('editTextModal')">취소</button>
-<button class="btn-primary" onclick="doSaveText()">저장</button></div></div></div>
+<button class="btn-secondary" onclick="closeModal('editTextModal')" id="editBtnCancel">취소</button>
+<button class="btn-primary" onclick="doSaveText()" id="editBtnSave">저장</button></div></div></div>
 
 <div class="pause-overlay" id="pauseOverlay">⏸ 일시정지 — 아무 키를 누르거나 클릭하면 재개</div>
 
@@ -441,6 +441,56 @@ lbl_pw_min:{ko:'비밀번호 (4자 이상)',zh:'密碼（4字以上）',en:'Pass
 lbl_nick_max:{ko:'닉네임 (10자 이하)',zh:'暱稱（10字以下）',en:'Nickname (max 10)',ja:'ニックネーム（10文字以下）'},
 btn_join:{ko:'가입',zh:'註冊',en:'Sign Up',ja:'登録'},
 footer_web_ver:{ko:'웹 버전',zh:'網頁版',en:'Web Version',ja:'Web版'},
+msg_enter_id_pw:{ko:'ID와 비밀번호를 입력하세요.',zh:'請輸入帳號和密碼。',en:'Please enter ID and password.',ja:'IDとパスワードを入力してください。'},
+msg_login_fail:{ko:'로그인 실패',zh:'登入失敗',en:'Login failed',ja:'ログイン失敗'},
+msg_fill_all:{ko:'모든 항목을 입력하세요.',zh:'請填寫所有欄位。',en:'Please fill in all fields.',ja:'すべての項目を入力してください。'},
+msg_fail:{ko:'실패',zh:'失敗',en:'Failed',ja:'失敗'},
+msg_enter_email:{ko:'이메일을 입력하세요.',zh:'請輸入電子郵件。',en:'Please enter email.',ja:'メールアドレスを入力してください。'},
+msg_not_found:{ko:'없음',zh:'查無此帳號',en:'Not found',ja:'見つかりません'},
+msg_fill_all_short:{ko:'모든 항목 입력',zh:'請填寫所有欄位',en:'Fill in all fields',ja:'すべて入力してください'},
+msg_pw_mismatch:{ko:'비밀번호 불일치',zh:'密碼不一致',en:'Password mismatch',ja:'パスワード不一致'},
+msg_complete:{ko:'완료',zh:'完成',en:'Done',ja:'完了'},
+msg_withdraw_done:{ko:'탈퇴 완료',zh:'帳號已刪除',en:'Account deleted',ja:'退会完了'},
+msg_select_text:{ko:'텍스트를 선택하세요.',zh:'請選擇文本。',en:'Please select a text.',ja:'テキストを選択してください。'},
+msg_enter_typewriter:{ko:'타자기 구분을 입력하세요.',zh:'請輸入輸入法名稱。',en:'Please enter typewriter type.',ja:'入力方式を入力してください。'},
+msg_rank_done:{ko:'등록 완료!',zh:'登錄成功！',en:'Registered!',ja:'登録完了！'},
+msg_select_file:{ko:'파일을 선택하세요.',zh:'請選擇檔案。',en:'Please select a file.',ja:'ファイルを選択してください。'},
+msg_file_empty:{ko:'파일이 비어 있습니다.',zh:'檔案內容為空。',en:'File is empty.',ja:'ファイルが空です。'},
+msg_request_done:{ko:'신청 완료! 관리자 승인을 기다려 주세요.',zh:'申請完成！請等待管理員審核。',en:'Request submitted! Waiting for admin approval.',ja:'申請完了！管理者の承認をお待ちください。'},
+msg_approved:{ko:'✅ 승인됨',zh:'✅ 已批准',en:'✅ Approved',ja:'✅ 承認済み'},
+msg_rejected:{ko:'❌ 거절됨',zh:'❌ 已拒絕',en:'❌ Rejected',ja:'❌ 却下'},
+msg_reason:{ko:'사유',zh:'原因',en:'Reason',ja:'理由'},
+msg_notif_result:{ko:'텍스트 신청 결과',zh:'文本申請結果',en:'Text Request Result',ja:'テキスト申請結果'},
+unit_sec:{ko:'초',zh:'秒',en:'s',ja:'秒'},
+btn_download:{ko:'다운로드',zh:'下載',en:'Download',ja:'ダウンロード'},
+placeholder_comment:{ko:'코멘트 (사유)',zh:'備註（原因）',en:'Comment (reason)',ja:'コメント（理由）'},
+btn_approve:{ko:'승인',zh:'批准',en:'Approve',ja:'承認'},
+btn_reject:{ko:'거절',zh:'拒絕',en:'Reject',ja:'却下'},
+msg_confirm_approve:{ko:'이 텍스트를 승인하시겠습니까?',zh:'確定要批准這個文本嗎？',en:'Approve this text?',ja:'このテキストを承認しますか？'},
+msg_approve_done:{ko:'승인 완료',zh:'批准完成',en:'Approved',ja:'承認完了'},
+msg_confirm_reject:{ko:'이 요청을 거절하시겠습니까?',zh:'確定要拒絕這個請求嗎？',en:'Reject this request?',ja:'このリクエストを却下しますか？'},
+msg_reject_done:{ko:'거절 완료',zh:'拒絕完成',en:'Rejected',ja:'却下完了'},
+msg_sel_count:{ko:'{0}/{1}개 선택',zh:'{0}/{1} 已選',en:'{0}/{1} selected',ja:'{0}/{1}件選択'},
+msg_no_sel_text:{ko:'삭제할 텍스트를 선택하세요.',zh:'請選擇要刪除的文本。',en:'Select texts to delete.',ja:'削除するテキストを選択してください。'},
+msg_confirm_del_texts:{ko:'개의 텍스트를 삭제하시겠습니까?',zh:' 個文本，確定刪除嗎？',en:' text(s). Delete?',ja:'件のテキストを削除しますか？'},
+msg_title_content_needed:{ko:'제목과 내용 필요',zh:'請輸入標題和內容',en:'Title and content required',ja:'タイトルと内容が必要です'},
+msg_save_done:{ko:'저장 완료!',zh:'儲存成功！',en:'Saved!',ja:'保存完了！'},
+msg_confirm_delete:{ko:'삭제하시겠습니까?',zh:'確定刪除嗎？',en:'Delete?',ja:'削除しますか？'},
+msg_no_sel_rank:{ko:'삭제할 항목을 선택하세요.',zh:'請選擇要刪除的項目。',en:'Select items to delete.',ja:'削除する項目を選択してください。'},
+msg_confirm_del_ranks:{ko:'개의 기록을 삭제할까요?',zh:' 筆記錄，確定刪除嗎？',en:' record(s). Delete?',ja:'件の記録を削除しますか？'},
+msg_del_rank_done:{ko:'건 삭제 완료',zh:' 筆已刪除',en:' deleted',ja:'件削除完了'},
+msg_select_board:{ko:'특정 텍스트를 선택한 후 전체 삭제하세요. (전체 보드에서는 사용 불가)',zh:'請先選擇特定文本再刪除全部。（全部排行無法使用）',en:'Select a specific text first. (Not available for All)',ja:'特定のテキストを選択してから全削除してください。（全体ボードでは使用不可）'},
+msg_confirm_del_board:{ko:'보드의 모든 기록을 삭제할까요?',zh:'排行的所有記錄，確定刪除嗎？',en:' board? Delete all records?',ja:'ボードの全記録を削除しますか？'},
+msg_del_done:{ko:'삭제 완료',zh:'刪除完成',en:'Deleted',ja:'削除完了'},
+tooltip_top:{ko:'맨 위로',zh:'回到頂部',en:'Scroll to top',ja:'一番上へ'},
+tooltip_bottom:{ko:'맨 아래로',zh:'到底部',en:'Scroll to bottom',ja:'一番下へ'},
+result_cpm_label:{ko:'CPM (타/분)',zh:'CPM（字/分）',en:'CPM',ja:'CPM（字/分）'},
+result_kpm_label:{ko:'타수 (KPM)',zh:'擊鍵 (KPM)',en:'KPM',ja:'打鍵 (KPM)'},
+result_acc_label:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+result_progress_label:{ko:'진행률',zh:'進度',en:'Progress',ja:'進行率'},
+result_time_label:{ko:'소요 시간',zh:'所用時間',en:'Elapsed Time',ja:'経過時間'},
+result_chars_label:{ko:'총 글자',zh:'總字數',en:'Total Chars',ja:'総文字数'},
+login_lbl_id:{ko:'ID',zh:'帳號',en:'ID',ja:'ID'},
 };
 let _wlang='ko';
 function wt(k){const e=WLANG[k];return e?e[_wlang]||e.ko||k:k;}
@@ -696,12 +746,12 @@ function showSignupModal(){openModal('signupModal');document.getElementById('sig
 function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
 function showResetPwModal(){openModal('resetPwModal');document.getElementById('resetPwId').focus();}
 function showDeleteAccountModal(){openModal('deleteAccountModal');document.getElementById('delAcctPw').focus();}
-async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent='ID와 비밀번호를 입력하세요.';return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();checkNotifications();}else{document.getElementById('loginMsg').textContent=r?.msg||'로그인 실패';}}
-async function doSignup(){const id=document.getElementById('signupId').value.trim(),pw=document.getElementById('signupPw').value,nk=document.getElementById('signupNick').value.trim(),em=document.getElementById('signupEmail').value.trim();if(!id||!pw||!nk||!em){document.getElementById('signupMsg').textContent='모든 항목을 입력하세요.';return;}const r=await api('/api/signup','POST',{user_id:id,password:pw,nickname:nk,email:em});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('signupModal');updateAuthUI();}else{document.getElementById('signupMsg').textContent=r?.msg||'실패';}}
+async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent=wt('msg_enter_id_pw');return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();checkNotifications();}else{document.getElementById('loginMsg').textContent=r?.msg||wt('msg_login_fail');}}
+async function doSignup(){const id=document.getElementById('signupId').value.trim(),pw=document.getElementById('signupPw').value,nk=document.getElementById('signupNick').value.trim(),em=document.getElementById('signupEmail').value.trim();if(!id||!pw||!nk||!em){document.getElementById('signupMsg').textContent=wt('msg_fill_all');return;}const r=await api('/api/signup','POST',{user_id:id,password:pw,nickname:nk,email:em});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('signupModal');updateAuthUI();}else{document.getElementById('signupMsg').textContent=r?.msg||wt('msg_fail');}}
 async function doLogout(){await api('/api/logout','POST');currentUser=null;localStorage.removeItem('auth');updateAuthUI();document.getElementById('notifArea').innerHTML='';}
-async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent='이메일을 입력하세요.';return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=r?.msg||'없음';}}
-async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent='모든 항목 입력';return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent='비밀번호 불일치';return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent='완료';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
-async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!==wt('delete_confirm_word')){document.getElementById('delAcctMsg').textContent=wt('delete_confirm_hint');return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert('탈퇴 완료');}else{document.getElementById('delAcctMsg').textContent=r?.msg||'실패';}}
+async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent=wt('msg_enter_email');return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_not_found');}}
+async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent=wt('msg_fill_all_short');return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent=wt('msg_pw_mismatch');return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_complete');}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
+async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!==wt('delete_confirm_word')){document.getElementById('delAcctMsg').textContent=wt('delete_confirm_hint');return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert(wt('msg_withdraw_done'));}else{document.getElementById('delAcctMsg').textContent=r?.msg||wt('msg_fail');}}
 
 /* FIX#5: Notification — check for text request results on login */
 async function checkNotifications(){
@@ -711,9 +761,9 @@ async function checkNotifications(){
   const area=document.getElementById('notifArea');let html='';const ids=[];
   for(const n of r.notifications){
     ids.push(n.id);
-    const st=n.status==='approved'?'✅ 승인됨':'❌ 거절됨';
-    const cm=n.review_comment?' — 사유: '+esc(n.review_comment):'';
-    html+='<div class="notif-banner"><button class="notif-close" onclick="this.parentElement.remove()">✕</button><div class="notif-title">텍스트 신청 결과: '+esc(n.title)+'</div>'+st+cm+'</div>';
+    const st=n.status==='approved'?wt('msg_approved'):wt('msg_rejected');
+    const cm=n.review_comment?' — '+wt('msg_reason')+': '+esc(n.review_comment):'';
+    html+='<div class="notif-banner"><button class="notif-close" onclick="this.parentElement.remove()">✕</button><div class="notif-title">'+ wt('msg_notif_result')+': '+esc(n.title)+'</div>'+st+cm+'</div>';
   }
   area.innerHTML=html;
   if(ids.length)api('/api/text-requests/notifications/ack','POST',{ids});
@@ -728,7 +778,7 @@ document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key=
 
 /* Texts */
 function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">'+wt('all')+'</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);ls.appendChild(o);});ls.value=pv;filterTexts();}
-function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">'+wt('select_text')+'</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+'자)';s.appendChild(o);});if(pv)s.value=pv;}
+function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">'+wt('select_text')+'</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+wt('unit_char')+')';s.appendChild(o);});if(pv)s.value=pv;}
 document.getElementById('langSelect').addEventListener('change',filterTexts);
 document.getElementById('textSelect').addEventListener('change',function(){if(this.value)startPractice();});
 async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
@@ -741,7 +791,7 @@ function applyFontSettings(){document.documentElement.style.setProperty('--pfs',
 
 /* Text request */
 function updateTextRequestUI(){document.getElementById('textRequestLogin').style.display=currentUser?'none':'';document.getElementById('textRequestForm').style.display=currentUser?'':'none';document.getElementById('pendingRequestsSection').style.display=isAdmin()?'':'none';}
-async function submitTextRequest(){const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');if(!fileInput.files.length){m.textContent='파일을 선택하세요.';return;}const file=fileInput.files[0],text=await file.text(),title=file.name.replace(/\.txt$/i,'').trim();if(!text.trim()){m.textContent='파일이 비어 있습니다.';return;}const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});if(r?.ok){m.className='modal-msg success';m.textContent='신청 완료! 관리자 승인을 기다려 주세요.';fileInput.value='';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
+async function submitTextRequest(){const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');if(!fileInput.files.length){m.textContent=wt('msg_select_file');return;}const file=fileInput.files[0],text=await file.text(),title=file.name.replace(/\.txt$/i,'').trim();if(!text.trim()){m.textContent=wt('msg_file_empty');return;}const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_request_done');fileInput.value='';}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
 
 /* FIX#4: Pending requests with comment input */
 async function loadPendingRequests(){
@@ -750,35 +800,35 @@ async function loadPendingRequests(){
   const pending=(r.requests||[]).filter(x=>x.status==='pending');
   if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('no_pending')+'</div>';return;}
   list.innerHTML=pending.map(req=>{
-    const d=req.created_at?new Date(req.created_at).toLocaleString('ko'):'';
+    const d=req.created_at?new Date(req.created_at).toLocaleString(_wlang==='ko'?'ko':_wlang==='zh'?'zh-TW':_wlang==='ja'?'ja':'en'):'';
     return '<div class="pending-item">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
         '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">'+esc(req.title)+'</div>'+
-        '<div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+'자 · '+d+'</div></div>'+
-        '<a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0">다운로드</a>'+
+        '<div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+wt('unit_char')+' · '+d+'</div></div>'+
+        '<a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0">'+wt('btn_download')+'</a>'+
       '</div>'+
       '<div style="display:flex;gap:6px;align-items:center">'+
-        '<input type="text" id="reqComment'+req.id+'" placeholder="코멘트 (사유)" style="flex:1;padding:4px 8px;font-size:.8rem">'+
-        '<button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">승인</button>'+
-        '<button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">거절</button>'+
+        '<input type="text" id="reqComment'+req.id+'" placeholder="'+wt('placeholder_comment')+'" style="flex:1;padding:4px 8px;font-size:.8rem">'+
+        '<button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">'+wt('btn_approve')+'</button>'+
+        '<button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">'+wt('btn_reject')+'</button>'+
       '</div></div>';
   }).join('');
 }
-async function approveRequest(id){if(!confirm('이 텍스트를 승인하시겠습니까?'))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/approve','POST',{comment});if(r?.ok){alert(r.msg||'승인 완료');loadPendingRequests();loadTexts();}else{alert(r?.msg||'실패');}}
-async function rejectRequest(id){if(!confirm('이 요청을 거절하시겠습니까?'))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/reject','POST',{comment});if(r?.ok){alert('거절 완료');loadPendingRequests();}else{alert(r?.msg||'실패');}}
+async function approveRequest(id){if(!confirm(wt('msg_confirm_approve')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/approve','POST',{comment});if(r?.ok){alert(r.msg||wt('msg_approve_done'));loadPendingRequests();loadTexts();}else{alert(r?.msg||wt('msg_fail'));}}
+async function rejectRequest(id){if(!confirm(wt('msg_confirm_reject')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/reject','POST',{comment});if(r?.ok){alert(wt('msg_reject_done'));loadPendingRequests();}else{alert(r?.msg||wt('msg_fail'));}}
 
 /* Admin text management */
 async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;const af=document.getElementById('adminLangFilter'),pv=af.value;const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];af.innerHTML='<option value="">'+wt('all')+'</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);af.appendChild(o);});af.value=pv;renderAdminList();}
 document.getElementById('adminLangFilter').addEventListener('change',renderAdminList);
 function renderAdminList(){const lang=document.getElementById('adminLangFilter').value;const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;document.getElementById('adminTotalCount').textContent='('+filtered.length+')';document.getElementById('adminSelCount').textContent='';const l=document.getElementById('adminTextList');if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('admin_no_text')+'</div>';return;}l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+langDisplayName(t.language)+' · '+t.content.length+wt('unit_char')+'</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">'+wt('btn_edit')+'</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">'+wt('btn_del_text')+'</button></div></div>').join('');}
 function adminSelectAll(checked){document.querySelectorAll('.admin-chk').forEach(c=>c.checked=checked);updateAdminSelCount();}
-function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?sel+'/'+total+'개 선택':'';}
-async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert('삭제할 텍스트를 선택하세요.');return;}if(!confirm(ids.length+'개의 텍스트를 삭제하시겠습니까?'))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
+function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?wt('msg_sel_count').replace('{0}',sel).replace('{1}',total):'';}
+async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert(wt('msg_no_sel_text'));return;}if(!confirm(ids.length+wt('msg_confirm_del_texts')))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
 function showAddTextModal(){document.getElementById('editTextTitle').textContent=wt('btn_add_text');document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
 function showEditTextModal(id){const t=allTexts.find(x=>x.id===id)||adminAllTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent=wt('edit_text_title');document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
-async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent='제목과 내용 필요';return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent='저장 완료!';await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
-async function doDeleteText(){const id=document.getElementById('editTextId').value;if(!id)return;if(!confirm('삭제하시겠습니까?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){closeModal('editTextModal');await loadTexts();refreshAdminTextList();}}
-async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'" 삭제?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
+async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent=wt('msg_title_content_needed');return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_save_done');await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
+async function doDeleteText(){const id=document.getElementById('editTextId').value;if(!id)return;if(!confirm(wt('msg_confirm_delete')))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){closeModal('editTextModal');await loadTexts();refreshAdminTextList();}}
+async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'"  — '+wt('msg_confirm_delete')))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
 
 /* Pause */
 function doPause(manual=false,silent=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();if(!silent){document.getElementById('pauseOverlay').classList.add('active');}document.getElementById('pauseStatus').style.display='';}
@@ -839,7 +889,7 @@ function doReflow(){
 }
 
 /* Practice */
-function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();const _sb=document.querySelector('.btn-stop');_sb.textContent=wt('btn_stop_f12');_sb.dataset.state='stop';practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert(wt('msg_select_text'));return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();const _sb=document.querySelector('.btn-stop');_sb.textContent=wt('btn_stop_f12');_sb.dataset.state='stop';practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';
 lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
 document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
@@ -930,9 +980,9 @@ document.getElementById('pauseOverlay').addEventListener('click',()=>{if(paused)
 /* Results */
 function showResults(){const el=getElapsed();let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);
 const cpm=el>0?Math.round(tc/(el/60)):0,kpm=el>0?Math.round(keystrokes/(el/60)):0,acc=tco>0?Math.round(tc/tco*1000)/10:0,prog=ttg>0?Math.round(ttl/ttg*1000)/10:0;
-document.getElementById('resCpm').textContent=cpm;document.getElementById('resKpm').textContent=kpm;document.getElementById('resAcc').textContent=acc+'%';document.getElementById('resProgress').textContent=Math.min(prog,100)+'%';document.getElementById('resTime').textContent=el.toFixed(1)+'초';document.getElementById('resChars').textContent=ttl;
+document.getElementById('resCpm').textContent=cpm;document.getElementById('resKpm').textContent=kpm;document.getElementById('resAcc').textContent=acc+'%';document.getElementById('resProgress').textContent=Math.min(prog,100)+'%';document.getElementById('resTime').textContent=el.toFixed(1)+wt('unit_sec');document.getElementById('resChars').textContent=ttl;
 window._lastResult={cpm,kpm,acc,progress:Math.min(prog,100),elapsed:el,chars:ttl,input_chars:ttl};document.getElementById('rankSubmitMsg').textContent='';if(currentUser)document.getElementById('rankSubmitArea').style.display='';openModal('resultsModal');}
-async function submitRanking(){if(!currentUser||!window._lastResult||!currentText)return;const tw=document.getElementById('resTypewriter').value.trim();if(!tw){document.getElementById('rankSubmitMsg').textContent="타자기 구분을 입력하세요.";return;}const bk=await sha1(currentText.content);const r=await api('/api/rankings','POST',{board_key:bk,board_name:currentText.title,typewriter:tw,cpm:window._lastResult.cpm,kpm:window._lastResult.kpm,acc:window._lastResult.acc,completion:window._lastResult.progress,chars:window._lastResult.chars,input_chars:window._lastResult.input_chars,elapsed:window._lastResult.elapsed,created_at:new Date().toLocaleString('sv-SE').replace('T',' '),created_ts:Math.floor(Date.now()/1000)});const m=document.getElementById('rankSubmitMsg');if(r?.ok){m.className='modal-msg success';m.textContent='등록 완료!';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
+async function submitRanking(){if(!currentUser||!window._lastResult||!currentText)return;const tw=document.getElementById('resTypewriter').value.trim();if(!tw){document.getElementById('rankSubmitMsg').textContent=wt('msg_enter_typewriter');return;}const bk=await sha1(currentText.content);const r=await api('/api/rankings','POST',{board_key:bk,board_name:currentText.title,typewriter:tw,cpm:window._lastResult.cpm,kpm:window._lastResult.kpm,acc:window._lastResult.acc,completion:window._lastResult.progress,chars:window._lastResult.chars,input_chars:window._lastResult.input_chars,elapsed:window._lastResult.elapsed,created_at:new Date().toLocaleString('sv-SE').replace('T',' '),created_ts:Math.floor(Date.now()/1000)});const m=document.getElementById('rankSubmitMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_rank_done');}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
 async function sha1(t){const d=new TextEncoder().encode(t),h=await crypto.subtle.digest('SHA-1',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 
 /* Rankings */
@@ -940,9 +990,9 @@ let _rankAllData=[];
 async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)return;const s=document.getElementById('rankBoardSelect'),cv=s.value;s.innerHTML='<option value="">'+wt('all')+'</option>';const meta=r.meta||{};for(const[k,m]of Object.entries(meta)){const o=document.createElement('option');o.value=k;o.textContent=m.name||k;s.appendChild(o);}s.value=cv;const fb=s.value;let all=[];for(const[bk,rows]of Object.entries(r.boards||{})){if(fb&&bk!==fb)continue;const bn=meta[bk]?.name||bk;for(const row of rows)all.push({...row,_boardName:bn,_boardKey:bk});}all.sort((a,b)=>b.cpm-a.cpm||b.created_ts-a.created_ts);_rankAllData=all;const adm=isAdmin();const cols=adm?11:10;const tb=document.getElementById('rankBody');if(all.length===0){tb.innerHTML='<tr><td colspan="'+cols+'" style="text-align:center;padding:30px;color:#94a3b8">'+wt('no_data')+'</td></tr>';return;}tb.innerHTML=all.slice(0,100).map((r,i)=>'<tr>'+(adm?'<td style="text-align:center;padding:4px"><input type="checkbox" class="rank-chk" data-idx="'+i+'" data-id="'+(r.id||'')+'" onchange="rankAdminUpdateCount()"></td>':'')+'<td class="rank-num">'+(i+1)+'</td><td class="rank-left">'+esc(r.nickname)+'</td><td class="rank-left">'+esc(r.typewriter)+'</td><td class="rank-left">'+esc(r._boardName)+'</td><td><strong>'+r.cpm+'</strong></td><td>'+r.kpm+'</td><td>'+(typeof r.acc==='number'?Math.round(r.acc):r.acc)+'%</td><td>'+(typeof r.completion==='number'?Math.round(r.completion):r.completion)+'%</td><td>'+(r.input_chars||0)+'</td><td class="rank-date">'+esc(r.created_at||'')+'</td></tr>').join('');const th=document.querySelector('.ranking-table thead tr');if(adm&&!th.querySelector('.rank-chk-th')){const chTh=document.createElement('th');chTh.className='rank-chk-th';chTh.style.cssText='min-width:36px;width:36px';chTh.textContent='✓';th.insertBefore(chTh,th.firstChild);}else if(!adm){const ex=th.querySelector('.rank-chk-th');if(ex)ex.remove();}}
 document.getElementById('rankBoardSelect').addEventListener('change',loadRankings);
 function rankAdminSelectAll(on){document.querySelectorAll('.rank-chk').forEach(c=>c.checked=on);rankAdminUpdateCount();}
-function rankAdminUpdateCount(){const n=document.querySelectorAll('.rank-chk:checked').length;document.getElementById('rankAdminSelCount').textContent=n>0?n+'개 선택됨':'';}
-async function rankAdminDeleteSelected(){if(!isAdmin())return;const chks=[...document.querySelectorAll('.rank-chk:checked')];if(chks.length===0){alert('삭제할 항목을 선택하세요.');return;}if(!confirm(chks.length+'개의 기록을 삭제할까요?'))return;let ok=0;for(const c of chks){const id=c.dataset.id;if(!id)continue;const r=await api('/api/rankings/'+id,'DELETE');if(r?.ok)ok++;}alert(ok+'건 삭제 완료');loadRankings();}
-async function rankAdminDeleteBoard(){if(!isAdmin())return;const bk=document.getElementById('rankBoardSelect').value;if(!bk){alert('특정 텍스트를 선택한 후 전체 삭제하세요. (전체 보드에서는 사용 불가)');return;}const bn=document.getElementById('rankBoardSelect').selectedOptions[0]?.textContent||bk;if(!confirm('"'+bn+'" 보드의 모든 기록을 삭제할까요?'))return;const r=await api('/api/rankings/board/'+encodeURIComponent(bk),'DELETE');if(r?.ok){alert('삭제 완료');loadRankings();}else{alert(r?.msg||'실패');}}
+function rankAdminUpdateCount(){const n=document.querySelectorAll('.rank-chk:checked').length;document.getElementById('rankAdminSelCount').textContent=n>0?n+wt('n_selected'):'';}
+async function rankAdminDeleteSelected(){if(!isAdmin())return;const chks=[...document.querySelectorAll('.rank-chk:checked')];if(chks.length===0){alert(wt('msg_no_sel_rank'));return;}if(!confirm(chks.length+wt('msg_confirm_del_ranks')))return;let ok=0;for(const c of chks){const id=c.dataset.id;if(!id)continue;const r=await api('/api/rankings/'+id,'DELETE');if(r?.ok)ok++;}alert(ok+wt('msg_del_rank_done'));loadRankings();}
+async function rankAdminDeleteBoard(){if(!isAdmin())return;const bk=document.getElementById('rankBoardSelect').value;if(!bk){alert(wt('msg_select_board'));return;}const bn=document.getElementById('rankBoardSelect').selectedOptions[0]?.textContent||bk;if(!confirm('"'+bn+'" '+wt('msg_confirm_del_board')))return;const r=await api('/api/rankings/board/'+encodeURIComponent(bk),'DELETE');if(r?.ok){alert(wt('msg_del_done'));loadRankings();}else{alert(r?.msg||wt('msg_fail'));}}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 /* Global hotkeys */
