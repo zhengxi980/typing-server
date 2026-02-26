@@ -134,7 +134,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 </div>
 <div class="practice-btn-row">
 <button class="btn-reset" onclick="doReset()">초기화 (F11)</button>
-<button class="btn-stop" disabled onclick="if(practicing){stopPractice();}else if(this.textContent.includes('결과')){openModal('resultsModal');}">연습 종료 (F12)</button>
+<button class="btn-stop" disabled onclick="if(practicing){stopPractice();}else if(window._resultsReady){openModal('resultsModal');}">연습 종료 (F12)</button>
 </div>
 <div class="stats-bar" id="statsBar" style="display:none">
 <div class="stat-item"><span class="stat-label">시간</span><span class="stat-value" id="statTime">0:00</span></div>
@@ -180,8 +180,8 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <p style="font-size:.85rem;color:#64748b;margin-bottom:12px">새 텍스트를 등록하고 싶다면 .txt 파일을 선택해서 업로드하세요. 관리자 승인 후 등록됩니다.</p>
 <div id="textRequestLogin" style="display:none"><p style="color:#dc2626;font-size:.85rem">로그인 후 이용할 수 있습니다.</p></div>
 <div id="textRequestForm" style="display:none">
-<div class="settings-row"><label>텍스트 파일</label><input type="file" id="reqTextFile" accept=".txt"></div>
-<div class="settings-row"><label>언어</label><select id="reqTextLang"><option>한국어</option><option>中文</option><option>영어</option><option>日本語</option></select></div>
+<div class="settings-row"><label>텍스트 파일</label><div style="display:flex;align-items:center;gap:8px"><button type="button" class="btn-secondary" id="reqFileBtn" onclick="document.getElementById('reqTextFile').click()" style="padding:4px 12px;font-size:.85rem">파일 선택</button><span id="reqFileName" style="font-size:.85rem;color:#94a3b8">선택된 파일 없음</span><input type="file" id="reqTextFile" accept=".txt" style="display:none" onchange="document.getElementById('reqFileName').textContent=this.files[0]?this.files[0].name:wt('no_file_chosen')"></div></div>
+<div class="settings-row"><label>언어</label><select id="reqTextLang"><option value="한국어">한국어</option><option value="中文">중국어</option><option value="영어">영어</option><option value="日本語">일본어</option></select></div>
 <button class="btn-primary" onclick="submitTextRequest()" style="font-size:.85rem;padding:6px 14px">신청하기</button>
 <div class="modal-msg" id="reqTextMsg"></div>
 </div></div>
@@ -211,33 +211,33 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 
 <!-- Account -->
 <div class="tab-panel" id="panel-account">
-<div id="accountLoggedOut"><div class="practice-msg">로그인하면 랭킹 등록 등의 기능을 사용할 수 있습니다.<br><br>
-<button class="btn-primary" onclick="showLoginModal()">로그인</button> <button class="btn-secondary" onclick="showSignupModal()">회원가입</button></div></div>
+<div id="accountLoggedOut"><div class="practice-msg"><span id="acctLoginMsg">로그인하면 랭킹 등록 등의 기능을 사용할 수 있습니다.</span><br><br>
+<button class="btn-primary" id="acctBtnLogin" onclick="showLoginModal()">로그인</button> <button class="btn-secondary" id="acctBtnSignup" onclick="showSignupModal()">회원가입</button></div></div>
 <div id="accountLoggedIn" style="display:none"><div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e2e8f0">
-<h3 style="margin-bottom:16px">계정 정보</h3>
+<h3 id="acctInfoTitle" style="margin-bottom:16px">계정 정보</h3>
 <p style="margin-bottom:8px"><strong>ID:</strong> <span id="acctId">-</span></p>
-<p style="margin-bottom:20px"><strong>닉네임:</strong> <span id="acctNick">-</span></p>
+<p style="margin-bottom:20px"><strong id="acctNickLabel">닉네임:</strong> <span id="acctNick">-</span></p>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
-<button class="btn-secondary" onclick="showFindIdModal()">아이디 찾기</button>
-<button class="btn-secondary" onclick="showResetPwModal()">비밀번호 재설정</button>
-<button class="btn-danger" onclick="showDeleteAccountModal()">회원탈퇴</button></div></div></div></div>
+<button class="btn-secondary" id="acctBtnFindId" onclick="showFindIdModal()">아이디 찾기</button>
+<button class="btn-secondary" id="acctBtnResetPw" onclick="showResetPwModal()">비밀번호 재설정</button>
+<button class="btn-danger" id="acctBtnWithdraw" onclick="showDeleteAccountModal()">회원탈퇴</button></div></div></div></div>
 
 <!-- Admin -->
 <div class="tab-panel" id="panel-admin">
-<div class="settings-section"><h3>서버 텍스트 관리 <span class="admin-count" id="adminTotalCount"></span></h3>
+<div class="settings-section"><h3 id="adminMgmtTitle">서버 텍스트 관리 <span class="admin-count" id="adminTotalCount"></span></h3>
 <div class="admin-controls">
-<button class="btn-primary" onclick="showAddTextModal()">새 텍스트 추가</button>
-<button class="btn-secondary" onclick="refreshAdminTextList()">새로고침</button>
+<button class="btn-primary" id="adminBtnAdd" onclick="showAddTextModal()">새 텍스트 추가</button>
+<button class="btn-secondary" id="adminBtnRefresh" onclick="refreshAdminTextList()">새로고침</button>
 <select id="adminLangFilter"><option value="">전체</option></select>
-<button class="btn-secondary" onclick="adminSelectAll(true)" style="padding:5px 10px;font-size:.8rem">전체 선택</button>
-<button class="btn-secondary" onclick="adminSelectAll(false)" style="padding:5px 10px;font-size:.8rem">전체 해제</button>
-<button class="btn-danger" onclick="adminDeleteSelected()" style="padding:5px 10px;font-size:.8rem">선택 삭제</button>
+<button class="btn-secondary" id="adminBtnSelAll" onclick="adminSelectAll(true)" style="padding:5px 10px;font-size:.8rem">전체 선택</button>
+<button class="btn-secondary" id="adminBtnDeselAll" onclick="adminSelectAll(false)" style="padding:5px 10px;font-size:.8rem">전체 해제</button>
+<button class="btn-danger" id="adminBtnDelSel" onclick="adminDeleteSelected()" style="padding:5px 10px;font-size:.8rem">선택 삭제</button>
 <span class="admin-count" id="adminSelCount"></span>
 </div>
 <div class="admin-text-list" id="adminTextList"><div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div></div></div></div>
 </div>
 
-<div class="footer">禧禧打字網 (XixiTyping) — 웹 버전</div>
+<div class="footer">禧禧打字網 (XixiTyping) — <span id="footerWebVer">웹 버전</span></div>
 <button class="scroll-btn up" onmousedown="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})" title="맨 위로">▲</button>
 <button class="scroll-btn down" onmousedown="event.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="맨 아래로">▼</button>
 
@@ -293,7 +293,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="modal-overlay" id="editTextModal"><div class="modal" style="max-width:640px"><h2 id="editTextTitle">텍스트 편집</h2>
 <input type="hidden" id="editTextId">
 <div class="modal-field"><label>제목</label><input id="editTextName"></div>
-<div class="modal-field"><label>언어</label><select id="editTextLang"><option>한국어</option><option>中文</option><option>영어</option><option>日本語</option></select></div>
+<div class="modal-field"><label>언어</label><select id="editTextLang"><option value="한국어">한국어</option><option value="中文">中文</option><option value="영어">영어</option><option value="日本語">日本語</option></select></div>
 <div class="modal-field"><label>내용</label><textarea id="editTextContent" rows="12" style="font-family:var(--pf);font-size:.85rem;line-height:1.6"></textarea></div>
 <div class="modal-msg" id="editTextMsg"></div>
 <div class="modal-actions">
@@ -405,9 +405,64 @@ delete_warn:{ko:'계정 정보와 랭킹 기록이 모두 삭제됩니다.',zh:'
 delete_confirm_hint:{ko:"'탈퇴'를 입력하세요",zh:"請輸入「刪除」",en:"Type 'delete'",ja:"「退会」と入力してください"},
 delete_confirm_word:{ko:'탈퇴',zh:'刪除',en:'delete',ja:'退会'},
 btn_delete:{ko:'탈퇴',zh:'刪除',en:'Delete',ja:'退会'},
+lang_korean:{ko:'한국어',zh:'韓語',en:'Korean',ja:'韓国語'},
+lang_chinese:{ko:'중국어',zh:'中文',en:'Chinese',ja:'中国語'},
+lang_english:{ko:'영어',zh:'英語',en:'English',ja:'英語'},
+lang_japanese:{ko:'일본어',zh:'日本語',en:'Japanese',ja:'日本語'},
+no_pending:{ko:'승인 대기 중인 요청 없음',zh:'沒有待審核的請求',en:'No pending requests',ja:'承認待ちのリクエストなし'},
+choose_file:{ko:'파일 선택',zh:'選擇檔案',en:'Choose File',ja:'ファイル選択'},
+no_file_chosen:{ko:'선택된 파일 없음',zh:'未選擇檔案',en:'No file chosen',ja:'ファイル未選択'},
+btn_find_id:{ko:'아이디 찾기',zh:'找回帳號',en:'Find ID',ja:'ID検索'},
+btn_reset_pw:{ko:'비밀번호 재설정',zh:'重設密碼',en:'Reset Password',ja:'パスワード再設定'},
+btn_withdraw:{ko:'회원탈퇴',zh:'刪除帳號',en:'Delete Account',ja:'退会'},
+acct_nickname:{ko:'닉네임:',zh:'暱稱：',en:'Nickname:',ja:'ニックネーム：'},
+acct_login_msg:{ko:'로그인하면 랭킹 등록 등의 기능을 사용할 수 있습니다.',zh:'登入後可使用排行榜等功能。',en:'Log in to access features like ranking registration.',ja:'ログインするとランキング登録などの機能が使えます。'},
+admin_text_mgmt:{ko:'서버 텍스트 관리',zh:'伺服器文本管理',en:'Server Text Management',ja:'サーバーテキスト管理'},
+btn_add_text:{ko:'새 텍스트 추가',zh:'新增文本',en:'Add New Text',ja:'新規テキスト追加'},
+admin_no_text:{ko:'텍스트 없음',zh:'沒有文本',en:'No texts',ja:'テキストなし'},
+unit_char:{ko:'자',zh:'字',en:' chars',ja:'字'},
+pending_download:{ko:'다운로드',zh:'下載',en:'Download',ja:'ダウンロード'},
+pending_comment:{ko:'코멘트 (사유)',zh:'備註（原因）',en:'Comment (reason)',ja:'コメント（理由）'},
+pending_approve:{ko:'승인',zh:'批准',en:'Approve',ja:'承認'},
+pending_reject:{ko:'거절',zh:'拒絕',en:'Reject',ja:'拒否'},
+admin_total_fmt:{ko:'(총 {0}개)',zh:'(共 {0} 個)',en:'({0} total)',ja:'(全{0}件)'},
+footer_web_ver:{ko:'웹 버전',zh:'網頁版',en:'Web Version',ja:'Web版'},
+admin_edit_text:{ko:'텍스트 편집',zh:'編輯文本',en:'Edit Text',ja:'テキスト編集'},
+lbl_title:{ko:'제목',zh:'標題',en:'Title',ja:'タイトル'},
+lbl_content:{ko:'내용',zh:'內容',en:'Content',ja:'内容'},
+btn_edit:{ko:'편집',zh:'編輯',en:'Edit',ja:'編集'},
+find_id_title:{ko:'아이디 찾기',zh:'找回帳號',en:'Find ID',ja:'ID検索'},
+reset_pw_title:{ko:'비밀번호 재설정',zh:'重設密碼',en:'Reset Password',ja:'パスワード再設定'},
+btn_find:{ko:'찾기',zh:'找回',en:'Find',ja:'検索'},
+btn_reset:{ko:'재설정',zh:'重設',en:'Reset',ja:'再設定'},
+lbl_new_pw:{ko:'새 비밀번호',zh:'新密碼',en:'New Password',ja:'新しいパスワード'},
+lbl_confirm:{ko:'확인',zh:'確認',en:'Confirm',ja:'確認'},
+delete_warn2:{ko:'계정과 랭킹이 모두 삭제됩니다.',zh:'帳號和排行紀錄將被永久刪除。',en:'All account data and rankings will be deleted.',ja:'アカウントとランキングがすべて削除されます。'},
+result_modal_title:{ko:'연습 결과',zh:'練習結果',en:'Practice Results',ja:'練習結果'},
+result_cpm_card:{ko:'CPM (타/분)',zh:'CPM（字/分）',en:'CPM (Chars/Min)',ja:'CPM（字/分）'},
+result_kpm_card:{ko:'타수 (KPM)',zh:'擊鍵 (KPM)',en:'KPM (Keys/Min)',ja:'打鍵 (KPM)'},
+result_acc_card:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+result_progress_card:{ko:'진행률',zh:'進度',en:'Progress',ja:'進行率'},
+result_time_card:{ko:'소요 시간',zh:'耗時',en:'Elapsed',ja:'経過時間'},
+result_chars_card:{ko:'총 글자',zh:'總字數',en:'Total Chars',ja:'総文字'},
+lbl_id_3:{ko:'ID (3자 이상)',zh:'帳號（3字以上）',en:'ID (3+ chars)',ja:'ID（3文字以上）'},
+lbl_pw_4:{ko:'비밀번호 (4자 이상)',zh:'密碼（4字以上）',en:'Password (4+ chars)',ja:'パスワード（4文字以上）'},
+lbl_nick_10:{ko:'닉네임 (10자 이하)',zh:'暱稱（10字以下）',en:'Nickname (max 10)',ja:'ニックネーム（10文字以下）'},
+btn_join:{ko:'가입',zh:'註冊',en:'Sign Up',ja:'登録'},
+lbl_del_pw:{ko:'비밀번호',zh:'密碼',en:'Password',ja:'パスワード'},
+lbl_del_input:{ko:"'탈퇴' 입력",zh:"輸入「刪除」",en:"Type 'delete'",ja:"「退会」と入力"},
+unit_char:{ko:'자',zh:'字',en:' chars',ja:'字'},
+pending_download:{ko:'다운로드',zh:'下載',en:'Download',ja:'ダウンロード'},
+pending_comment:{ko:'코멘트 (사유)',zh:'備註（原因）',en:'Comment (reason)',ja:'コメント（理由）'},
+pending_approve:{ko:'승인',zh:'通過',en:'Approve',ja:'承認'},
+pending_reject:{ko:'거절',zh:'拒絕',en:'Reject',ja:'拒否'},
+suffix_nim:{ko:' 님',zh:'',en:'',ja:' さん'},
+admin_sel_fmt:{ko:'{0}/{1}개 선택',zh:'已選 {0}/{1} 個',en:'{0}/{1} selected',ja:'{0}/{1}件選択'},
 };
 let _wlang='ko';
 function wt(k){const e=WLANG[k];return e?e[_wlang]||e.ko||k:k;}
+function wtf(k,...a){let s=wt(k);a.forEach((v,i)=>{s=s.replace('{'+i+'}',v);});return s;}
+function langDisplayName(raw){const m={'한국어':'lang_korean','韓語':'lang_korean','Korean':'lang_korean','韓国語':'lang_korean','중국어':'lang_chinese','中文':'lang_chinese','Chinese':'lang_chinese','中国語':'lang_chinese','영어':'lang_english','英語':'lang_english','English':'lang_english','일본어':'lang_japanese','日本語':'lang_japanese','Japanese':'lang_japanese'};const k=m[raw];return k?wt(k):raw;}
 function setWebLang(code){if(['ko','zh','en','ja'].includes(code)){_wlang=code;localStorage.setItem('ui_lang',code);applyWebLang();}}
 function applyWebLang(){
 // Tabs
@@ -493,15 +548,12 @@ if(btns[2])btns[2].textContent=wt('btn_delete_selected');
 if(btns[3])btns[3].textContent=wt('btn_delete_board');
 const st=rap.querySelector('strong');if(st)st.textContent=wt('rank_admin_title');}
 // Account
-const acctTitle=document.querySelector('#panel-account .settings-section h3');
-if(acctTitle)acctTitle.textContent=wt('account_title');
-const acctLogout=document.getElementById('accountLoggedOut');
-if(acctLogout)acctLogout.innerHTML='<p>'+wt('account_logged_out')+'</p>';
+// Account - individual elements handled below
 // Result modal headers
-const rsh=document.querySelectorAll('#resultsModal .result-row .result-label');
-const rsKeys=['result_cpm','result_kpm','result_acc','result_elapsed','result_completion','result_chars'];
+const rsh=document.querySelectorAll('#resultsModal .result-card .r-label');
+const rsKeys=['result_cpm_card','result_kpm_card','result_acc_card','result_progress_card','result_time_card','result_chars_card'];
 rsh.forEach((l,i)=>{if(rsKeys[i])l.textContent=wt(rsKeys[i]);});
-const rmTitle=document.querySelector('#resultsModal h3');
+const rmTitle=document.querySelector('#resultsModal h2');
 if(rmTitle)rmTitle.textContent=wt('result_title');
 const rsClose=document.querySelector('#resultsModal .modal-actions .btn-secondary');
 if(rsClose)rsClose.textContent=wt('btn_close');
@@ -511,19 +563,68 @@ if(rsl){const lb=rsl.querySelector('label');if(lb)lb.textContent=wt('rank_submit
 const inp=rsl.querySelector('input[type=text]');if(inp)inp.placeholder=wt('rank_submit_placeholder');
 const btn=rsl.querySelector('.btn-primary');if(btn)btn.textContent=wt('btn_register_rank');}
 // Login modal
-const lmTitle=document.querySelector('#loginModal h3');
+const lmTitle=document.querySelector('#loginModal h2');
 if(lmTitle)lmTitle.textContent=wt('login_title');
 // Signup modal
-const smTitle=document.querySelector('#signupModal h3');
+const smTitle=document.querySelector('#signupModal h2');
 if(smTitle)smTitle.textContent=wt('signup_title');
 // Delete account modal
-const dmTitle=document.querySelector('#deleteAccountModal h3');
+const dmTitle=document.querySelector('#deleteAccountModal h2');
 if(dmTitle)dmTitle.textContent=wt('delete_account_title');
 // UI language selector
 const uls=document.getElementById('settingUILang');
 if(uls)uls.value=_wlang;
 const ulLabel=document.getElementById('uiLangLabel');
 if(ulLabel)ulLabel.textContent=wt('settings_ui_lang');
+// [1] Practice language dropdown options
+const langSelOpts=document.getElementById('langSelect');
+if(langSelOpts){for(let i=1;i<langSelOpts.options.length;i++){langSelOpts.options[i].textContent=langDisplayName(langSelOpts.options[i].value);}}
+// [2] Text request: custom file button, file name, language dropdown
+const rfb=document.getElementById('reqFileBtn');if(rfb)rfb.textContent=wt('choose_file');
+const rfn=document.getElementById('reqFileName');if(rfn&&!document.getElementById('reqTextFile').files.length)rfn.textContent=wt('no_file_chosen');
+const rtl=document.getElementById('reqTextLang');
+if(rtl){const rlKeys=['lang_korean','lang_chinese','lang_english','lang_japanese'];rtl.querySelectorAll('option').forEach((o,i)=>{if(rlKeys[i])o.textContent=wt(rlKeys[i]);});}
+// [3] Pending empty message (if currently shown)
+const pdl=document.getElementById('pendingRequestsList');
+if(pdl&&pdl.querySelector('div')&&!pdl.querySelector('.pending-item')){const d=pdl.querySelector('div');if(d&&(d.textContent.includes('요청 없음')||d.textContent.includes('No pending')||d.textContent.includes('沒有待審')||d.textContent.includes('リクエストなし')))d.textContent=wt('no_pending');
+if(d&&(d.textContent.includes('로딩')||d.textContent.includes('Loading')||d.textContent.includes('載入')||d.textContent.includes('読み込み')))d.textContent=wt('loading');}
+// [4] Ranking board select "전체" - already handled above for options[0]
+// [5] Account tab
+const acctLoginMsg=document.getElementById('acctLoginMsg');if(acctLoginMsg)acctLoginMsg.textContent=wt('acct_login_msg');
+const acctBtnLogin=document.getElementById('acctBtnLogin');if(acctBtnLogin)acctBtnLogin.textContent=wt('btn_login');
+const acctBtnSignup=document.getElementById('acctBtnSignup');if(acctBtnSignup)acctBtnSignup.textContent=wt('btn_signup');
+const acctInfoTitle=document.getElementById('acctInfoTitle');if(acctInfoTitle)acctInfoTitle.textContent=wt('account_title');
+const acctNickLabel=document.getElementById('acctNickLabel');if(acctNickLabel)acctNickLabel.textContent=wt('acct_nickname');
+const acctBtnFindId=document.getElementById('acctBtnFindId');if(acctBtnFindId)acctBtnFindId.textContent=wt('btn_find_id');
+const acctBtnResetPw=document.getElementById('acctBtnResetPw');if(acctBtnResetPw)acctBtnResetPw.textContent=wt('btn_reset_pw');
+const acctBtnWithdraw=document.getElementById('acctBtnWithdraw');if(acctBtnWithdraw)acctBtnWithdraw.textContent=wt('btn_withdraw');
+// [6] Admin tab
+const adminMgmtTitle=document.getElementById('adminMgmtTitle');
+if(adminMgmtTitle){const cnt=document.getElementById('adminTotalCount');adminMgmtTitle.textContent=wt('admin_text_mgmt')+' ';if(cnt)adminMgmtTitle.appendChild(cnt);}
+const adminBtnAdd=document.getElementById('adminBtnAdd');if(adminBtnAdd)adminBtnAdd.textContent=wt('btn_add_text');
+const adminBtnRefresh=document.getElementById('adminBtnRefresh');if(adminBtnRefresh)adminBtnRefresh.textContent=wt('btn_refresh');
+const alf=document.getElementById('adminLangFilter');if(alf&&alf.options[0])alf.options[0].textContent=wt('all');
+for(let i=1;alf&&i<alf.options.length;i++){alf.options[i].textContent=langDisplayName(alf.options[i].value);}
+const adminBtnSelAll=document.getElementById('adminBtnSelAll');if(adminBtnSelAll)adminBtnSelAll.textContent=wt('btn_select_all');
+const adminBtnDeselAll=document.getElementById('adminBtnDeselAll');if(adminBtnDeselAll)adminBtnDeselAll.textContent=wt('btn_deselect_all');
+const adminBtnDelSel=document.getElementById('adminBtnDelSel');if(adminBtnDelSel)adminBtnDelSel.textContent=wt('btn_delete_selected');
+// Admin loading text
+const atl=document.getElementById('adminTextList');
+if(atl&&atl.children.length===1&&!atl.querySelector('.admin-text-item')){const d=atl.children[0];if(d&&(d.textContent.includes('로딩')||d.textContent.includes('Loading')||d.textContent.includes('載入')||d.textContent.includes('読み込み')))d.textContent=wt('loading');
+if(d&&(d.textContent.includes('텍스트 없음')||d.textContent.includes('No texts')||d.textContent.includes('沒有文本')||d.textContent.includes('テキストなし')))d.textContent=wt('admin_no_text');}
+// [7] Footer
+const fwv=document.getElementById('footerWebVer');if(fwv)fwv.textContent=wt('footer_web_ver');
+// Find ID modal
+const fiTitle=document.querySelector('#findIdModal h2');if(fiTitle)fiTitle.textContent=wt('find_id_title');
+const fiBtns=document.querySelectorAll('#findIdModal .modal-actions button');
+if(fiBtns[0])fiBtns[0].textContent=wt('btn_close');if(fiBtns[1])fiBtns[1].textContent=wt('btn_find');
+// Reset PW modal
+const rpTitle=document.querySelector('#resetPwModal h2');if(rpTitle)rpTitle.textContent=wt('reset_pw_title');
+const rpBtns=document.querySelectorAll('#resetPwModal .modal-actions button');
+if(rpBtns[0])rpBtns[0].textContent=wt('btn_close');if(rpBtns[1])rpBtns[1].textContent=wt('btn_reset');
+// Edit text modal
+const etLangs=document.getElementById('editTextLang');
+if(etLangs){const elk=['lang_korean','lang_chinese','lang_english','lang_japanese'];etLangs.querySelectorAll('option').forEach((o,i)=>{if(elk[i])o.textContent=wt(elk[i]);});}
 }
 
 let currentUser=null,allTexts=[],texts=[],languages=[];
@@ -563,7 +664,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=
 
 /* Auth */
 function isAdmin(){return currentUser?.user_id===ADMIN_ID;}
-function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+' 님';document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent='로그인하지 않음';document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';document.getElementById('rankAdminPanel').style.display=isAdmin()?'':'none';updateTextRequestUI();}
+function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+wt('suffix_nim');document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent=wt('not_logged_in');document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';document.getElementById('rankAdminPanel').style.display=isAdmin()?'':'none';updateTextRequestUI();}
 function showLoginModal(){openModal('loginModal');document.getElementById('loginId').focus();}
 function showSignupModal(){openModal('signupModal');document.getElementById('signupId').focus();}
 function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
@@ -574,7 +675,7 @@ async function doSignup(){const id=document.getElementById('signupId').value.tri
 async function doLogout(){await api('/api/logout','POST');currentUser=null;localStorage.removeItem('auth');updateAuthUI();document.getElementById('notifArea').innerHTML='';}
 async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent='이메일을 입력하세요.';return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=r?.msg||'없음';}}
 async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent='모든 항목 입력';return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent='비밀번호 불일치';return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent='완료';}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
-async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!=='탈퇴'){document.getElementById('delAcctMsg').textContent="'탈퇴' 입력 필요";return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert('탈퇴 완료');}else{document.getElementById('delAcctMsg').textContent=r?.msg||'실패';}}
+async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!==wt('delete_confirm_word')){document.getElementById('delAcctMsg').textContent=wt('delete_confirm_hint');return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert('탈퇴 완료');}else{document.getElementById('delAcctMsg').textContent=r?.msg||'실패';}}
 
 /* FIX#5: Notification — check for text request results on login */
 async function checkNotifications(){
@@ -600,8 +701,8 @@ document.getElementById('loginPw')?.addEventListener('keydown',e=>{if(e.key==='E
 document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
 
 /* Texts */
-function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">전체</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;ls.appendChild(o);});ls.value=pv;filterTexts();}
-function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">텍스트를 선택해 주세요</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+'자)';s.appendChild(o);});if(pv)s.value=pv;}
+function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">'+wt('all')+'</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);ls.appendChild(o);});ls.value=pv;filterTexts();}
+function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">'+wt('select_text')+'</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+wt('unit_char')+')';s.appendChild(o);});if(pv)s.value=pv;}
 document.getElementById('langSelect').addEventListener('change',filterTexts);
 document.getElementById('textSelect').addEventListener('change',function(){if(this.value)startPractice();});
 async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
@@ -621,19 +722,19 @@ async function loadPendingRequests(){
   const r=await api('/api/text-requests');if(!r?.ok)return;
   const list=document.getElementById('pendingRequestsList');
   const pending=(r.requests||[]).filter(x=>x.status==='pending');
-  if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">승인 대기 중인 요청 없음</div>';return;}
+  if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('no_pending')+'</div>';return;}
   list.innerHTML=pending.map(req=>{
     const d=req.created_at?new Date(req.created_at).toLocaleString('ko'):'';
     return '<div class="pending-item">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
         '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">'+esc(req.title)+'</div>'+
-        '<div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+'자 · '+d+'</div></div>'+
-        '<a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0">다운로드</a>'+
+        '<div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+wt('unit_char')+' · '+d+'</div></div>'+
+        '<a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0">'+wt('pending_download')+'</a>'+
       '</div>'+
       '<div style="display:flex;gap:6px;align-items:center">'+
-        '<input type="text" id="reqComment'+req.id+'" placeholder="코멘트 (사유)" style="flex:1;padding:4px 8px;font-size:.8rem">'+
-        '<button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">승인</button>'+
-        '<button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">거절</button>'+
+        '<input type="text" id="reqComment'+req.id+'" placeholder="'+wt('pending_comment')+'" style="flex:1;padding:4px 8px;font-size:.8rem">'+
+        '<button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">'+wt('pending_approve')+'</button>'+
+        '<button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">'+wt('pending_reject')+'</button>'+
       '</div></div>';
   }).join('');
 }
@@ -641,14 +742,14 @@ async function approveRequest(id){if(!confirm('이 텍스트를 승인하시겠�
 async function rejectRequest(id){if(!confirm('이 요청을 거절하시겠습니까?'))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/reject','POST',{comment});if(r?.ok){alert('거절 완료');loadPendingRequests();}else{alert(r?.msg||'실패');}}
 
 /* Admin text management */
-async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;const af=document.getElementById('adminLangFilter'),pv=af.value;const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];af.innerHTML='<option value="">전체</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;af.appendChild(o);});af.value=pv;renderAdminList();}
+async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;const af=document.getElementById('adminLangFilter'),pv=af.value;const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];af.innerHTML='<option value="">'+wt('all')+'</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);af.appendChild(o);});af.value=pv;renderAdminList();}
 document.getElementById('adminLangFilter').addEventListener('change',renderAdminList);
-function renderAdminList(){const lang=document.getElementById('adminLangFilter').value;const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;document.getElementById('adminTotalCount').textContent='(총 '+filtered.length+'개)';document.getElementById('adminSelCount').textContent='';const l=document.getElementById('adminTextList');if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">텍스트 없음</div>';return;}l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');}
+function renderAdminList(){const lang=document.getElementById('adminLangFilter').value;const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;document.getElementById('adminTotalCount').textContent=wtf('admin_total_fmt',filtered.length);document.getElementById('adminSelCount').textContent='';const l=document.getElementById('adminTextList');if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('admin_no_text')+'</div>';return;}l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+wt('unit_char')+'</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">'+wt('btn_edit')+'</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">'+wt('btn_delete')+'</button></div></div>').join('');}
 function adminSelectAll(checked){document.querySelectorAll('.admin-chk').forEach(c=>c.checked=checked);updateAdminSelCount();}
-function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?sel+'/'+total+'개 선택':'';}
+function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?wtf('admin_sel_fmt',sel,total):'';}
 async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert('삭제할 텍스트를 선택하세요.');return;}if(!confirm(ids.length+'개의 텍스트를 삭제하시겠습니까?'))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
-function showAddTextModal(){document.getElementById('editTextTitle').textContent='새 텍스트 추가';document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
-function showEditTextModal(id){const t=allTexts.find(x=>x.id===id)||adminAllTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent='텍스트 편집';document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
+function showAddTextModal(){document.getElementById('editTextTitle').textContent=wt('btn_add_text');document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
+function showEditTextModal(id){const t=allTexts.find(x=>x.id===id)||adminAllTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent=wt('admin_edit_text');document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
 async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent='제목과 내용 필요';return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent='저장 완료!';await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=r?.msg||'실패';}}
 async function doDeleteText(){const id=document.getElementById('editTextId').value;if(!id)return;if(!confirm('삭제하시겠습니까?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){closeModal('editTextModal');await loadTexts();refreshAdminTextList();}}
 async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'" 삭제?'))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
@@ -712,7 +813,7 @@ function doReflow(){
 }
 
 /* Practice */
-function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();document.querySelector('.btn-stop').textContent='연습 종료 (F12)';practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert('텍스트를 선택하세요.');return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();document.querySelector('.btn-stop').textContent=wt('btn_stop_f12');practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
 document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';
 lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
 document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
@@ -788,9 +889,9 @@ function doReset(){
   document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';
   document.getElementById('prepArea').style.display='';document.getElementById('prepInput').value='';document.getElementById('prepInput').focus();
 }
-function fullReset(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];rawParagraphs=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';document.querySelector('.btn-stop').disabled=true;document.querySelector('.btn-stop').textContent='연습 종료 (F12)';}
+function fullReset(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;window._resultsReady=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];rawParagraphs=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';document.querySelector('.btn-stop').disabled=true;document.querySelector('.btn-stop').textContent=wt('btn_stop_f12');}
 
-function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.classList.remove('active-line');i.classList.add('inactive-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';document.querySelector('.btn-stop').textContent='결과 확인 (F12)';showResults();}
+function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.classList.remove('active-line');i.classList.add('inactive-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';window._resultsReady=true;document.querySelector('.btn-stop').textContent=wt('btn_result_f12');showResults();}
 
 function getElapsed(){if(!startTime)return 0;let pe=totalPausedMs;if(paused&&pauseStartTime)pe+=(Date.now()-pauseStartTime);return Math.max(0,(Date.now()-startTime-pe))/1000;}
 function updateStats(){const el=getElapsed(),mn=Math.floor(el/60),sc=Math.floor(el%60);document.getElementById('statTime').textContent=mn+':'+String(sc).padStart(2,'0');if(el<=0)return;let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);document.getElementById('statCpm').textContent=Math.round(tc/(el/60));document.getElementById('statKpm').textContent=Math.round(keystrokes/(el/60));document.getElementById('statAcc').textContent=(tco>0?Math.round(tc/tco*100):0)+'%';document.getElementById('statProgress').textContent=Math.min(ttg>0?Math.round(ttl/ttg*100):0,100)+'%';document.getElementById('statChars').textContent=ttl;document.getElementById('statKeys').textContent=keystrokes;}
@@ -810,10 +911,10 @@ async function sha1(t){const d=new TextEncoder().encode(t),h=await crypto.subtle
 
 /* Rankings */
 let _rankAllData=[];
-async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)return;const s=document.getElementById('rankBoardSelect'),cv=s.value;s.innerHTML='<option value="">전체</option>';const meta=r.meta||{};for(const[k,m]of Object.entries(meta)){const o=document.createElement('option');o.value=k;o.textContent=m.name||k;s.appendChild(o);}s.value=cv;const fb=s.value;let all=[];for(const[bk,rows]of Object.entries(r.boards||{})){if(fb&&bk!==fb)continue;const bn=meta[bk]?.name||bk;for(const row of rows)all.push({...row,_boardName:bn,_boardKey:bk});}all.sort((a,b)=>b.cpm-a.cpm||b.created_ts-a.created_ts);_rankAllData=all;const adm=isAdmin();const cols=adm?11:10;const tb=document.getElementById('rankBody');if(all.length===0){tb.innerHTML='<tr><td colspan="'+cols+'" style="text-align:center;padding:30px;color:#94a3b8">데이터 없음</td></tr>';return;}tb.innerHTML=all.slice(0,100).map((r,i)=>'<tr>'+(adm?'<td style="text-align:center;padding:4px"><input type="checkbox" class="rank-chk" data-idx="'+i+'" data-id="'+(r.id||'')+'" onchange="rankAdminUpdateCount()"></td>':'')+'<td class="rank-num">'+(i+1)+'</td><td class="rank-left">'+esc(r.nickname)+'</td><td class="rank-left">'+esc(r.typewriter)+'</td><td class="rank-left">'+esc(r._boardName)+'</td><td><strong>'+r.cpm+'</strong></td><td>'+r.kpm+'</td><td>'+(typeof r.acc==='number'?Math.round(r.acc):r.acc)+'%</td><td>'+(typeof r.completion==='number'?Math.round(r.completion):r.completion)+'%</td><td>'+(r.input_chars||0)+'</td><td class="rank-date">'+esc(r.created_at||'')+'</td></tr>').join('');const th=document.querySelector('.ranking-table thead tr');if(adm&&!th.querySelector('.rank-chk-th')){const chTh=document.createElement('th');chTh.className='rank-chk-th';chTh.style.cssText='min-width:36px;width:36px';chTh.textContent='✓';th.insertBefore(chTh,th.firstChild);}else if(!adm){const ex=th.querySelector('.rank-chk-th');if(ex)ex.remove();}}
+async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)return;const s=document.getElementById('rankBoardSelect'),cv=s.value;s.innerHTML='<option value="">'+wt('all')+'</option>';const meta=r.meta||{};for(const[k,m]of Object.entries(meta)){const o=document.createElement('option');o.value=k;o.textContent=m.name||k;s.appendChild(o);}s.value=cv;const fb=s.value;let all=[];for(const[bk,rows]of Object.entries(r.boards||{})){if(fb&&bk!==fb)continue;const bn=meta[bk]?.name||bk;for(const row of rows)all.push({...row,_boardName:bn,_boardKey:bk});}all.sort((a,b)=>b.cpm-a.cpm||b.created_ts-a.created_ts);_rankAllData=all;const adm=isAdmin();const cols=adm?11:10;const tb=document.getElementById('rankBody');if(all.length===0){tb.innerHTML='<tr><td colspan="'+cols+'" style="text-align:center;padding:30px;color:#94a3b8">'+wt('no_data')+'</td></tr>';return;}tb.innerHTML=all.slice(0,100).map((r,i)=>'<tr>'+(adm?'<td style="text-align:center;padding:4px"><input type="checkbox" class="rank-chk" data-idx="'+i+'" data-id="'+(r.id||'')+'" onchange="rankAdminUpdateCount()"></td>':'')+'<td class="rank-num">'+(i+1)+'</td><td class="rank-left">'+esc(r.nickname)+'</td><td class="rank-left">'+esc(r.typewriter)+'</td><td class="rank-left">'+esc(r._boardName)+'</td><td><strong>'+r.cpm+'</strong></td><td>'+r.kpm+'</td><td>'+(typeof r.acc==='number'?Math.round(r.acc):r.acc)+'%</td><td>'+(typeof r.completion==='number'?Math.round(r.completion):r.completion)+'%</td><td>'+(r.input_chars||0)+'</td><td class="rank-date">'+esc(r.created_at||'')+'</td></tr>').join('');const th=document.querySelector('.ranking-table thead tr');if(adm&&!th.querySelector('.rank-chk-th')){const chTh=document.createElement('th');chTh.className='rank-chk-th';chTh.style.cssText='min-width:36px;width:36px';chTh.textContent='✓';th.insertBefore(chTh,th.firstChild);}else if(!adm){const ex=th.querySelector('.rank-chk-th');if(ex)ex.remove();}}
 document.getElementById('rankBoardSelect').addEventListener('change',loadRankings);
 function rankAdminSelectAll(on){document.querySelectorAll('.rank-chk').forEach(c=>c.checked=on);rankAdminUpdateCount();}
-function rankAdminUpdateCount(){const n=document.querySelectorAll('.rank-chk:checked').length;document.getElementById('rankAdminSelCount').textContent=n>0?n+'개 선택됨':'';}
+function rankAdminUpdateCount(){const n=document.querySelectorAll('.rank-chk:checked').length;document.getElementById('rankAdminSelCount').textContent=n>0?n+wt('n_selected'):'';}
 async function rankAdminDeleteSelected(){if(!isAdmin())return;const chks=[...document.querySelectorAll('.rank-chk:checked')];if(chks.length===0){alert('삭제할 항목을 선택하세요.');return;}if(!confirm(chks.length+'개의 기록을 삭제할까요?'))return;let ok=0;for(const c of chks){const id=c.dataset.id;if(!id)continue;const r=await api('/api/rankings/'+id,'DELETE');if(r?.ok)ok++;}alert(ok+'건 삭제 완료');loadRankings();}
 async function rankAdminDeleteBoard(){if(!isAdmin())return;const bk=document.getElementById('rankBoardSelect').value;if(!bk){alert('특정 텍스트를 선택한 후 전체 삭제하세요. (전체 보드에서는 사용 불가)');return;}const bn=document.getElementById('rankBoardSelect').selectedOptions[0]?.textContent||bk;if(!confirm('"'+bn+'" 보드의 모든 기록을 삭제할까요?'))return;const r=await api('/api/rankings/board/'+encodeURIComponent(bk),'DELETE');if(r?.ok){alert('삭제 완료');loadRankings();}else{alert(r?.msg||'실패');}}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
@@ -823,7 +924,7 @@ document.addEventListener('keydown',e=>{
   if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){return;}
   if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
   if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
-  if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();if(document.querySelector('.btn-stop').disabled)return;if(practicing){stopPractice();}else if(document.querySelector('.btn-stop').textContent.includes('결과')){openModal('resultsModal');}}});
+  if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();if(document.querySelector('.btn-stop').disabled)return;if(practicing){stopPractice();}else if(window._resultsReady){openModal('resultsModal');}}});
 
 /* Init */
 (async function init(){loadSettings();_wlang=localStorage.getItem('ui_lang')||'ko';document.getElementById('settingUILang').value=_wlang;applyWebLang();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
