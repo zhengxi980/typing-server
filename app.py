@@ -152,7 +152,7 @@ def init_db():
     # 초기 버전 정보 (없을 때만)
     cur.execute("SELECT 1 FROM app_meta WHERE key = 'latest_version'")
     if not cur.fetchone():
-        cur.execute("INSERT INTO app_meta (key, value) VALUES ('latest_version', 'v144')")
+        cur.execute("INSERT INTO app_meta (key, value) VALUES ('latest_version', 'v146')")
     cur.execute("SELECT 1 FROM app_meta WHERE key = 'download_url'")
     if not cur.fetchone():
         cur.execute("INSERT INTO app_meta (key, value) VALUES ('download_url', '')")
@@ -508,6 +508,7 @@ def get_rankings():
             "user_id": r["user_id"],
             "nickname": r["nickname"],
             "typewriter": r["typewriter"],
+            "board_name": r["board_name"],
             "cpm": r["cpm"],
             "kpm": r["kpm"],
             "acc": r["acc"],

@@ -188,8 +188,8 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div class="ranking-controls"><select id="rankBoardSelect"><option value="">전체</option></select>
 <button class="btn-primary" onclick="loadRankings()" style="padding:6px 14px;font-size:.85rem">새로고침</button></div>
 <div class="ranking-table-wrap"><table class="ranking-table">
-<thead><tr><th>#</th><th>닉네임</th><th>타자기</th><th>CPM</th><th>타수</th><th>정확도</th><th>진행률</th><th>텍스트</th><th>날짜</th></tr></thead>
-<tbody id="rankBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">로딩 중...</td></tr></tbody>
+<thead><tr><th>#</th><th>닉네임</th><th>타자기</th><th>텍스트</th><th>CPM</th><th>KPM</th><th>타수</th><th>정확도</th><th>완료율</th><th>총 입력</th><th>기록일</th></tr></thead>
+<tbody id="rankBody"><tr><td colspan="11" style="text-align:center;padding:30px;color:#94a3b8">로딩 중...</td></tr></tbody>
 </table></div></div>
 
 <!-- Account -->
@@ -571,7 +571,7 @@ async function submitRanking(){if(!currentUser||!window._lastResult||!currentTex
 async function sha1(t){const d=new TextEncoder().encode(t),h=await crypto.subtle.digest('SHA-1',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 
 /* Rankings */
-async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)return;const s=document.getElementById('rankBoardSelect'),cv=s.value;s.innerHTML='<option value="">전체</option>';const meta=r.meta||{};for(const[k,m]of Object.entries(meta)){const o=document.createElement('option');o.value=k;o.textContent=m.name||k;s.appendChild(o);}s.value=cv;const fb=s.value;let all=[];for(const[bk,rows]of Object.entries(r.boards||{})){if(fb&&bk!==fb)continue;const bn=meta[bk]?.name||bk;for(const row of rows)all.push({...row,_boardName:bn});}all.sort((a,b)=>b.cpm-a.cpm||b.created_ts-a.created_ts);const tb=document.getElementById('rankBody');if(all.length===0){tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">데이터 없음</td></tr>';return;}tb.innerHTML=all.slice(0,100).map((r,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td>'+esc(r.nickname)+'</td><td>'+esc(r.typewriter)+'</td><td><strong>'+r.cpm+'</strong></td><td>'+r.kpm+'</td><td>'+(typeof r.acc==='number'?r.acc.toFixed(1):r.acc)+'%</td><td>'+(typeof r.completion==='number'?r.completion.toFixed(1):r.completion)+'%</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">'+esc(r._boardName)+'</td><td>'+esc(r.created_at||'')+'</td></tr>').join('');}
+async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)return;const s=document.getElementById('rankBoardSelect'),cv=s.value;s.innerHTML='<option value="">전체</option>';const meta=r.meta||{};for(const[k,m]of Object.entries(meta)){const o=document.createElement('option');o.value=k;o.textContent=m.name||k;s.appendChild(o);}s.value=cv;const fb=s.value;let all=[];for(const[bk,rows]of Object.entries(r.boards||{})){if(fb&&bk!==fb)continue;const bn=meta[bk]?.name||bk;for(const row of rows)all.push({...row,_boardName:bn});}all.sort((a,b)=>b.cpm-a.cpm||b.created_ts-a.created_ts);const tb=document.getElementById('rankBody');if(all.length===0){tb.innerHTML='<tr><td colspan="11" style="text-align:center;padding:30px;color:#94a3b8">데이터 없음</td></tr>';return;}tb.innerHTML=all.slice(0,100).map((r,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td>'+esc(r.nickname)+'</td><td>'+esc(r.typewriter)+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">'+esc(r._boardName)+'</td><td><strong>'+r.cpm+'</strong></td><td>'+r.kpm+'</td><td>'+(r.chars||0)+'</td><td>'+(typeof r.acc==='number'?r.acc.toFixed(1):r.acc)+'%</td><td>'+(typeof r.completion==='number'?r.completion.toFixed(1):r.completion)+'%</td><td>'+(r.input_chars||0)+'</td><td>'+esc(r.created_at||'')+'</td></tr>').join('');}
 document.getElementById('rankBoardSelect').addEventListener('change',loadRankings);
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
