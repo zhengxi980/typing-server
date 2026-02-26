@@ -535,7 +535,7 @@ svr_version_updated:{ko:'버전 정보가 업데이트되었습니다.',zh:'版�
 svr_server_running:{ko:'타자 연습 서버 가동 중',zh:'打字練習伺服器運行中',en:'Typing practice server running',ja:'タイピング練習サーバー稼働中'},
 };
 let _wlang='ko';
-function wt(k){const e=WLANG[k];return e?e[_wlang]||e.ko||k:k;}
+function wt(k){const e=WLANG[k];if(!e)return k;const v=e[_wlang];return v!=null?v:e.ko||k;}
 function serverMsg(r,fb){if(!r)return fb?wt(fb):'';if(r.msg_code){const t=wt(r.msg_code);if(t!==r.msg_code)return t;}return r.msg||( fb?wt(fb):'');}
 function langDisplayName(raw){const m={'한국어':'lang_korean','韓語':'lang_korean','Korean':'lang_korean','韓国語':'lang_korean','중국어':'lang_chinese','中文':'lang_chinese','Chinese':'lang_chinese','中国語':'lang_chinese','영어':'lang_english','英語':'lang_english','English':'lang_english','일본어':'lang_japanese','日本語':'lang_japanese','Japanese':'lang_japanese'};const k=m[raw];return k?wt(k):raw;}
 function setWebLang(code){if(['ko','zh','en','ja'].includes(code)){_wlang=code;localStorage.setItem('ui_lang',code);applyWebLang();}}
