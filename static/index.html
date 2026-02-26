@@ -434,6 +434,12 @@ acct_nickname:{ko:'닉네임:',zh:'暱稱：',en:'Nickname:',ja:'ニックネー
 acct_login_msg:{ko:'로그인하면 랭킹 등록 등의 기능을 사용할 수 있습니다.',zh:'登入後可使用排行榜等功能。',en:'Log in to access features like ranking registration.',ja:'ログインするとランキング登録などの機能が使えます。'},
 admin_text_mgmt:{ko:'서버 텍스트 관리',zh:'伺服器文本管理',en:'Server Text Management',ja:'サーバーテキスト管理'},
 admin_no_text:{ko:'텍스트 없음',zh:'沒有文本',en:'No texts',ja:'テキストなし'},
+unit_char:{ko:'자',zh:'字',en:' chars',ja:'字'},
+btn_edit:{ko:'편집',zh:'編輯',en:'Edit',ja:'編集'},
+lbl_id_min:{ko:'ID (3자 이상)',zh:'帳號（3字以上）',en:'ID (3+ chars)',ja:'ID（3文字以上）'},
+lbl_pw_min:{ko:'비밀번호 (4자 이상)',zh:'密碼（4字以上）',en:'Password (4+ chars)',ja:'パスワード（4文字以上）'},
+lbl_nick_max:{ko:'닉네임 (10자 이하)',zh:'暱稱（10字以下）',en:'Nickname (max 10)',ja:'ニックネーム（10文字以下）'},
+btn_join:{ko:'가입',zh:'註冊',en:'Sign Up',ja:'登録'},
 footer_web_ver:{ko:'웹 버전',zh:'網頁版',en:'Web Version',ja:'Web版'},
 };
 let _wlang='ko';
@@ -534,7 +540,7 @@ if(acctLogout)acctLogout.innerHTML='<p>'+wt('account_logged_out')+'</p>';
 const rsh=document.querySelectorAll('#resultsModal .result-row .result-label');
 const rsKeys=['result_cpm','result_kpm','result_acc','result_elapsed','result_completion','result_chars'];
 rsh.forEach((l,i)=>{if(rsKeys[i])l.textContent=wt(rsKeys[i]);});
-const rmTitle=document.querySelector('#resultsModal h3');
+const rmTitle=document.querySelector('#resultsModal h2');
 if(rmTitle)rmTitle.textContent=wt('result_title');
 const rsClose=document.querySelector('#resultsModal .modal-actions .btn-secondary');
 if(rsClose)rsClose.textContent=wt('btn_close');
@@ -544,13 +550,21 @@ if(rsl){const lb=rsl.querySelector('label');if(lb)lb.textContent=wt('rank_submit
 const inp=rsl.querySelector('input[type=text]');if(inp)inp.placeholder=wt('rank_submit_placeholder');
 const btn=rsl.querySelector('.btn-primary');if(btn)btn.textContent=wt('btn_register_rank');}
 // Login modal
-const lmTitle=document.querySelector('#loginModal h3');
+const lmTitle=document.querySelector('#loginModal h2');
 if(lmTitle)lmTitle.textContent=wt('login_title');
 // Signup modal
-const smTitle=document.querySelector('#signupModal h3');
+const smTitle=document.querySelector('#signupModal h2');
 if(smTitle)smTitle.textContent=wt('signup_title');
+const smLabels=document.querySelectorAll('#signupModal .modal-field label');
+if(smLabels[0])smLabels[0].textContent=wt('lbl_id_min');
+if(smLabels[1])smLabels[1].textContent=wt('lbl_pw_min');
+if(smLabels[2])smLabels[2].textContent=wt('lbl_nick_max');
+if(smLabels[3])smLabels[3].textContent=wt('lbl_email');
+const smBtns=document.querySelectorAll('#signupModal .modal-actions button');
+if(smBtns[0])smBtns[0].textContent=wt('btn_cancel');
+if(smBtns[1])smBtns[1].textContent=wt('btn_join');
 // Delete account modal
-const dmTitle=document.querySelector('#deleteAccountModal h3');
+const dmTitle=document.querySelector('#deleteAccountModal h2');
 if(dmTitle)dmTitle.textContent=wt('delete_account_title');
 // UI language selector
 const uls=document.getElementById('settingUILang');
@@ -612,7 +626,7 @@ const etlSel=document.getElementById('editTextLang');
 if(etlSel){const elk=['lang_korean','lang_chinese','lang_english','lang_japanese'];etlSel.querySelectorAll('option').forEach((o,i)=>{if(elk[i])o.textContent=wt(elk[i]);});}
 // [11] Pending empty (detect current text)
 const pdl=document.getElementById('pendingRequestsList');
-if(pdl){const pd=pdl.querySelector('div');if(pd&&!pdl.querySelector('.pending-item')){const t=pd.textContent.trim();if(t&&!t.includes('...')&&t!==wt('loading'))pd.textContent=wt('no_pending');}}
+if(pdl){const pd=pdl.querySelector('div');if(pd&&!pdl.querySelector('.pending-item')){const t=pd.textContent.trim();if(t){const isLoading=t.includes('...')||t===wt('loading');pd.textContent=isLoading?wt('loading'):wt('no_pending');}}}
 // [13] Account tab
 const acctLoginMsg=document.getElementById('acctLoginMsg');if(acctLoginMsg)acctLoginMsg.textContent=wt('acct_login_msg');
 const acctBtnLogin=document.getElementById('acctBtnLogin');if(acctBtnLogin)acctBtnLogin.textContent=wt('btn_login');
@@ -756,7 +770,7 @@ async function rejectRequest(id){if(!confirm('이 요청을 거절하시겠습�
 /* Admin text management */
 async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;const af=document.getElementById('adminLangFilter'),pv=af.value;const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];af.innerHTML='<option value="">'+wt('all')+'</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);af.appendChild(o);});af.value=pv;renderAdminList();}
 document.getElementById('adminLangFilter').addEventListener('change',renderAdminList);
-function renderAdminList(){const lang=document.getElementById('adminLangFilter').value;const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;document.getElementById('adminTotalCount').textContent='('+filtered.length+')';document.getElementById('adminSelCount').textContent='';const l=document.getElementById('adminTextList');if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('admin_no_text')+'</div>';return;}l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+esc(t.language)+' · '+t.content.length+'자</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">편집</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">삭제</button></div></div>').join('');}
+function renderAdminList(){const lang=document.getElementById('adminLangFilter').value;const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;document.getElementById('adminTotalCount').textContent='('+filtered.length+')';document.getElementById('adminSelCount').textContent='';const l=document.getElementById('adminTextList');if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('admin_no_text')+'</div>';return;}l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+langDisplayName(t.language)+' · '+t.content.length+wt('unit_char')+'</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">'+wt('btn_edit')+'</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">'+wt('btn_del_text')+'</button></div></div>').join('');}
 function adminSelectAll(checked){document.querySelectorAll('.admin-chk').forEach(c=>c.checked=checked);updateAdminSelCount();}
 function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?sel+'/'+total+'개 선택':'';}
 async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert('삭제할 텍스트를 선택하세요.');return;}if(!confirm(ids.length+'개의 텍스트를 삭제하시겠습니까?'))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
