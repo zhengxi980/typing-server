@@ -220,7 +220,7 @@ def require_login():
     """로그인 필수. 실패 시 (None, 에러응답) 반환."""
     user = get_current_user()
     if not user:
-        return None, (jsonify({"ok": False, "msg": "로그인이 필요합니다."}), 401)
+        return None, (jsonify({"ok": False, "msg": "로그인이 필요합니다.", "msg_code": "svr_login_required"}), 401)
     return user, None
 
 
@@ -237,15 +237,15 @@ def signup():
 
     # 유효성 검사 (v120과 동일한 규칙)
     if not uid or not pw or not nick:
-        return jsonify({"ok": False, "msg": "ID/비밀번호/닉네임을 모두 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "ID/비밀번호/닉네임을 모두 입력해 주세요.", "msg_code": "svr_fill_all_signup"}), 400
     if len(uid) < 3:
-        return jsonify({"ok": False, "msg": "ID는 3자 이상을 권장합니다."}), 400
+        return jsonify({"ok": False, "msg": "ID는 3자 이상을 권장합니다.", "msg_code": "svr_id_min3"}), 400
     if len(pw) < 4:
-        return jsonify({"ok": False, "msg": "비밀번호는 4자 이상을 권장합니다."}), 400
+        return jsonify({"ok": False, "msg": "비밀번호는 4자 이상을 권장합니다.", "msg_code": "svr_pw_min4"}), 400
     if len(nick) > 10:
-        return jsonify({"ok": False, "msg": "닉네임은 10자 이하로 해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "닉네임은 10자 이하로 해 주세요.", "msg_code": "svr_nick_max10"}), 400
     if email and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
-        return jsonify({"ok": False, "msg": "이메일 형식이 올바르지 않습니다."}), 400
+        return jsonify({"ok": False, "msg": "이메일 형식이 올바르지 않습니다.", "msg_code": "svr_email_invalid"}), 400
 
     conn = get_db()
     cur = conn.cursor()
@@ -254,20 +254,20 @@ def signup():
     cur.execute("SELECT 1 FROM users WHERE user_id = %s", (uid,))
     if cur.fetchone():
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "이미 사용 중인 ID입니다."}), 409
+        return jsonify({"ok": False, "msg": "이미 사용 중인 ID입니다.", "msg_code": "svr_dup_id"}), 409
 
     # 닉네임 중복 검사
     cur.execute("SELECT 1 FROM users WHERE LOWER(nickname) = LOWER(%s)", (nick,))
     if cur.fetchone():
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "이미 사용 중인 닉네임입니다."}), 409
+        return jsonify({"ok": False, "msg": "이미 사용 중인 닉네임입니다.", "msg_code": "svr_dup_nick"}), 409
 
     # 이메일 중복 검사
     if email:
         cur.execute("SELECT 1 FROM users WHERE LOWER(email) = LOWER(%s) AND email != ''", (email,))
         if cur.fetchone():
             cur.close(); conn.close()
-            return jsonify({"ok": False, "msg": "이미 사용 중인 이메일입니다."}), 409
+            return jsonify({"ok": False, "msg": "이미 사용 중인 이메일입니다.", "msg_code": "svr_dup_email"}), 409
 
     # 저장
     h = hash_password(pw)
@@ -296,7 +296,7 @@ def login():
     pw = str(data.get("password", "") or "")
 
     if not uid or not pw:
-        return jsonify({"ok": False, "msg": "ID와 비밀번호를 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "ID와 비밀번호를 입력해 주세요.", "msg_code": "svr_enter_id_pw"}), 400
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -305,11 +305,11 @@ def login():
 
     if not row:
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "ID 또는 비밀번호가 올바르지 않습니다."}), 401
+        return jsonify({"ok": False, "msg": "ID 또는 비밀번호가 올바르지 않습니다.", "msg_code": "svr_wrong_id_pw"}), 401
 
     if not verify_password(pw, row["salt"], row["hash"], row["iter"]):
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "ID 또는 비밀번호가 올바르지 않습니다."}), 401
+        return jsonify({"ok": False, "msg": "ID 또는 비밀번호가 올바르지 않습니다.", "msg_code": "svr_wrong_id_pw"}), 401
 
     # 토큰 발급
     token = secrets.token_hex(32)
@@ -351,7 +351,7 @@ def find_id():
     email = str(data.get("email", "") or "").strip()
 
     if not email:
-        return jsonify({"ok": False, "msg": "이메일을 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "이메일을 입력해 주세요.", "msg_code": "svr_enter_email"}), 400
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -361,7 +361,7 @@ def find_id():
     conn.close()
 
     if not row:
-        return jsonify({"ok": False, "msg": "해당 이메일로 가입된 계정을 찾을 수 없습니다."}), 404
+        return jsonify({"ok": False, "msg": "해당 이메일로 가입된 계정을 찾을 수 없습니다.", "msg_code": "svr_email_not_found"}), 404
 
     return jsonify({"ok": True, "user_id": row["user_id"]})
 
@@ -377,9 +377,9 @@ def reset_password():
     new_pw = str(data.get("new_password", "") or "")
 
     if not uid or not email or not new_pw:
-        return jsonify({"ok": False, "msg": "ID, 이메일, 새 비밀번호를 모두 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "ID, 이메일, 새 비밀번호를 모두 입력해 주세요.", "msg_code": "svr_fill_all_reset"}), 400
     if len(new_pw) < 4:
-        return jsonify({"ok": False, "msg": "비밀번호는 4자 이상을 권장합니다."}), 400
+        return jsonify({"ok": False, "msg": "비밀번호는 4자 이상을 권장합니다.", "msg_code": "svr_pw_min4"}), 400
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -388,7 +388,7 @@ def reset_password():
 
     if not row:
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "ID와 이메일이 일치하는 계정을 찾을 수 없습니다."}), 404
+        return jsonify({"ok": False, "msg": "ID와 이메일이 일치하는 계정을 찾을 수 없습니다.", "msg_code": "svr_id_email_mismatch"}), 404
 
     h = hash_password(new_pw)
     cur2 = conn.cursor()
@@ -397,7 +397,7 @@ def reset_password():
     cur2.close()
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "비밀번호가 재설정되었습니다."})
+    return jsonify({"ok": True, "msg": "비밀번호가 재설정되었습니다.", "msg_code": "svr_pw_reset_done"})
 
 
 # ============================================================
@@ -413,9 +413,9 @@ def update_email():
     new_email = str(data.get("email", "") or "").strip()
 
     if not new_email:
-        return jsonify({"ok": False, "msg": "이메일을 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "이메일을 입력해 주세요.", "msg_code": "svr_enter_email"}), 400
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", new_email):
-        return jsonify({"ok": False, "msg": "이메일 형식이 올바르지 않습니다."}), 400
+        return jsonify({"ok": False, "msg": "이메일 형식이 올바르지 않습니다.", "msg_code": "svr_email_invalid"}), 400
 
     conn = get_db()
     cur = conn.cursor()
@@ -425,12 +425,12 @@ def update_email():
                 (new_email, user["user_id"]))
     if cur.fetchone():
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "이미 사용 중인 이메일입니다."}), 409
+        return jsonify({"ok": False, "msg": "이미 사용 중인 이메일입니다.", "msg_code": "svr_dup_email"}), 409
 
     cur.execute("UPDATE users SET email = %s WHERE user_id = %s", (new_email, user["user_id"]))
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "이메일이 변경되었습니다."})
+    return jsonify({"ok": True, "msg": "이메일이 변경되었습니다.", "msg_code": "svr_email_changed"})
 
 
 # ============================================================
@@ -452,7 +452,7 @@ def delete_account():
 
     if not row or not verify_password(pw, row["salt"], row["hash"], row["iter"]):
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "비밀번호가 올바르지 않습니다."}), 401
+        return jsonify({"ok": False, "msg": "비밀번호가 올바르지 않습니다.", "msg_code": "svr_pw_wrong"}), 401
 
     cur2 = conn.cursor()
     cur2.execute("DELETE FROM sessions WHERE user_id = %s", (user["user_id"],))
@@ -461,7 +461,7 @@ def delete_account():
     cur2.close()
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "계정이 삭제되었습니다."})
+    return jsonify({"ok": True, "msg": "계정이 삭제되었습니다.", "msg_code": "svr_account_deleted"})
 
 
 # ============================================================
@@ -541,9 +541,9 @@ def submit_ranking():
     typewriter = str(data.get("typewriter", "") or "").strip()
 
     if not board_key:
-        return jsonify({"ok": False, "msg": "보드 정보가 없습니다."}), 400
+        return jsonify({"ok": False, "msg": "보드 정보가 없습니다.", "msg_code": "svr_no_board"}), 400
     if not typewriter:
-        return jsonify({"ok": False, "msg": "'타자기 구분'을 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "'타자기 구분'을 입력해 주세요.", "msg_code": "svr_enter_typewriter"}), 400
 
     now = data.get("created_at") or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ts = int(data.get("created_ts") or 0) or int(time.time())
@@ -560,7 +560,7 @@ def submit_ranking():
     if cur.fetchone():
         cur.close()
         conn.close()
-        return jsonify({"ok": True, "msg": "이미 등록된 기록입니다.", "duplicate": True})
+        return jsonify({"ok": True, "msg": "이미 등록된 기록입니다.", "msg_code": "svr_rank_duplicate", "duplicate": True})
 
     cur.execute("""
         INSERT INTO rankings
@@ -589,7 +589,7 @@ def submit_ranking():
     new_id = cur.fetchone()[0]
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "랭킹에 등록되었습니다.", "id": new_id})
+    return jsonify({"ok": True, "msg": "랭킹에 등록되었습니다.", "msg_code": "svr_rank_registered", "id": new_id})
 
 
 # ============================================================
@@ -608,19 +608,19 @@ def delete_ranking(ranking_id):
 
     if not row:
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "해당 기록을 찾을 수 없습니다."}), 404
+        return jsonify({"ok": False, "msg": "해당 기록을 찾을 수 없습니다.", "msg_code": "svr_record_not_found"}), 404
 
     # 본인 또는 관리자만 삭제 가능
     if row["user_id"] != user["user_id"] and user["user_id"] != ADMIN_ID:
         cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": "삭제 권한이 없습니다."}), 403
+        return jsonify({"ok": False, "msg": "삭제 권한이 없습니다.", "msg_code": "svr_no_delete_perm"}), 403
 
     cur2 = conn.cursor()
     cur2.execute("DELETE FROM rankings WHERE id = %s", (ranking_id,))
     cur2.close()
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "삭제되었습니다."})
+    return jsonify({"ok": True, "msg": "삭제되었습니다.", "msg_code": "svr_deleted"})
 
 
 # ============================================================
@@ -633,14 +633,14 @@ def delete_board_rankings(board_key):
         return err
 
     if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 전체 삭제할 수 있습니다."}), 403
+        return jsonify({"ok": False, "msg": "관리자만 전체 삭제할 수 있습니다.", "msg_code": "svr_admin_only_bulk_del"}), 403
 
     conn = get_db()
     cur = conn.cursor()
     cur.execute("DELETE FROM rankings WHERE board_key = %s", (board_key,))
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "해당 보드의 모든 기록이 삭제되었습니다."})
+    return jsonify({"ok": True, "msg": "해당 보드의 모든 기록이 삭제되었습니다.", "msg_code": "svr_board_cleared"})
 
 
 # ============================================================
@@ -671,7 +671,7 @@ def index():
 
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify({"ok": True, "msg": "타자 연습 서버 가동 중", "version": "1.0"})
+    return jsonify({"ok": True, "msg": "타자 연습 서버 가동 중", "msg_code": "svr_server_running", "version": "1.0"})
 
 
 @app.route("/api/ping", methods=["GET"])
@@ -710,14 +710,14 @@ def add_text():
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 추가할 수 있습니다."}), 403
+        return jsonify({"ok": False, "msg": "관리자만 추가할 수 있습니다.", "msg_code": "svr_admin_only_add"}), 403
 
     data = request.get_json(force=True, silent=True) or {}
     title = str(data.get("title", "") or "").strip()
     content = str(data.get("content", "") or "").strip()
     language = str(data.get("language", "한국어") or "한국어").strip()
     if not title or not content:
-        return jsonify({"ok": False, "msg": "제목과 내용을 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "제목과 내용을 입력해 주세요.", "msg_code": "svr_enter_title_content"}), 400
 
     conn = get_db()
     cur = conn.cursor()
@@ -737,7 +737,7 @@ def update_text(text_id):
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 수정할 수 있습니다."}), 403
+        return jsonify({"ok": False, "msg": "관리자만 수정할 수 있습니다.", "msg_code": "svr_admin_only_edit"}), 403
 
     data = request.get_json(force=True, silent=True) or {}
     title = str(data.get("title", "") or "").strip()
@@ -764,7 +764,7 @@ def delete_text(text_id):
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 삭제할 수 있습니다."}), 403
+        return jsonify({"ok": False, "msg": "관리자만 삭제할 수 있습니다.", "msg_code": "svr_admin_only_delete"}), 403
 
     conn = get_db()
     cur = conn.cursor()
@@ -788,7 +788,7 @@ def submit_text_request():
     content = str(data.get("content", "") or "").strip()
     language = str(data.get("language", "한국어") or "한국어").strip()
     if not title or not content:
-        return jsonify({"ok": False, "msg": "제목과 내용을 입력해 주세요."}), 400
+        return jsonify({"ok": False, "msg": "제목과 내용을 입력해 주세요.", "msg_code": "svr_enter_title_content"}), 400
 
     conn = get_db()
     cur = conn.cursor()
@@ -799,7 +799,7 @@ def submit_text_request():
     new_id = cur.fetchone()[0]
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "id": new_id, "msg": "텍스트 요청이 등록되었습니다. 관리자 승인을 기다려 주세요."})
+    return jsonify({"ok": True, "id": new_id, "msg": "텍스트 요청이 등록되었습니다. 관리자 승인을 기다려 주세요.", "msg_code": "svr_text_req_submitted"})
 
 
 # ============================================================
@@ -837,7 +837,7 @@ def approve_text_request(req_id):
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 승인할 수 있습니다."}), 403
+        return jsonify({"ok": False, "msg": "관리자만 승인할 수 있습니다.", "msg_code": "svr_admin_only_approve"}), 403
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -847,7 +847,7 @@ def approve_text_request(req_id):
     if not req:
         cur.close()
         conn.close()
-        return jsonify({"ok": False, "msg": "요청을 찾을 수 없습니다."}), 404
+        return jsonify({"ok": False, "msg": "요청을 찾을 수 없습니다.", "msg_code": "svr_request_not_found"}), 404
 
     # texts 테이블에 추가
     cur.execute("INSERT INTO texts (title, content, language) VALUES (%s, %s, %s) RETURNING id",
@@ -864,7 +864,7 @@ def approve_text_request(req_id):
 
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "text_id": new_text_id, "msg": "승인 완료. 텍스트가 등록되었습니다."})
+    return jsonify({"ok": True, "text_id": new_text_id, "msg": "승인 완료. 텍스트가 등록되었습니다.", "msg_code": "svr_approved_done"})
 
 
 # ============================================================
@@ -876,7 +876,7 @@ def reject_text_request(req_id):
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 거절할 수 있습니다."}), 403
+        return jsonify({"ok": False, "msg": "관리자만 거절할 수 있습니다.", "msg_code": "svr_admin_only_reject"}), 403
 
     conn = get_db()
     cur = conn.cursor()
@@ -888,7 +888,7 @@ def reject_text_request(req_id):
                    WHERE id = %s""", (comment, req_id))
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "요청이 거절되었습니다."})
+    return jsonify({"ok": True, "msg": "요청이 거절되었습니다.", "msg_code": "svr_rejected_done"})
 
 
 # ============================================================
@@ -980,7 +980,7 @@ def update_version():
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 가능합니다."}), 403
+        return jsonify({"ok": False, "msg": "관리자만 가능합니다.", "msg_code": "svr_admin_only"}), 403
 
     data = request.get_json(force=True, silent=True) or {}
     conn = get_db()
@@ -996,7 +996,7 @@ def update_version():
 
     cur.close()
     conn.close()
-    return jsonify({"ok": True, "msg": "버전 정보가 업데이트되었습니다."})
+    return jsonify({"ok": True, "msg": "버전 정보가 업데이트되었습니다.", "msg_code": "svr_version_updated"})
 
 
 # ============================================================

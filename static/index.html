@@ -405,7 +405,7 @@ delete_warn:{ko:'계정 정보와 랭킹 기록이 모두 삭제됩니다.',zh:'
 delete_confirm_hint:{ko:"'탈퇴'를 입력하세요",zh:"請輸入「刪除」",en:"Type 'delete'",ja:"「退会」と入力してください"},
 delete_confirm_word:{ko:'탈퇴',zh:'刪除',en:'delete',ja:'退会'},
 btn_delete:{ko:'탈퇴',zh:'刪除',en:'Delete',ja:'退会'},
-user_suffix:{ko:' 님',zh:'',en:'',ja:''},
+user_suffix:{ko:' 님',zh:'',en:'',ja:'さん'},
 lbl_new_pw:{ko:'새 비밀번호',zh:'新密碼',en:'New Password',ja:'新しいパスワード'},
 lbl_confirm_pw:{ko:'확인',zh:'確認',en:'Confirm',ja:'確認'},
 lbl_del_confirm_input:{ko:"'탈퇴' 입력",zh:"輸入「刪除」",en:"Type 'delete'",ja:"「退会」と入力"},
@@ -491,9 +491,52 @@ result_progress_label:{ko:'진행률',zh:'進度',en:'Progress',ja:'進行率'},
 result_time_label:{ko:'소요 시간',zh:'所用時間',en:'Elapsed Time',ja:'経過時間'},
 result_chars_label:{ko:'총 글자',zh:'總字數',en:'Total Chars',ja:'総文字数'},
 login_lbl_id:{ko:'ID',zh:'帳號',en:'ID',ja:'ID'},
+
+svr_login_required:{ko:'로그인이 필요합니다.',zh:'需要登入。',en:'Login required.',ja:'ログインが必要です。'},
+svr_fill_all_signup:{ko:'ID/비밀번호/닉네임을 모두 입력해 주세요.',zh:'請輸入ID、密碼和暱稱。',en:'Please enter ID, password, and nickname.',ja:'ID・パスワード・ニックネームをすべて入力してください。'},
+svr_id_min3:{ko:'ID는 3자 이상을 권장합니다.',zh:'ID至少需要3個字元。',en:'ID must be at least 3 characters.',ja:'IDは3文字以上必要です。'},
+svr_pw_min4:{ko:'비밀번호는 4자 이상을 권장합니다.',zh:'建議密碼至少4個字元。',en:'Password should be at least 4 characters.',ja:'パスワードは4文字以上を推奨します。'},
+svr_nick_max10:{ko:'닉네임은 10자 이하로 해 주세요.',zh:'暱稱請在10字以內。',en:'Nickname must be 10 characters or less.',ja:'ニックネームは10文字以内にしてください。'},
+svr_email_invalid:{ko:'이메일 형식이 올바르지 않습니다.',zh:'電子郵件格式不正確。',en:'Invalid email format.',ja:'メール形式が正しくありません。'},
+svr_dup_id:{ko:'이미 사용 중인 ID입니다.',zh:'此ID已被使用。',en:'This ID is already in use.',ja:'このIDは既に使用されています。'},
+svr_dup_nick:{ko:'이미 사용 중인 닉네임입니다.',zh:'此暱稱已被使用。',en:'This nickname is already in use.',ja:'このニックネームは既に使用されています。'},
+svr_dup_email:{ko:'이미 사용 중인 이메일입니다.',zh:'此電子郵件已被使用。',en:'This email is already in use.',ja:'このメールアドレスは既に使用されています。'},
+svr_enter_id_pw:{ko:'ID와 비밀번호를 입력해 주세요.',zh:'請輸入ID和密碼。',en:'Please enter ID and password.',ja:'IDとパスワードを入力してください。'},
+svr_wrong_id_pw:{ko:'ID 또는 비밀번호가 올바르지 않습니다.',zh:'ID或密碼不正確。',en:'Incorrect ID or password.',ja:'IDまたはパスワードが正しくありません。'},
+svr_enter_email:{ko:'이메일을 입력해 주세요.',zh:'請輸入電子郵件。',en:'Please enter your email.',ja:'メールアドレスを入力してください。'},
+svr_email_not_found:{ko:'해당 이메일로 가입된 계정을 찾을 수 없습니다.',zh:'找不到此電子郵件註冊的帳號。',en:'No account found for this email.',ja:'このメールで登録されたアカウントが見つかりません。'},
+svr_fill_all_reset:{ko:'ID, 이메일, 새 비밀번호를 모두 입력해 주세요.',zh:'請輸入ID、電子郵件和新密碼。',en:'Please enter ID, email, and new password.',ja:'ID・メール・新しいパスワードをすべて入力してください。'},
+svr_id_email_mismatch:{ko:'ID와 이메일이 일치하는 계정을 찾을 수 없습니다.',zh:'找不到ID和電子郵件匹配的帳號。',en:'No account found matching this ID and email.',ja:'IDとメールが一致するアカウントが見つかりません。'},
+svr_pw_reset_done:{ko:'비밀번호가 재설정되었습니다.',zh:'密碼已重設。',en:'Password has been reset.',ja:'パスワードがリセットされました。'},
+svr_email_changed:{ko:'이메일이 변경되었습니다.',zh:'電子郵件已變更。',en:'Email has been changed.',ja:'メールアドレスが変更されました。'},
+svr_pw_wrong:{ko:'비밀번호가 올바르지 않습니다.',zh:'密碼不正確。',en:'Incorrect password.',ja:'パスワードが正しくありません。'},
+svr_account_deleted:{ko:'계정이 삭제되었습니다.',zh:'帳號已刪除。',en:'Account has been deleted.',ja:'アカウントが削除されました。'},
+svr_no_board:{ko:'보드 정보가 없습니다.',zh:'沒有排行榜資訊。',en:'No board information.',ja:'ボード情報がありません。'},
+svr_enter_typewriter:{ko:'타자기 구분을 입력해 주세요.',zh:'請輸入打字機類型。',en:'Please enter typewriter type.',ja:'タイプライター区分を入力してください。'},
+svr_rank_duplicate:{ko:'이미 등록된 기록입니다.',zh:'此記錄已登錄。',en:'This record is already registered.',ja:'すでに登録されている記録です。'},
+svr_rank_registered:{ko:'랭킹에 등록되었습니다.',zh:'已登錄排行榜。',en:'Registered to ranking.',ja:'ランキングに登録されました。'},
+svr_record_not_found:{ko:'해당 기록을 찾을 수 없습니다.',zh:'找不到該記錄。',en:'Record not found.',ja:'該当する記録が見つかりません。'},
+svr_no_delete_perm:{ko:'삭제 권한이 없습니다.',zh:'沒有刪除權限。',en:'No permission to delete.',ja:'削除権限がありません。'},
+svr_deleted:{ko:'삭제되었습니다.',zh:'已刪除。',en:'Deleted.',ja:'削除されました。'},
+svr_admin_only_bulk_del:{ko:'관리자만 전체 삭제할 수 있습니다.',zh:'僅限管理員批量刪除。',en:'Only admin can bulk delete.',ja:'管理者のみ一括削除できます。'},
+svr_board_cleared:{ko:'해당 보드의 모든 기록이 삭제되었습니다.',zh:'此排行榜的所有記錄已刪除。',en:'All records on this board have been deleted.',ja:'このボードのすべての記録が削除されました。'},
+svr_admin_only_add:{ko:'관리자만 추가할 수 있습니다.',zh:'僅限管理員新增。',en:'Only admin can add.',ja:'管理者のみ追加できます。'},
+svr_admin_only_edit:{ko:'관리자만 수정할 수 있습니다.',zh:'僅限管理員修改。',en:'Only admin can edit.',ja:'管理者のみ編集できます。'},
+svr_admin_only_delete:{ko:'관리자만 삭제할 수 있습니다.',zh:'僅限管理員刪除。',en:'Only admin can delete.',ja:'管理者のみ削除できます。'},
+svr_enter_title_content:{ko:'제목과 내용을 입력해 주세요.',zh:'請輸入標題和內容。',en:'Please enter title and content.',ja:'タイトルと内容を入力してください。'},
+svr_text_req_submitted:{ko:'텍스트 요청이 등록되었습니다.',zh:'文本請求已提交。',en:'Text request submitted.',ja:'テキストリクエストが登録されました。'},
+svr_admin_only_approve:{ko:'관리자만 승인할 수 있습니다.',zh:'僅限管理員批准。',en:'Only admin can approve.',ja:'管理者のみ承認できます。'},
+svr_request_not_found:{ko:'요청을 찾을 수 없습니다.',zh:'找不到該請求。',en:'Request not found.',ja:'リクエストが見つかりません。'},
+svr_approved_done:{ko:'승인 완료. 텍스트가 등록되었습니다.',zh:'已批准，文本已登錄。',en:'Approved. Text has been registered.',ja:'承認完了。テキストが登録されました。'},
+svr_admin_only_reject:{ko:'관리자만 거절할 수 있습니다.',zh:'僅限管理員拒絕。',en:'Only admin can reject.',ja:'管理者のみ拒否できます。'},
+svr_rejected_done:{ko:'요청이 거절되었습니다.',zh:'請求已被拒絕。',en:'Request has been rejected.',ja:'リクエストが拒否されました。'},
+svr_admin_only:{ko:'관리자만 가능합니다.',zh:'僅限管理員。',en:'Admin only.',ja:'管理者のみ可能です。'},
+svr_version_updated:{ko:'버전 정보가 업데이트되었습니다.',zh:'版本資訊已更新。',en:'Version info updated.',ja:'バージョン情報が更新されました。'},
+svr_server_running:{ko:'타자 연습 서버 가동 중',zh:'打字練習伺服器運行中',en:'Typing practice server running',ja:'タイピング練習サーバー稼働中'},
 };
 let _wlang='ko';
 function wt(k){const e=WLANG[k];return e?e[_wlang]||e.ko||k:k;}
+function serverMsg(r,fb){if(!r)return fb?wt(fb):'';if(r.msg_code){const t=wt(r.msg_code);if(t!==r.msg_code)return t;}return r.msg||( fb?wt(fb):'');}
 function langDisplayName(raw){const m={'한국어':'lang_korean','韓語':'lang_korean','Korean':'lang_korean','韓国語':'lang_korean','중국어':'lang_chinese','中文':'lang_chinese','Chinese':'lang_chinese','中国語':'lang_chinese','영어':'lang_english','英語':'lang_english','English':'lang_english','일본어':'lang_japanese','日本語':'lang_japanese','Japanese':'lang_japanese'};const k=m[raw];return k?wt(k):raw;}
 function setWebLang(code){if(['ko','zh','en','ja'].includes(code)){_wlang=code;localStorage.setItem('ui_lang',code);applyWebLang();}}
 function applyWebLang(){
@@ -746,12 +789,12 @@ function showSignupModal(){openModal('signupModal');document.getElementById('sig
 function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
 function showResetPwModal(){openModal('resetPwModal');document.getElementById('resetPwId').focus();}
 function showDeleteAccountModal(){openModal('deleteAccountModal');document.getElementById('delAcctPw').focus();}
-async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent=wt('msg_enter_id_pw');return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();checkNotifications();}else{document.getElementById('loginMsg').textContent=r?.msg||wt('msg_login_fail');}}
-async function doSignup(){const id=document.getElementById('signupId').value.trim(),pw=document.getElementById('signupPw').value,nk=document.getElementById('signupNick').value.trim(),em=document.getElementById('signupEmail').value.trim();if(!id||!pw||!nk||!em){document.getElementById('signupMsg').textContent=wt('msg_fill_all');return;}const r=await api('/api/signup','POST',{user_id:id,password:pw,nickname:nk,email:em});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('signupModal');updateAuthUI();}else{document.getElementById('signupMsg').textContent=r?.msg||wt('msg_fail');}}
+async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent=wt('msg_enter_id_pw');return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();checkNotifications();}else{document.getElementById('loginMsg').textContent=serverMsg(r,'msg_login_fail');}}
+async function doSignup(){const id=document.getElementById('signupId').value.trim(),pw=document.getElementById('signupPw').value,nk=document.getElementById('signupNick').value.trim(),em=document.getElementById('signupEmail').value.trim();if(!id||!pw||!nk||!em){document.getElementById('signupMsg').textContent=wt('msg_fill_all');return;}const r=await api('/api/signup','POST',{user_id:id,password:pw,nickname:nk,email:em});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('signupModal');updateAuthUI();}else{document.getElementById('signupMsg').textContent=serverMsg(r,'msg_fail');}}
 async function doLogout(){await api('/api/logout','POST');currentUser=null;localStorage.removeItem('auth');updateAuthUI();document.getElementById('notifArea').innerHTML='';}
-async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent=wt('msg_enter_email');return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_not_found');}}
-async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent=wt('msg_fill_all_short');return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent=wt('msg_pw_mismatch');return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_complete');}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
-async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!==wt('delete_confirm_word')){document.getElementById('delAcctMsg').textContent=wt('delete_confirm_hint');return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert(wt('msg_withdraw_done'));}else{document.getElementById('delAcctMsg').textContent=r?.msg||wt('msg_fail');}}
+async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent=wt('msg_enter_email');return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_not_found');}}
+async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent=wt('msg_fill_all_short');return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent=wt('msg_pw_mismatch');return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_complete');}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
+async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!==wt('delete_confirm_word')){document.getElementById('delAcctMsg').textContent=wt('delete_confirm_hint');return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert(wt('msg_withdraw_done'));}else{document.getElementById('delAcctMsg').textContent=serverMsg(r,'msg_fail');}}
 
 /* FIX#5: Notification — check for text request results on login */
 async function checkNotifications(){
@@ -791,7 +834,7 @@ function applyFontSettings(){document.documentElement.style.setProperty('--pfs',
 
 /* Text request */
 function updateTextRequestUI(){document.getElementById('textRequestLogin').style.display=currentUser?'none':'';document.getElementById('textRequestForm').style.display=currentUser?'':'none';document.getElementById('pendingRequestsSection').style.display=isAdmin()?'':'none';}
-async function submitTextRequest(){const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');if(!fileInput.files.length){m.textContent=wt('msg_select_file');return;}const file=fileInput.files[0],text=await file.text(),title=file.name.replace(/\.txt$/i,'').trim();if(!text.trim()){m.textContent=wt('msg_file_empty');return;}const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_request_done');fileInput.value='';}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
+async function submitTextRequest(){const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');if(!fileInput.files.length){m.textContent=wt('msg_select_file');return;}const file=fileInput.files[0],text=await file.text(),title=file.name.replace(/\.txt$/i,'').trim();if(!text.trim()){m.textContent=wt('msg_file_empty');return;}const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_request_done');fileInput.value='';}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
 
 /* FIX#4: Pending requests with comment input */
 async function loadPendingRequests(){
@@ -814,8 +857,8 @@ async function loadPendingRequests(){
       '</div></div>';
   }).join('');
 }
-async function approveRequest(id){if(!confirm(wt('msg_confirm_approve')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/approve','POST',{comment});if(r?.ok){alert(r.msg||wt('msg_approve_done'));loadPendingRequests();loadTexts();}else{alert(r?.msg||wt('msg_fail'));}}
-async function rejectRequest(id){if(!confirm(wt('msg_confirm_reject')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/reject','POST',{comment});if(r?.ok){alert(wt('msg_reject_done'));loadPendingRequests();}else{alert(r?.msg||wt('msg_fail'));}}
+async function approveRequest(id){if(!confirm(wt('msg_confirm_approve')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/approve','POST',{comment});if(r?.ok){alert(serverMsg(r,'msg_approve_done'));loadPendingRequests();loadTexts();}else{alert(serverMsg(r,'msg_fail'));}}
+async function rejectRequest(id){if(!confirm(wt('msg_confirm_reject')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/reject','POST',{comment});if(r?.ok){alert(wt('msg_reject_done'));loadPendingRequests();}else{alert(serverMsg(r,'msg_fail'));}}
 
 /* Admin text management */
 async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;const af=document.getElementById('adminLangFilter'),pv=af.value;const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];af.innerHTML='<option value="">'+wt('all')+'</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);af.appendChild(o);});af.value=pv;renderAdminList();}
@@ -826,7 +869,7 @@ function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:c
 async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert(wt('msg_no_sel_text'));return;}if(!confirm(ids.length+wt('msg_confirm_del_texts')))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
 function showAddTextModal(){document.getElementById('editTextTitle').textContent=wt('btn_add_text');document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
 function showEditTextModal(id){const t=allTexts.find(x=>x.id===id)||adminAllTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent=wt('edit_text_title');document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
-async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent=wt('msg_title_content_needed');return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_save_done');await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
+async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent=wt('msg_title_content_needed');return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_save_done');await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
 async function doDeleteText(){const id=document.getElementById('editTextId').value;if(!id)return;if(!confirm(wt('msg_confirm_delete')))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){closeModal('editTextModal');await loadTexts();refreshAdminTextList();}}
 async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'"  — '+wt('msg_confirm_delete')))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
 
@@ -982,7 +1025,7 @@ function showResults(){const el=getElapsed();let tc=0,tco=0,ttl=0;for(let i=0;i<
 const cpm=el>0?Math.round(tc/(el/60)):0,kpm=el>0?Math.round(keystrokes/(el/60)):0,acc=tco>0?Math.round(tc/tco*1000)/10:0,prog=ttg>0?Math.round(ttl/ttg*1000)/10:0;
 document.getElementById('resCpm').textContent=cpm;document.getElementById('resKpm').textContent=kpm;document.getElementById('resAcc').textContent=acc+'%';document.getElementById('resProgress').textContent=Math.min(prog,100)+'%';document.getElementById('resTime').textContent=el.toFixed(1)+wt('unit_sec');document.getElementById('resChars').textContent=ttl;
 window._lastResult={cpm,kpm,acc,progress:Math.min(prog,100),elapsed:el,chars:ttl,input_chars:ttl};document.getElementById('rankSubmitMsg').textContent='';if(currentUser)document.getElementById('rankSubmitArea').style.display='';openModal('resultsModal');}
-async function submitRanking(){if(!currentUser||!window._lastResult||!currentText)return;const tw=document.getElementById('resTypewriter').value.trim();if(!tw){document.getElementById('rankSubmitMsg').textContent=wt('msg_enter_typewriter');return;}const bk=await sha1(currentText.content);const r=await api('/api/rankings','POST',{board_key:bk,board_name:currentText.title,typewriter:tw,cpm:window._lastResult.cpm,kpm:window._lastResult.kpm,acc:window._lastResult.acc,completion:window._lastResult.progress,chars:window._lastResult.chars,input_chars:window._lastResult.input_chars,elapsed:window._lastResult.elapsed,created_at:new Date().toLocaleString('sv-SE').replace('T',' '),created_ts:Math.floor(Date.now()/1000)});const m=document.getElementById('rankSubmitMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_rank_done');}else{m.className='modal-msg';m.textContent=r?.msg||wt('msg_fail');}}
+async function submitRanking(){if(!currentUser||!window._lastResult||!currentText)return;const tw=document.getElementById('resTypewriter').value.trim();if(!tw){document.getElementById('rankSubmitMsg').textContent=wt('msg_enter_typewriter');return;}const bk=await sha1(currentText.content);const r=await api('/api/rankings','POST',{board_key:bk,board_name:currentText.title,typewriter:tw,cpm:window._lastResult.cpm,kpm:window._lastResult.kpm,acc:window._lastResult.acc,completion:window._lastResult.progress,chars:window._lastResult.chars,input_chars:window._lastResult.input_chars,elapsed:window._lastResult.elapsed,created_at:new Date().toLocaleString('sv-SE').replace('T',' '),created_ts:Math.floor(Date.now()/1000)});const m=document.getElementById('rankSubmitMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_rank_done');}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
 async function sha1(t){const d=new TextEncoder().encode(t),h=await crypto.subtle.digest('SHA-1',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 
 /* Rankings */
@@ -992,7 +1035,7 @@ document.getElementById('rankBoardSelect').addEventListener('change',loadRanking
 function rankAdminSelectAll(on){document.querySelectorAll('.rank-chk').forEach(c=>c.checked=on);rankAdminUpdateCount();}
 function rankAdminUpdateCount(){const n=document.querySelectorAll('.rank-chk:checked').length;document.getElementById('rankAdminSelCount').textContent=n>0?n+wt('n_selected'):'';}
 async function rankAdminDeleteSelected(){if(!isAdmin())return;const chks=[...document.querySelectorAll('.rank-chk:checked')];if(chks.length===0){alert(wt('msg_no_sel_rank'));return;}if(!confirm(chks.length+wt('msg_confirm_del_ranks')))return;let ok=0;for(const c of chks){const id=c.dataset.id;if(!id)continue;const r=await api('/api/rankings/'+id,'DELETE');if(r?.ok)ok++;}alert(ok+wt('msg_del_rank_done'));loadRankings();}
-async function rankAdminDeleteBoard(){if(!isAdmin())return;const bk=document.getElementById('rankBoardSelect').value;if(!bk){alert(wt('msg_select_board'));return;}const bn=document.getElementById('rankBoardSelect').selectedOptions[0]?.textContent||bk;if(!confirm('"'+bn+'" '+wt('msg_confirm_del_board')))return;const r=await api('/api/rankings/board/'+encodeURIComponent(bk),'DELETE');if(r?.ok){alert(wt('msg_del_done'));loadRankings();}else{alert(r?.msg||wt('msg_fail'));}}
+async function rankAdminDeleteBoard(){if(!isAdmin())return;const bk=document.getElementById('rankBoardSelect').value;if(!bk){alert(wt('msg_select_board'));return;}const bn=document.getElementById('rankBoardSelect').selectedOptions[0]?.textContent||bk;if(!confirm('"'+bn+'" '+wt('msg_confirm_del_board')))return;const r=await api('/api/rankings/board/'+encodeURIComponent(bk),'DELETE');if(r?.ok){alert(wt('msg_del_done'));loadRankings();}else{alert(serverMsg(r,'msg_fail'));}}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 /* Global hotkeys */
