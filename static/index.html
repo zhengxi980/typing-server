@@ -156,6 +156,9 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 
 <!-- Settings -->
 <div class="tab-panel" id="panel-settings">
+<div class="settings-section"><h3 id="uiLangLabel">UI 언어</h3>
+<div class="settings-row"><label>Language</label>
+<select id="settingUILang" onchange="setWebLang(this.value)"><option value="ko">한국어</option><option value="zh">中文</option><option value="en">English</option><option value="ja">日本語</option></select></div></div>
 <div class="settings-section"><h3>연습 단위</h3>
 <div class="settings-row"><label>표시 형식</label>
 <select id="settingUnitMode"><option value="line">행 단위 (줄마다 분할)</option><option value="paragraph">문단 단위 (원본 줄바꿈 유지)</option></select></div>
@@ -302,6 +305,227 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 
 <script>
 const API='',ADMIN_ID='zhengxi980';
+// ── UI 다국어 ──
+const WLANG={
+tab_practice:{ko:'연습',zh:'練習',en:'Practice',ja:'練習'},
+tab_settings:{ko:'설정',zh:'設定',en:'Settings',ja:'設定'},
+tab_ranking:{ko:'랭킹',zh:'排行榜',en:'Ranking',ja:'ランキング'},
+tab_account:{ko:'계정',zh:'帳號',en:'Account',ja:'アカウント'},
+tab_admin:{ko:'관리',zh:'管理',en:'Admin',ja:'管理'},
+btn_login:{ko:'로그인',zh:'登入',en:'Login',ja:'ログイン'},
+btn_signup:{ko:'회원가입',zh:'註冊',en:'Sign Up',ja:'新規登録'},
+btn_logout:{ko:'로그아웃',zh:'登出',en:'Logout',ja:'ログアウト'},
+not_logged_in:{ko:'로그인하지 않음',zh:'未登入',en:'Not logged in',ja:'未ログイン'},
+all:{ko:'전체',zh:'全部',en:'All',ja:'すべて'},
+select_text:{ko:'텍스트를 선택해 주세요',zh:'請選擇文本',en:'Select a text',ja:'テキストを選択してください'},
+btn_reset_f11:{ko:'초기화 (F11)',zh:'重置 (F11)',en:'Reset (F11)',ja:'リセット (F11)'},
+btn_stop_f12:{ko:'연습 종료 (F12)',zh:'結束練習 (F12)',en:'End Practice (F12)',ja:'練習終了 (F12)'},
+btn_result_f12:{ko:'결과 확인 (F12)',zh:'查看結果 (F12)',en:'View Results (F12)',ja:'結果確認 (F12)'},
+stat_time:{ko:'시간',zh:'時間',en:'Time',ja:'時間'},
+stat_cpm:{ko:'CPM',zh:'CPM',en:'CPM',ja:'CPM'},
+stat_kpm:{ko:'타수(KPM)',zh:'擊鍵(KPM)',en:'KPM',ja:'打鍵(KPM)'},
+stat_acc:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+stat_progress:{ko:'진행률',zh:'進度',en:'Progress',ja:'進行率'},
+stat_chars:{ko:'입력글자',zh:'輸入字數',en:'Input Chars',ja:'入力文字'},
+stat_keys:{ko:'총타수',zh:'總擊鍵',en:'Keystrokes',ja:'総打鍵'},
+pause:{ko:'⏸ 일시정지',zh:'⏸ 暫停',en:'⏸ Paused',ja:'⏸ 一時停止'},
+pause_overlay:{ko:'⏸ 일시정지 — 아무 키를 누르거나 클릭하면 재개',zh:'⏸ 暫停 — 按任意鍵或點擊以繼續',en:'⏸ Paused — Press any key or click to resume',ja:'⏸ 一時停止 — 任意のキーを押すかクリックで再開'},
+hotkey_hint:{ko:'Enter/Space(행끝): 다음 행 | Tab/Shift+Tab/↑↓: 행 이동 | BackSpace(행앞): 이전 행 | ESC: 일시정지',zh:'Enter/Space(行末): 下一行 | Tab/Shift+Tab/↑↓: 切換行 | BackSpace(行首): 上一行 | ESC: 暫停',en:'Enter/Space(end): Next line | Tab/Shift+Tab/↑↓: Move line | BackSpace(start): Prev line | ESC: Pause',ja:'Enter/Space(行末): 次の行 | Tab/Shift+Tab/↑↓: 行移動 | BackSpace(行頭): 前の行 | ESC: 一時停止'},
+practice_msg:{ko:'위에서 텍스트를 선택하고 <strong>시작</strong>을 누르세요.',zh:'請在上方選擇文本，然後按<strong>開始</strong>。',en:'Select a text above and press <strong>Start</strong>.',ja:'上でテキストを選択し、<strong>開始</strong>を押してください。'},
+prep_label:{ko:'準備區：',zh:'準備區：',en:'Prep:',ja:'準備：'},
+prep_placeholder:{ko:'在這裡調整輸入法，按 Enter/↓ 開始計時',zh:'在這裡調整輸入法，按 Enter/↓ 開始計時',en:'Adjust input method here, press Enter/↓ to start',ja:'ここで入力方式を調整し、Enter/↓で開始'},
+settings_unit:{ko:'연습 단위',zh:'練習單位',en:'Practice Unit',ja:'練習単位'},
+settings_unit_label:{ko:'표시 형식',zh:'顯示格式',en:'Display Mode',ja:'表示形式'},
+unit_line:{ko:'행 단위 (줄마다 분할)',zh:'行模式（逐行分割）',en:'Line mode (split per line)',ja:'行単位（行ごとに分割）'},
+unit_para:{ko:'문단 단위 (원본 줄바꿈 유지)',zh:'段落模式（保留原始換行）',en:'Paragraph mode (keep original)',ja:'段落単位（元の改行を保持）'},
+unit_note:{ko:"※ '행 단위'는 긴 문단을 창 너비에 맞게 여러 줄로 분할합니다.",zh:'※「行模式」會將長段落依視窗寬度分割為多行。',en:"※ 'Line mode' splits long paragraphs by window width.",ja:'※「行単位」では長い段落をウィンドウ幅に合わせて複数行に分割します。'},
+settings_font_size:{ko:'폰트 크기',zh:'字型大小',en:'Font Size',ja:'フォントサイズ'},
+lbl_original_input:{ko:'원문/입력',zh:'原文/輸入',en:'Original/Input',ja:'原文/入力'},
+settings_line_height:{ko:'줄 간격',zh:'行距',en:'Line Height',ja:'行間隔'},
+settings_letter_spacing:{ko:'자간',zh:'字距',en:'Letter Spacing',ja:'字間'},
+settings_sfx:{ko:'키 입력 효과음',zh:'按鍵音效',en:'Key Sound Effects',ja:'キー入力効果音'},
+lbl_sfx:{ko:'효과음',zh:'音效',en:'Sound',ja:'効果音'},
+sfx_on:{ko:'켜기',zh:'開',en:'On',ja:'オン'},
+sfx_off:{ko:'끄기',zh:'關',en:'Off',ja:'オフ'},
+lbl_sfx_type:{ko:'효과음 종류',zh:'音效類型',en:'Sound Type',ja:'効果音の種類'},
+sfx_typewriter:{ko:'전통 타자기',zh:'傳統打字機',en:'Typewriter',ja:'タイプライター'},
+sfx_retro:{ko:'레트로',zh:'復古',en:'Retro',ja:'レトロ'},
+sfx_analog:{ko:'아날로그',zh:'類比',en:'Analog',ja:'アナログ'},
+sfx_mechanical:{ko:'기계음',zh:'機械',en:'Mechanical',ja:'メカニカル'},
+sfx_soft:{ko:'소프트',zh:'輕柔',en:'Soft',ja:'ソフト'},
+lbl_volume:{ko:'음량',zh:'音量',en:'Volume',ja:'音量'},
+settings_text_request:{ko:'더 많은 타자 연습 텍스트 신청',zh:'申請更多打字練習文本',en:'Request More Practice Texts',ja:'タイピング練習テキストの追加申請'},
+text_req_desc:{ko:'새 텍스트를 등록하고 싶다면 .txt 파일을 선택해서 업로드하세요. 관리자 승인 후 등록됩니다.',zh:'若要新增文本，請選擇 .txt 檔案上傳。經管理員審核後即可使用。',en:'To add new text, select and upload a .txt file. Available after admin approval.',ja:'新しいテキストを登録したい場合は、.txtファイルをアップロードしてください。管理者の承認後に登録されます。'},
+text_req_login:{ko:'로그인 후 이용할 수 있습니다.',zh:'請先登入。',en:'Please log in first.',ja:'ログイン後に利用できます。'},
+lbl_text_file:{ko:'텍스트 파일',zh:'文本檔案',en:'Text File',ja:'テキストファイル'},
+lbl_lang:{ko:'언어',zh:'語言',en:'Language',ja:'言語'},
+btn_submit:{ko:'신청하기',zh:'提交',en:'Submit',ja:'送信'},
+pending_title:{ko:'승인 대기 텍스트 목록',zh:'待審核文本清單',en:'Pending Text Requests',ja:'承認待ちテキスト一覧'},
+btn_refresh:{ko:'새로고침',zh:'重新整理',en:'Refresh',ja:'更新'},
+loading:{ko:'로딩 중...',zh:'載入中...',en:'Loading...',ja:'読み込み中...'},
+no_data:{ko:'데이터 없음',zh:'無資料',en:'No data',ja:'データなし'},
+col_rank:{ko:'순위',zh:'排名',en:'Rank',ja:'順位'},
+col_nickname:{ko:'닉네임',zh:'暱稱',en:'Nickname',ja:'ニックネーム'},
+col_typewriter:{ko:'타자기',zh:'輸入法',en:'Typewriter',ja:'入力方式'},
+col_text:{ko:'텍스트',zh:'文本',en:'Text',ja:'テキスト'},
+col_acc:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+col_completion:{ko:'완료율',zh:'完成率',en:'Completion',ja:'完了率'},
+col_total_input:{ko:'총 입력',zh:'總輸入',en:'Total Input',ja:'総入力'},
+col_date:{ko:'기록일',zh:'日期',en:'Date',ja:'記録日'},
+rank_admin_title:{ko:'🔧 관리자 랭킹 편집',zh:'🔧 管理員排行編輯',en:'🔧 Admin Ranking Edit',ja:'🔧 管理者ランキング編集'},
+btn_select_all:{ko:'전체 선택',zh:'全選',en:'Select All',ja:'全選択'},
+btn_deselect_all:{ko:'전체 해제',zh:'全不選',en:'Deselect All',ja:'全解除'},
+btn_delete_selected:{ko:'선택 삭제',zh:'刪除所選',en:'Delete Selected',ja:'選択削除'},
+btn_delete_board:{ko:'현재 보드 전체 삭제',zh:'刪除當前全部排行',en:'Delete All in Board',ja:'現在のボード全削除'},
+n_selected:{ko:'개 선택됨',zh:'已選擇',en:' selected',ja:'件選択中'},
+account_title:{ko:'계정 정보',zh:'帳號資訊',en:'Account Info',ja:'アカウント情報'},
+account_logged_out:{ko:'로그인 후 이용할 수 있습니다.',zh:'請先登入。',en:'Please log in first.',ja:'ログイン後に利用できます。'},
+settings_ui_lang:{ko:'UI 언어',zh:'介面語言',en:'UI Language',ja:'UI言語'},
+result_title:{ko:'결과',zh:'結果',en:'Results',ja:'結果'},
+result_cpm:{ko:'분당 글자수 (CPM)',zh:'每分鐘字數 (CPM)',en:'Characters Per Minute (CPM)',ja:'文字/分 (CPM)'},
+result_kpm:{ko:'분당 타수 (KPM)',zh:'每分鐘擊鍵 (KPM)',en:'Keystrokes Per Minute (KPM)',ja:'打鍵/分 (KPM)'},
+result_acc:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+result_elapsed:{ko:'경과 시간',zh:'經過時間',en:'Elapsed Time',ja:'経過時間'},
+result_completion:{ko:'완료율',zh:'完成率',en:'Completion',ja:'完了率'},
+result_chars:{ko:'총 입력 글자수',zh:'總輸入字數',en:'Total Input Chars',ja:'総入力文字数'},
+btn_close:{ko:'닫기',zh:'關閉',en:'Close',ja:'閉じる'},
+btn_register_rank:{ko:'랭킹에 등록',zh:'記錄到排行榜',en:'Register Ranking',ja:'ランキング登録'},
+rank_submit_label:{ko:'타자기 구분:',zh:'輸入法：',en:'Typewriter:',ja:'入力方式：'},
+rank_submit_placeholder:{ko:'예) 창힐, 두벌식, QWERTY …',zh:'例）倉頡、注音、拼音 …',en:'e.g.) QWERTY, Dvorak …',ja:'例）ローマ字、かな入力 …'},
+login_title:{ko:'로그인',zh:'登入',en:'Login',ja:'ログイン'},
+lbl_password:{ko:'비밀번호',zh:'密碼',en:'Password',ja:'パスワード'},
+signup_title:{ko:'회원가입',zh:'註冊',en:'Sign Up',ja:'新規登録'},
+lbl_pw_confirm:{ko:'비밀번호 확인',zh:'確認密碼',en:'Confirm Password',ja:'パスワード確認'},
+lbl_nickname_rank:{ko:'닉네임 (랭킹 표시)',zh:'暱稱（排行顯示）',en:'Nickname (for ranking)',ja:'ニックネーム（ランキング表示用）'},
+lbl_email:{ko:'이메일',zh:'電子郵件',en:'Email',ja:'メール'},
+btn_cancel:{ko:'취소',zh:'取消',en:'Cancel',ja:'キャンセル'},
+btn_save:{ko:'저장',zh:'儲存',en:'Save',ja:'保存'},
+delete_account_title:{ko:'회원탈퇴',zh:'刪除帳號',en:'Delete Account',ja:'退会'},
+delete_warn:{ko:'계정 정보와 랭킹 기록이 모두 삭제됩니다.',zh:'帳號資訊和排行紀錄將被永久刪除。',en:'All account data and rankings will be deleted.',ja:'アカウント情報とランキング記録がすべて削除されます。'},
+delete_confirm_hint:{ko:"'탈퇴'를 입력하세요",zh:"請輸入「刪除」",en:"Type 'delete'",ja:"「退会」と入力してください"},
+delete_confirm_word:{ko:'탈퇴',zh:'刪除',en:'delete',ja:'退会'},
+btn_delete:{ko:'탈퇴',zh:'刪除',en:'Delete',ja:'退会'},
+};
+let _wlang='ko';
+function wt(k){const e=WLANG[k];return e?e[_wlang]||e.ko||k:k;}
+function setWebLang(code){if(['ko','zh','en','ja'].includes(code)){_wlang=code;localStorage.setItem('ui_lang',code);applyWebLang();}}
+function applyWebLang(){
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(b=>{
+const t=b.dataset.tab;if(t==='practice')b.textContent=wt('tab_practice');
+else if(t==='settings')b.textContent=wt('tab_settings');
+else if(t==='ranking')b.textContent=wt('tab_ranking');
+else if(t==='account')b.textContent=wt('tab_account');
+else if(t==='admin')b.textContent=wt('tab_admin');
+});
+// Header buttons
+document.getElementById('btnLogin').textContent=wt('btn_login');
+document.getElementById('btnSignup').textContent=wt('btn_signup');
+document.getElementById('btnLogout').textContent=wt('btn_logout');
+if(!currentUser)document.getElementById('userInfo').textContent=wt('not_logged_in');
+// Practice controls
+const langSel=document.getElementById('langSelect');
+if(langSel.options[0])langSel.options[0].textContent=wt('all');
+const tSel=document.getElementById('textSelect');
+if(tSel.options[0]&&!currentText)tSel.options[0].textContent=wt('select_text');
+document.querySelector('.btn-reset').textContent=wt('btn_reset_f11');
+const stopBtn=document.querySelector('.btn-stop');
+if(!practicing&&!started)stopBtn.textContent=wt('btn_stop_f12');
+// Stats labels
+const slabels=[['stat_time','statTime'],['stat_cpm','statCpm'],['stat_kpm','statKpm'],['stat_acc','statAcc'],['stat_progress','statProgress'],['stat_chars','statChars'],['stat_keys','statKeys']];
+slabels.forEach(([k,id])=>{const el=document.getElementById(id);if(el){const p=el.parentElement;if(p){const lbl=p.querySelector('.stat-label');if(lbl)lbl.textContent=wt(k);}}});
+const ps=document.getElementById('pauseStatus');if(ps){const sv=ps.querySelector('.stat-value');if(sv)sv.textContent=wt('pause');}
+// Pause overlay
+document.getElementById('pauseOverlay').textContent=wt('pause_overlay');
+// Hotkey hint
+const hh=document.querySelector('.hotkey-hint');if(hh)hh.textContent=wt('hotkey_hint');
+// Practice msg
+const pm=document.getElementById('practiceMsg');if(pm&&!practicing&&!started)pm.innerHTML=wt('practice_msg');
+// Prep area
+const pl=document.querySelector('.prep-label');if(pl)pl.textContent=wt('prep_label');
+const pi=document.getElementById('prepInput');if(pi)pi.placeholder=wt('prep_placeholder');
+// Settings
+const sps=document.querySelectorAll('#panel-settings .settings-section h3');
+const settingsKeys=['settings_ui_lang','settings_unit','settings_font_size','settings_line_height','settings_letter_spacing','settings_sfx','settings_text_request'];
+sps.forEach((h,i)=>{if(settingsKeys[i])h.textContent=wt(settingsKeys[i]);});
+// Settings labels
+const sLabels=document.querySelectorAll('#panel-settings .settings-row label');
+const slKeys=['','settings_unit_label','lbl_original_input','','','lbl_sfx','lbl_sfx_type','lbl_volume','lbl_text_file','lbl_lang'];
+sLabels.forEach((l,i)=>{if(slKeys[i])l.textContent=wt(slKeys[i]);});
+// Unit mode options
+const usel=document.getElementById('settingUnitMode');
+if(usel){usel.options[0].textContent=wt('unit_line');usel.options[1].textContent=wt('unit_para');}
+// Unit note
+const unote=document.querySelector('#panel-settings .settings-section:nth-child(2) p');
+if(unote)unote.textContent=wt('unit_note');
+// SFX options
+const sfxEn=document.getElementById('settingSfxEnabled');
+if(sfxEn){sfxEn.options[0].textContent=wt('sfx_on');sfxEn.options[1].textContent=wt('sfx_off');}
+const sfxSt=document.getElementById('settingSfxStyle');
+if(sfxSt){const sfxK=['sfx_typewriter','sfx_retro','sfx_analog','sfx_mechanical','sfx_soft'];sfxSt.querySelectorAll('option').forEach((o,i)=>{if(sfxK[i])o.textContent=wt(sfxK[i]);});}
+// Text request
+const trDesc=document.querySelector('#panel-settings .settings-section:nth-child(7) > p');
+if(trDesc)trDesc.textContent=wt('text_req_desc');
+const trLogin=document.getElementById('textRequestLogin');
+if(trLogin)trLogin.innerHTML='<p style="color:#dc2626;font-size:.85rem">'+wt('text_req_login')+'</p>';
+const trBtn=document.querySelector('#textRequestForm .btn-primary');
+if(trBtn)trBtn.textContent=wt('btn_submit');
+// Pending
+const pdTitle=document.querySelector('#pendingRequestsSection h3');
+if(pdTitle)pdTitle.textContent=wt('pending_title');
+const pdRefresh=document.querySelector('#pendingRequestsSection .btn-secondary');
+if(pdRefresh)pdRefresh.textContent=wt('btn_refresh');
+// Ranking headers
+const ths=document.querySelectorAll('.ranking-table thead th');
+const thKeys=['col_rank','col_nickname','col_typewriter','col_text','','','col_acc','col_completion','col_total_input','col_date'];
+ths.forEach((th,i)=>{if(thKeys[i])th.textContent=wt(thKeys[i]);});
+// Ranking controls
+const rbs=document.getElementById('rankBoardSelect');
+if(rbs&&rbs.options[0])rbs.options[0].textContent=wt('all');
+const rrBtn=document.querySelector('.ranking-controls .btn-primary');
+if(rrBtn)rrBtn.textContent=wt('btn_refresh');
+// Ranking admin panel
+const rap=document.getElementById('rankAdminPanel');
+if(rap){const btns=rap.querySelectorAll('button');
+if(btns[0])btns[0].textContent=wt('btn_select_all');
+if(btns[1])btns[1].textContent=wt('btn_deselect_all');
+if(btns[2])btns[2].textContent=wt('btn_delete_selected');
+if(btns[3])btns[3].textContent=wt('btn_delete_board');
+const st=rap.querySelector('strong');if(st)st.textContent=wt('rank_admin_title');}
+// Account
+const acctTitle=document.querySelector('#panel-account .settings-section h3');
+if(acctTitle)acctTitle.textContent=wt('account_title');
+const acctLogout=document.getElementById('accountLoggedOut');
+if(acctLogout)acctLogout.innerHTML='<p>'+wt('account_logged_out')+'</p>';
+// Result modal headers
+const rsh=document.querySelectorAll('#resultsModal .result-row .result-label');
+const rsKeys=['result_cpm','result_kpm','result_acc','result_elapsed','result_completion','result_chars'];
+rsh.forEach((l,i)=>{if(rsKeys[i])l.textContent=wt(rsKeys[i]);});
+const rmTitle=document.querySelector('#resultsModal h3');
+if(rmTitle)rmTitle.textContent=wt('result_title');
+const rsClose=document.querySelector('#resultsModal .modal-actions .btn-secondary');
+if(rsClose)rsClose.textContent=wt('btn_close');
+// Rank submit in result modal
+const rsl=document.getElementById('rankSubmitArea');
+if(rsl){const lb=rsl.querySelector('label');if(lb)lb.textContent=wt('rank_submit_label');
+const inp=rsl.querySelector('input[type=text]');if(inp)inp.placeholder=wt('rank_submit_placeholder');
+const btn=rsl.querySelector('.btn-primary');if(btn)btn.textContent=wt('btn_register_rank');}
+// Login modal
+const lmTitle=document.querySelector('#loginModal h3');
+if(lmTitle)lmTitle.textContent=wt('login_title');
+// Signup modal
+const smTitle=document.querySelector('#signupModal h3');
+if(smTitle)smTitle.textContent=wt('signup_title');
+// Delete account modal
+const dmTitle=document.querySelector('#deleteAccountModal h3');
+if(dmTitle)dmTitle.textContent=wt('delete_account_title');
+// UI language selector
+const uls=document.getElementById('settingUILang');
+if(uls)uls.value=_wlang;
+const ulLabel=document.getElementById('uiLangLabel');
+if(ulLabel)ulLabel.textContent=wt('settings_ui_lang');
+}
+
 let currentUser=null,allTexts=[],texts=[],languages=[];
 let currentText=null,practicing=false,started=false,paused=false;
 let startTime=null,timerInterval=null,keystrokes=0;
@@ -602,7 +826,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();if(document.querySelector('.btn-stop').disabled)return;if(practicing){stopPractice();}else if(document.querySelector('.btn-stop').textContent.includes('결과')){openModal('resultsModal');}}});
 
 /* Init */
-(async function init(){loadSettings();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
+(async function init(){loadSettings();_wlang=localStorage.getItem('ui_lang')||'ko';document.getElementById('settingUILang').value=_wlang;applyWebLang();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
 </script>
 </body>
 </html>
