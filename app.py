@@ -1,8 +1,15 @@
 """
-타자 연습 서버 API
+타자 연습 서버 API (v26 — 보안 강화)
 - 회원가입/로그인/계정 관리
 - 랭킹 등록/조회/삭제
 - Railway + PostgreSQL 용
+
+보안 기능:
+- CORS 도메인 제한 (xixityping.com만)
+- API Rate Limiting (IP 기반)
+- 로그인 실패 잠금 (5회/15분)
+- 세션 토큰 만료 (30일)
+- 랭킹 입력값 교차 검증
 """
 
 import os
@@ -11,6 +18,9 @@ import time
 import hashlib
 import secrets
 import datetime
+import threading
+from collections import defaultdict
+from functools import wraps
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -21,12 +31,113 @@ import psycopg2.extras
 # Flask 앱 설정
 # ============================================================
 app = Flask(__name__, static_folder="static", static_url_path="/static")
-CORS(app)  # 웹 버전에서 접속할 수 있도록 허용
+
+# ── 보안 #1: CORS 도메인 제한 ──
+# PC 앱(urllib)은 Origin 헤더 없음 → CORS 무관
+# 브라우저만 Origin 체크 대상 → xixityping.com만 허용
+ALLOWED_ORIGINS = [
+    "https://xixityping.com",
+    "https://www.xixityping.com",
+    "http://localhost:5000",       # 로컬 개발용
+    "http://127.0.0.1:5000",
+]
+CORS(app, origins=ALLOWED_ORIGINS)
 
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 ADMIN_ID = "zhengxi980"
+
+# ── 보안 #2: 세션 토큰 유효 기간 (30일) ──
+SESSION_MAX_AGE_DAYS = 30
+
+# ── 보안 #3: 랭킹 입력값 상한선 ──
+MAX_CPM = 2000         # 분당 글자수 상한 (세계 기록급 ~800)
+MAX_KPM = 3000         # 분당 타수 상한
+MAX_ACC = 100.0        # 정확도 상한
+MAX_ELAPSED = 86400.0  # 최대 경과 시간 (24시간)
+MAX_CHARS = 100000     # 최대 글자수
+
+# ── 보안 #4: 로그인 실패 잠금 ──
+LOGIN_MAX_ATTEMPTS = 5       # 최대 시도 횟수
+LOGIN_LOCKOUT_SECONDS = 900  # 잠금 시간 (15분)
+
+# ── 보안 #5: Rate Limiting ──
+# {IP: [(timestamp, ...), ...]}
+_rate_store = defaultdict(list)
+_rate_lock = threading.Lock()
+
+
+def _rate_limit(ip, max_calls, window_seconds):
+    """IP 기반 호출 횟수 제한. 초과 시 True 반환."""
+    now = time.time()
+    cutoff = now - window_seconds
+    with _rate_lock:
+        calls = _rate_store[ip]
+        # 오래된 기록 정리
+        _rate_store[ip] = [t for t in calls if t > cutoff]
+        if len(_rate_store[ip]) >= max_calls:
+            return True
+        _rate_store[ip].append(now)
+    return False
+
+
+def rate_limit(max_calls=30, window=60):
+    """데코레이터: 엔드포인트별 Rate Limiting."""
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
+            ip = ip.split(",")[0].strip()
+            key = f"{ip}:{f.__name__}"
+            if _rate_limit(key, max_calls, window):
+                return jsonify({
+                    "ok": False,
+                    "msg": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+                    "msg_code": "svr_rate_limited"
+                }), 429
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+# ── 로그인 실패 추적 ──
+_login_failures = defaultdict(list)  # {IP: [timestamp, ...]}
+_login_lock = threading.Lock()
+
+
+def _check_login_lockout(ip):
+    """로그인 잠금 상태 확인. 잠금이면 True."""
+    now = time.time()
+    cutoff = now - LOGIN_LOCKOUT_SECONDS
+    with _login_lock:
+        attempts = _login_failures[ip]
+        _login_failures[ip] = [t for t in attempts if t > cutoff]
+        return len(_login_failures[ip]) >= LOGIN_MAX_ATTEMPTS
+
+
+def _record_login_failure(ip):
+    """로그인 실패 기록."""
+    with _login_lock:
+        _login_failures[ip].append(time.time())
+
+
+def _clear_login_failures(ip):
+    """로그인 성공 시 실패 기록 초기화."""
+    with _login_lock:
+        _login_failures.pop(ip, None)
+
+
+# ============================================================
+# 보안 미들웨어: 응답 헤더
+# ============================================================
+@app.after_request
+def add_security_headers(response):
+    """보안 관련 HTTP 헤더를 자동 추가."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 
 # ============================================================
@@ -142,6 +253,12 @@ def init_db():
         )
     """)
 
+    # ── 보안: 만료된 세션 토큰 정리 ──
+    cur.execute("""
+        DELETE FROM sessions
+        WHERE created_at < NOW() - INTERVAL '%s days'
+    """, (SESSION_MAX_AGE_DAYS,))
+
     # v144: 앱 메타 정보 테이블 (버전 관리 등)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS app_meta (
@@ -205,15 +322,31 @@ def get_current_user():
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    # ── 보안: 토큰 만료 체크 (30일) ──
     cur.execute("""
-        SELECT s.user_id, u.nickname, u.email
+        SELECT s.user_id, u.nickname, u.email, s.created_at as session_created
         FROM sessions s JOIN users u ON s.user_id = u.user_id
         WHERE s.token = %s
     """, (token,))
     row = cur.fetchone()
+
+    if row:
+        # 세션 만료 확인
+        session_age = datetime.datetime.now(datetime.timezone.utc) - row["session_created"].replace(
+            tzinfo=datetime.timezone.utc) if row["session_created"].tzinfo is None else (
+            datetime.datetime.now(datetime.timezone.utc) - row["session_created"])
+        if session_age.days > SESSION_MAX_AGE_DAYS:
+            # 만료된 세션 삭제
+            cur.execute("DELETE FROM sessions WHERE token = %s", (token,))
+            cur.close(); conn.close()
+            return None
+        result = {"user_id": row["user_id"], "nickname": row["nickname"], "email": row["email"]}
+        cur.close(); conn.close()
+        return result
+
     cur.close()
     conn.close()
-    return dict(row) if row else None
+    return None
 
 
 def require_login():
@@ -228,6 +361,7 @@ def require_login():
 # API: 회원가입
 # ============================================================
 @app.route("/api/signup", methods=["POST"])
+@rate_limit(max_calls=5, window=300)  # 5분에 5회
 def signup():
     data = request.get_json(force=True, silent=True) or {}
     uid = str(data.get("user_id", "") or "").strip()
@@ -290,6 +424,7 @@ def signup():
 # API: 로그인
 # ============================================================
 @app.route("/api/login", methods=["POST"])
+@rate_limit(max_calls=10, window=60)  # 1분에 10회
 def login():
     data = request.get_json(force=True, silent=True) or {}
     uid = str(data.get("user_id", "") or "").strip()
@@ -298,18 +433,32 @@ def login():
     if not uid or not pw:
         return jsonify({"ok": False, "msg": "ID와 비밀번호를 입력해 주세요.", "msg_code": "svr_enter_id_pw"}), 400
 
+    # ── 보안: 로그인 실패 잠금 확인 ──
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+    if _check_login_lockout(ip):
+        return jsonify({
+            "ok": False,
+            "msg": "로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요.",
+            "msg_code": "svr_login_locked"
+        }), 429
+
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM users WHERE user_id = %s", (uid,))
     row = cur.fetchone()
 
     if not row:
+        _record_login_failure(ip)
         cur.close(); conn.close()
         return jsonify({"ok": False, "msg": "ID 또는 비밀번호가 올바르지 않습니다.", "msg_code": "svr_wrong_id_pw"}), 401
 
     if not verify_password(pw, row["salt"], row["hash"], row["iter"]):
+        _record_login_failure(ip)
         cur.close(); conn.close()
         return jsonify({"ok": False, "msg": "ID 또는 비밀번호가 올바르지 않습니다.", "msg_code": "svr_wrong_id_pw"}), 401
+
+    # 성공 → 실패 기록 초기화
+    _clear_login_failures(ip)
 
     # 토큰 발급
     token = secrets.token_hex(32)
@@ -346,6 +495,7 @@ def logout():
 # API: 아이디 찾기 (이메일로)
 # ============================================================
 @app.route("/api/find-id", methods=["POST"])
+@rate_limit(max_calls=5, window=300)  # 5분에 5회
 def find_id():
     data = request.get_json(force=True, silent=True) or {}
     email = str(data.get("email", "") or "").strip()
@@ -370,6 +520,7 @@ def find_id():
 # API: 비밀번호 재설정
 # ============================================================
 @app.route("/api/reset-password", methods=["POST"])
+@rate_limit(max_calls=3, window=300)  # 5분에 3회
 def reset_password():
     data = request.get_json(force=True, silent=True) or {}
     uid = str(data.get("user_id", "") or "").strip()
@@ -437,6 +588,7 @@ def update_email():
 # API: 회원탈퇴
 # ============================================================
 @app.route("/api/delete-account", methods=["POST"])
+@rate_limit(max_calls=3, window=300)  # 5분에 3회
 def delete_account():
     user, err = require_login()
     if err:
@@ -529,6 +681,7 @@ def get_rankings():
 # API: 랭킹 등록
 # ============================================================
 @app.route("/api/rankings", methods=["POST"])
+@rate_limit(max_calls=10, window=60)  # 1분에 10회
 def submit_ranking():
     user, err = require_login()
     if err:
@@ -544,6 +697,36 @@ def submit_ranking():
         return jsonify({"ok": False, "msg": "보드 정보가 없습니다.", "msg_code": "svr_no_board"}), 400
     if not typewriter:
         return jsonify({"ok": False, "msg": "'타자기 구분'을 입력해 주세요.", "msg_code": "svr_enter_typewriter"}), 400
+
+    # ── 보안: 입력값 범위 검증 ──
+    cpm = int(data.get("cpm", 0) or 0)
+    kpm = int(data.get("kpm", 0) or 0)
+    acc = float(data.get("acc", 0.0) or 0.0)
+    completion = float(data.get("completion", 0.0) or 0.0)
+    chars = int(data.get("chars", 0) or 0)
+    input_chars = int(data.get("input_chars", 0) or 0)
+    elapsed = float(data.get("elapsed", 0.0) or 0.0)
+
+    # 범위 검사
+    if cpm < 0 or cpm > MAX_CPM:
+        return jsonify({"ok": False, "msg": "비정상적인 CPM 값입니다.", "msg_code": "svr_invalid_cpm"}), 400
+    if kpm < 0 or kpm > MAX_KPM:
+        return jsonify({"ok": False, "msg": "비정상적인 KPM 값입니다.", "msg_code": "svr_invalid_kpm"}), 400
+    if acc < 0 or acc > MAX_ACC:
+        return jsonify({"ok": False, "msg": "비정상적인 정확도 값입니다.", "msg_code": "svr_invalid_acc"}), 400
+    if completion < 0 or completion > 100.0:
+        return jsonify({"ok": False, "msg": "비정상적인 완료율 값입니다.", "msg_code": "svr_invalid_completion"}), 400
+    if elapsed <= 0 or elapsed > MAX_ELAPSED:
+        return jsonify({"ok": False, "msg": "비정상적인 경과 시간입니다.", "msg_code": "svr_invalid_elapsed"}), 400
+    if chars < 0 or chars > MAX_CHARS:
+        return jsonify({"ok": False, "msg": "비정상적인 글자수입니다.", "msg_code": "svr_invalid_chars"}), 400
+
+    # ── 보안: 교차 검증 (CPM vs 경과시간 vs 글자수) ──
+    if elapsed > 0 and chars > 0:
+        expected_cpm = chars / (elapsed / 60.0)
+        # 실제 CPM이 기대값의 2배를 초과하면 조작 의심
+        if cpm > expected_cpm * 2 + 50:
+            return jsonify({"ok": False, "msg": "입력 데이터가 일치하지 않습니다.", "msg_code": "svr_data_mismatch"}), 400
 
     now = data.get("created_at") or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ts = int(data.get("created_ts") or 0) or int(time.time())
@@ -575,13 +758,13 @@ def submit_ranking():
         user["user_id"],
         user["nickname"],
         typewriter,
-        int(data.get("cpm", 0) or 0),
-        int(data.get("kpm", 0) or 0),
-        float(data.get("acc", 0.0) or 0.0),
-        float(data.get("completion", 0.0) or 0.0),
-        int(data.get("chars", 0) or 0),
-        int(data.get("input_chars", 0) or 0),
-        float(data.get("elapsed", 0.0) or 0.0),
+        cpm,
+        kpm,
+        acc,
+        completion,
+        chars,
+        input_chars,
+        elapsed,
         now,
         ts,
     ))
@@ -778,6 +961,7 @@ def delete_text(text_id):
 # API: 텍스트 요청 (일반 사용자가 텍스트 등록 요청)
 # ============================================================
 @app.route("/api/text-requests", methods=["POST"])
+@rate_limit(max_calls=5, window=300)  # 5분에 5회
 def submit_text_request():
     user, err = require_login()
     if err:
