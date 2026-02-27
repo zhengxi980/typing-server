@@ -43,8 +43,8 @@ ALLOWED_ORIGINS = [
 ]
 CORS(app, origins=ALLOWED_ORIGINS)
 
-# 최대 요청 크기: 청크 단위 업로드를 위해 5MB로 제한 (청크당 최대 2MB)
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+# 최대 요청 크기: 청크 단위 업로드를 위해 8MB로 제한 (청크당 최대 4MB)
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
 
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -291,7 +291,8 @@ def init_db():
             data        BYTEA NOT NULL,
             created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
             PRIMARY KEY (upload_id, chunk_index)
-        )
+        );
+        CREATE INDEX IF NOT EXISTS idx_dl_chunks_uid ON download_chunks (upload_id, chunk_index);
     """)
     # 24시간 이상 된 미완성 청크 정리
     cur.execute("""
@@ -1284,9 +1285,9 @@ def upload_chunk():
 
     chunk_data = request.files["chunk"].read()
 
-    # 단일 청크 최대 3MB (클라이언트는 2MB 사용)
-    if len(chunk_data) > 3 * 1024 * 1024:
-        return jsonify({"ok": False, "msg": "청크 크기는 3MB 이하여야 합니다."}), 400
+    # 단일 청크 최대 6MB (클라이언트는 4MB 사용)
+    if len(chunk_data) > 6 * 1024 * 1024:
+        return jsonify({"ok": False, "msg": "청크 크기는 6MB 이하여야 합니다."}), 400
 
     conn = get_db()
     cur = conn.cursor()
@@ -1295,6 +1296,7 @@ def upload_chunk():
         VALUES (%s, %s, %s)
         ON CONFLICT (upload_id, chunk_index) DO UPDATE SET data = EXCLUDED.data
     """, (upload_id, int(chunk_index), psycopg2.Binary(chunk_data)))
+    conn.commit()  # 명시적 커밋으로 락 즉시 해제 → 병렬 청크 충돌 방지
     cur.close()
     conn.close()
     return jsonify({"ok": True})
@@ -1342,17 +1344,13 @@ def finalize_upload():
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     # 청크 개수 확인
-    cur.execute("SELECT COUNT(*) as cnt FROM download_chunks WHERE upload_id = %s", (upload_id,))
+    cur.execute("SELECT COUNT(*) as cnt, COALESCE(SUM(length(data)), 0) as total_size FROM download_chunks WHERE upload_id = %s", (upload_id,))
     row = cur.fetchone()
     if not row or row["cnt"] < total_chunks:
         cur.close(); conn.close()
         return jsonify({"ok": False, "msg": f"청크가 부족합니다. ({row['cnt'] if row else 0}/{total_chunks})"}), 400
 
-    # 청크 순서대로 가져와서 조합
-    cur.execute("SELECT data FROM download_chunks WHERE upload_id = %s ORDER BY chunk_index", (upload_id,))
-    chunks = cur.fetchall()
-    full_data = b"".join(bytes(c["data"]) for c in chunks)
-    filesize = len(full_data)
+    filesize = row["total_size"]
 
     # 전체 파일 크기 제한: 5GB
     if filesize > 5 * 1024 * 1024 * 1024:
@@ -1360,11 +1358,19 @@ def finalize_upload():
         cur.close(); conn.close()
         return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
 
+    # ★ 핵심: Python RAM을 전혀 사용하지 않고 PostgreSQL 내부에서 직접 조합 후 저장
+    # decode(string_agg(encode(..., 'hex'), '' ORDER BY chunk_index), 'hex') 방식으로
+    # 모든 청크를 DB 엔진 안에서 이어붙여 downloads 테이블에 바로 INSERT
     cur2 = conn.cursor()
     cur2.execute("""
         INSERT INTO downloads (filename, filesize, mime_type, version, description, data, uploaded_by)
-        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-    """, (filename, filesize, mime_type, version, description, psycopg2.Binary(full_data), user["user_id"]))
+        SELECT %s, %s, %s, %s, %s,
+               decode(string_agg(encode(data, 'hex'), '' ORDER BY chunk_index), 'hex'),
+               %s
+        FROM download_chunks
+        WHERE upload_id = %s
+        RETURNING id
+    """, (filename, filesize, mime_type, version, description, user["user_id"], upload_id))
     new_id = cur2.fetchone()[0]
 
     # 임시 청크 삭제
@@ -1380,31 +1386,57 @@ def finalize_upload():
 # ============================================================
 @app.route("/api/downloads/<int:file_id>", methods=["GET"])
 def download_file(file_id):
-    from flask import Response
+    from flask import Response, stream_with_context
+    import urllib.parse
+
+    # 메타정보만 먼저 조회 (data 제외)
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT filename, mime_type, data FROM downloads WHERE id = %s", (file_id,))
+    cur.execute("SELECT filename, mime_type, filesize FROM downloads WHERE id = %s", (file_id,))
     row = cur.fetchone()
     cur.close()
     conn.close()
+
     if not row:
         return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
 
     filename = row["filename"]
-    data = bytes(row["data"])
-
-    import mimetypes, urllib.parse
     mime_type = row.get("mime_type") or "application/octet-stream"
-
-    # 파일명 인코딩 (한글/특수문자 포함 대비)
+    filesize = row["filesize"]
     encoded_filename = urllib.parse.quote(filename)
 
+    # 64MB 단위 스트리밍 — 커넥션 1개 재사용, 루프당 DB 오버헤드 최소화
+    STREAM_CHUNK = 64 * 1024 * 1024
+
+    def generate():
+        dl_conn = get_db()
+        dl_cur = dl_conn.cursor()
+        try:
+            offset = 0
+            while offset < filesize:
+                length = min(STREAM_CHUNK, filesize - offset)
+                dl_cur.execute(
+                    "SELECT substring(data from %s for %s) FROM downloads WHERE id = %s",
+                    (offset + 1, length, file_id)
+                )
+                chunk_row = dl_cur.fetchone()
+                if not chunk_row or not chunk_row[0]:
+                    break
+                yield bytes(chunk_row[0])
+                offset += length
+        finally:
+            dl_cur.close()
+            dl_conn.close()
+
     return Response(
-        data,
+        stream_with_context(generate()),
         headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+            "Content-Disposition": f"attachment; filename*=UTF-8\'\'{encoded_filename}",
             "Content-Type": mime_type,
-            "Content-Length": str(len(data)),
+            "Content-Length": str(filesize),
+            # Nginx/Railway 프록시 버퍼링 비활성화 → 클라이언트로 즉시 전달
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-store",
         }
     )
 

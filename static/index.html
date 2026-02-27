@@ -891,26 +891,56 @@ async function uploadDownloadFile(){
       <span id="${jobId}_status" style="color:#64748b;white-space:nowrap;font-size:.8rem">준비 중...</span>
     </div>
     <div style="background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden">
-      <div id="${jobId}_bar" style="background:#2563eb;height:6px;border-radius:4px;width:0%;transition:width .2s"></div>
+      <div id="${jobId}_bar" style="background:#2563eb;height:6px;border-radius:4px;width:0%;transition:width .15s"></div>
     </div>
-    <div id="${jobId}_text" style="color:#64748b;font-size:.78rem;margin-top:4px"></div>`;
+    <div id="${jobId}_text" style="color:#64748b;font-size:.78rem;margin-top:4px;display:flex;justify-content:space-between">
+      <span id="${jobId}_prog"></span>
+      <span id="${jobId}_speed" style="color:#2563eb;font-weight:600"></span>
+    </div>`;
   queue.insertBefore(card, queue.firstChild);
 
   const bar=document.getElementById(jobId+'_bar');
   const statusEl=document.getElementById(jobId+'_status');
-  const textEl=document.getElementById(jobId+'_text');
+  const progEl=document.getElementById(jobId+'_prog');
+  const speedEl=document.getElementById(jobId+'_speed');
 
   const setStatus=(msg,color='#64748b')=>{statusEl.textContent=msg;statusEl.style.color=color;};
-  const setPct=(pct,detail='')=>{bar.style.width=pct+'%';textEl.textContent=detail;};
 
-  // 청크 설정: 2MB 청크, 최대 5회 재시도, 지수 백오프
-  const CHUNK_SIZE=2*1024*1024;
-  const totalChunks=Math.ceil(file.size/CHUNK_SIZE);
+  // ── 업로드 설정 ──
+  const CHUNK_SIZE=4*1024*1024;       // 4MB 청크
+  const CONCURRENCY=4;                 // 4개 동시 병렬 업로드
   const MAX_RETRY=5;
+  const totalChunks=Math.ceil(file.size/CHUNK_SIZE);
+
+  let completedChunks=0;
+  let uploadedBytes=0;
+  const startTime=Date.now();
+
+  const fmtSpeed=(bps)=>{
+    if(bps<1024)return bps.toFixed(0)+'B/s';
+    if(bps<1024*1024)return (bps/1024).toFixed(1)+'KB/s';
+    return (bps/(1024*1024)).toFixed(1)+'MB/s';
+  };
+  const fmtEta=(sec)=>{
+    if(!isFinite(sec)||sec<0)return '';
+    if(sec<60)return `(남은시간 ${Math.ceil(sec)}초)`;
+    return `(남은시간 ${Math.floor(sec/60)}분 ${Math.ceil(sec%60)}초)`;
+  };
+
+  const updateProgress=()=>{
+    const elapsed=(Date.now()-startTime)/1000||0.001;
+    const pct=Math.round(uploadedBytes/file.size*90);
+    bar.style.width=pct+'%';
+    const speed=uploadedBytes/elapsed;
+    const remaining=(file.size-uploadedBytes)/(speed||1);
+    progEl.textContent=`${fmtBytes(uploadedBytes)} / ${fmtBytes(file.size)} (${pct}%)`;
+    speedEl.textContent=speed>0?fmtSpeed(speed)+' '+fmtEta(remaining):'';
+  };
 
   const sendChunk=(index)=>new Promise((resolve,reject)=>{
     const start=index*CHUNK_SIZE;
     const blob=file.slice(start,Math.min(start+CHUNK_SIZE,file.size));
+    const chunkBytes=blob.size;
     const fd=new FormData();
     fd.append('upload_id',uploadId);
     fd.append('chunk_index',String(index));
@@ -918,9 +948,13 @@ async function uploadDownloadFile(){
     const xhr=new XMLHttpRequest();
     xhr.open('POST','/api/downloads/chunk');
     if(currentUser?.token)xhr.setRequestHeader('Authorization','Bearer '+currentUser.token);
+    xhr.upload.onprogress=e=>{
+      // 각 청크의 진행률을 전체에 반영 (근사값)
+      if(e.lengthComputable){uploadedBytes=Math.min(uploadedBytes+e.loaded,file.size);updateProgress();}
+    };
     xhr.onload=()=>{
       if(xhr.status===200){
-        try{const r=JSON.parse(xhr.responseText);if(r.ok)resolve();else reject(new Error(r.msg||'서버 오류'));}
+        try{const r=JSON.parse(xhr.responseText);if(r.ok){uploadedBytes=Math.min(start+chunkBytes,file.size);updateProgress();resolve();}else reject(new Error(r.msg||'서버 오류'));}
         catch{reject(new Error('응답 파싱 오류'));}
       } else {
         reject(new Error(`HTTP ${xhr.status}`));
@@ -928,38 +962,44 @@ async function uploadDownloadFile(){
     };
     xhr.onerror=()=>reject(new Error('네트워크 오류'));
     xhr.ontimeout=()=>reject(new Error('타임아웃'));
-    xhr.timeout=180000; // 3분
+    xhr.timeout=180000;
     xhr.send(fd);
   });
 
-  try{
-    for(let i=0;i<totalChunks;i++){
-      const pct=Math.round(i/totalChunks*90);
-      const uploaded=Math.min((i+1)*CHUNK_SIZE,file.size);
-      setPct(pct, `${fmtBytes(i*CHUNK_SIZE)} / ${fmtBytes(file.size)} (${pct}%)`);
-      setStatus(`청크 ${i+1}/${totalChunks}`);
-
-      let lastErr=null;
-      for(let retry=0;retry<MAX_RETRY;retry++){
-        try{
-          await sendChunk(i);
-          lastErr=null;
-          break;
-        } catch(e){
-          lastErr=e;
-          if(retry<MAX_RETRY-1){
-            const wait=1000*Math.pow(2,retry); // 1s,2s,4s,8s,16s
-            setStatus(`재시도 ${retry+1}/${MAX_RETRY-1} (${Math.round(wait/1000)}초 후)`, '#f59e0b');
-            await new Promise(r=>setTimeout(r,wait));
-          }
+  const sendChunkWithRetry=async(index)=>{
+    let lastErr=null;
+    for(let retry=0;retry<MAX_RETRY;retry++){
+      try{await sendChunk(index);return;}
+      catch(e){
+        lastErr=e;
+        if(retry<MAX_RETRY-1){
+          const wait=1000*Math.pow(2,retry);
+          setStatus(`청크 ${index+1} 재시도 (${retry+1}회)...`,'#f59e0b');
+          await new Promise(r=>setTimeout(r,wait));
         }
       }
-      if(lastErr) throw lastErr;
+    }
+    throw lastErr;
+  };
+
+  try{
+    // 4개씩 병렬로 청크 전송
+    setStatus(`업로드 중 (${CONCURRENCY}개 병렬)`,'#2563eb');
+    for(let i=0;i<totalChunks;i+=CONCURRENCY){
+      const batch=[];
+      for(let j=i;j<Math.min(i+CONCURRENCY,totalChunks);j++){
+        batch.push(sendChunkWithRetry(j));
+      }
+      await Promise.all(batch);
+      completedChunks+=batch.length;
+      setStatus(`업로드 중... ${completedChunks}/${totalChunks} 청크`,'#2563eb');
     }
 
     // 파이널라이즈
     setStatus('조합 중...','#64748b');
-    setPct(95,'서버에서 파일 조합 중...');
+    bar.style.width='95%';
+    progEl.textContent='서버에서 파일 조합 중...';
+    speedEl.textContent='';
 
     const r=await fetch('/api/downloads/finalize',{
       method:'POST',
@@ -969,16 +1009,20 @@ async function uploadDownloadFile(){
     const rj=await r.json();
     if(!rj?.ok) throw new Error(rj?.msg||'파이널라이즈 실패');
 
-    setPct(100, fmtBytes(file.size)+' — 완료');
-    setStatus('✅ 완료','#16a34a');
+    const totalElapsed=(Date.now()-startTime)/1000;
+    const avgSpeed=file.size/totalElapsed;
+    bar.style.width='100%';
     bar.style.background='#16a34a';
-    // 3초 후 카드 페이드 제거
-    setTimeout(()=>{card.style.transition='opacity .5s';card.style.opacity='0';setTimeout(()=>card.remove(),500);},3000);
+    progEl.textContent=fmtBytes(file.size)+' — 완료';
+    speedEl.textContent='평균 '+fmtSpeed(avgSpeed);
+    setStatus('✅ 완료','#16a34a');
+    setTimeout(()=>{card.style.transition='opacity .5s';card.style.opacity='0';setTimeout(()=>card.remove(),500);},4000);
     loadDownloadList();
   } catch(e){
     setStatus('❌ '+e.message,'#dc2626');
     bar.style.background='#dc2626';
-    textEl.style.color='#dc2626';
+    progEl.style.color='#dc2626';
+    speedEl.textContent='';
   }
 }
 
