@@ -147,9 +147,15 @@ def add_security_headers(response):
 # 데이터베이스 연결
 # ============================================================
 def get_db():
-    """PostgreSQL 연결을 반환한다."""
+    """PostgreSQL 연결을 반환한다. (autocommit=True, 일반 쿼리용)"""
     conn = psycopg2.connect(DATABASE_URL)
     conn.autocommit = True
+    return conn
+
+def get_db_tx():
+    """트랜잭션 연결을 반환한다. (autocommit=False, Large Object 전용)"""
+    conn = psycopg2.connect(DATABASE_URL)
+    conn.autocommit = False
     return conn
 
 
@@ -315,12 +321,24 @@ def init_db():
         WHERE created_at < NOW() - INTERVAL '24 hours'
     """)
     old_oids = [r[0] for r in cur.fetchall()]
-    for oid in old_oids:
+    cur.execute("DELETE FROM upload_sessions WHERE created_at < NOW() - INTERVAL '24 hours'")
+    conn.commit()
+    # LO는 별도 트랜잭션 연결로 삭제
+    if old_oids:
         try:
-            cur.execute("SELECT lo_unlink(%s)", (oid,))
+            lo_conn = get_db_tx()
+            lo_cur = lo_conn.cursor()
+            for oid in old_oids:
+                try:
+                    lobj = lo_conn.lobject(oid, "n")
+                    lobj.unlink()
+                except Exception:
+                    pass
+            lo_conn.commit()
+            lo_cur.close()
+            lo_conn.close()
         except Exception:
             pass
-    cur.execute("DELETE FROM upload_sessions WHERE created_at < NOW() - INTERVAL '24 hours'")
     # 이전 방식 임시 테이블도 정리
     cur.execute("""
         CREATE TABLE IF NOT EXISTS download_chunks (
@@ -1380,7 +1398,8 @@ def upload_chunk():
     if len(chunk_data) > 20 * 1024 * 1024:
         return jsonify({"ok": False, "msg": "청크 크기는 20MB 이하여야 합니다."}), 400
 
-    conn = get_db()
+    # Large Object는 반드시 autocommit=False 트랜잭션 안에서만 동작
+    conn = get_db_tx()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
@@ -1393,10 +1412,10 @@ def upload_chunk():
 
             # 기존 세션 있으면 정리
             cur.execute("SELECT lo_oid FROM upload_sessions WHERE upload_id = %s", (upload_id,))
-            old = cur.fetchone()
-            if old:
+            existing = cur.fetchone()
+            if existing:
                 try:
-                    old_lo = conn.lobject(old["lo_oid"], "n")
+                    old_lo = conn.lobject(existing["lo_oid"], "n")
                     old_lo.unlink()
                 except Exception:
                     pass
@@ -1411,6 +1430,7 @@ def upload_chunk():
             cur.execute("SELECT lo_oid, received_chunks, filesize FROM upload_sessions WHERE upload_id = %s", (upload_id,))
             session = cur.fetchone()
             if not session:
+                conn.rollback()
                 cur.close()
                 conn.close()
                 return jsonify({"ok": False, "msg": "세션을 찾을 수 없습니다. 처음부터 다시 시도하세요."}), 400
@@ -1439,6 +1459,8 @@ def upload_chunk():
             conn.close()
         except Exception:
             pass
+        import traceback
+        print(f"[upload_chunk] 오류: {traceback.format_exc()}")
         return jsonify({"ok": False, "msg": f"청크 저장 오류: {str(e)}"}), 500
 
 
@@ -1478,18 +1500,19 @@ def finalize_upload():
     if not mime_type:
         mime_type = "application/octet-stream"
 
-    conn = get_db()
+    # Large Object 트랜잭션 필요
+    conn = get_db_tx()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT lo_oid, received_chunks, filesize FROM upload_sessions WHERE upload_id = %s", (upload_id,))
         session = cur.fetchone()
 
         if not session:
-            cur.close(); conn.close()
+            conn.rollback(); cur.close(); conn.close()
             return jsonify({"ok": False, "msg": "업로드 세션을 찾을 수 없습니다."}), 400
 
         if session["received_chunks"] < total_chunks:
-            cur.close(); conn.close()
+            conn.rollback(); cur.close(); conn.close()
             return jsonify({"ok": False, "msg": f"청크가 부족합니다. ({session['received_chunks']}/{total_chunks})"}), 400
 
         filesize = session["filesize"]
@@ -1519,6 +1542,8 @@ def finalize_upload():
         except Exception: pass
         try: conn.close()
         except Exception: pass
+        import traceback
+        print(f"[finalize_upload] 오류: {traceback.format_exc()}")
         return jsonify({"ok": False, "msg": f"파이널라이즈 오류: {str(e)}"}), 500
 
 
@@ -1549,18 +1574,23 @@ def download_file(file_id):
     READ_CHUNK = 64 * 1024 * 1024  # 64MB씩 스트리밍
 
     if lo_oid:
-        # v160: Large Object 스트리밍
+        # v160: Large Object 스트리밍 (트랜잭션 커넥션 필요)
+        conn.close()  # 메타 조회용 autocommit 연결 닫기
+        lo_conn = get_db_tx()  # LO 전용 트랜잭션 연결
+
         def generate_lo():
             try:
-                lobj = conn.lobject(lo_oid, "rb")
+                lobj = lo_conn.lobject(lo_oid, "rb")
                 while True:
                     chunk = lobj.read(READ_CHUNK)
                     if not chunk:
                         break
                     yield bytes(chunk)
                 lobj.close()
+                lo_conn.commit()
             finally:
-                conn.close()
+                try: lo_conn.close()
+                except Exception: pass
 
         return Response(
             stream_with_context(generate_lo()),
@@ -1619,12 +1649,12 @@ def delete_download(file_id):
     if user["user_id"] != ADMIN_ID:
         return jsonify({"ok": False, "msg": "관리자만 삭제할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
 
-    conn = get_db()
+    conn = get_db_tx()  # LO unlink는 트랜잭션 필요
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT id, lo_oid FROM downloads WHERE id = %s", (file_id,))
     row = cur.fetchone()
     if not row:
-        cur.close(); conn.close()
+        conn.rollback(); cur.close(); conn.close()
         return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
 
     # Large Object 삭제
