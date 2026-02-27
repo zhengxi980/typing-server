@@ -847,6 +847,25 @@ def get_boards():
 # ============================================================
 # API: 서버 상태 확인
 # ============================================================
+# ── SEO: robots.txt / sitemap.xml ──
+@app.route("/robots.txt", methods=["GET"])
+def robots_txt():
+    txt = "User-agent: *\nAllow: /\nSitemap: https://www.xixityping.com/sitemap.xml\n"
+    return txt, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap_xml():
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.xixityping.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>"""
+    return xml, 200, {"Content-Type": "application/xml; charset=utf-8"}
+
+
 @app.route("/", methods=["GET"])
 def index():
     return send_from_directory("static", "index.html")
