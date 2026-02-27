@@ -44,7 +44,7 @@ ALLOWED_ORIGINS = [
 CORS(app, origins=ALLOWED_ORIGINS)
 
 # 최대 요청 크기: 청크 단위 업로드를 위해 8MB로 제한 (청크당 최대 4MB)
-app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 24 * 1024 * 1024  # 16MB 청크 + 오버헤드
 
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -774,12 +774,20 @@ def submit_ranking():
     conn = get_db()
     cur = conn.cursor()
 
-    # v143: 중복 방지 — (nickname, created_at)이 동일한 기록이 이미 있으면 등록 안 함
+    # 중복 방지 — 60초 내에 동일한 (닉네임, 타자기, 보드, CPM, KPM, 정확도, 완료율, 총입력) 기록 차단
     cur.execute("""
         SELECT id FROM rankings
-        WHERE nickname = %s AND created_at = %s
+        WHERE nickname   = %s
+          AND typewriter = %s
+          AND board_key  = %s
+          AND cpm        = %s
+          AND kpm        = %s
+          AND ROUND(acc::numeric, 2) = ROUND(%s::numeric, 2)
+          AND ROUND(completion::numeric, 2) = ROUND(%s::numeric, 2)
+          AND input_chars = %s
+          AND created_ts >= %s - 60
         LIMIT 1
-    """, (user["nickname"], now))
+    """, (user["nickname"], typewriter, board_key, cpm, kpm, acc, completion, input_chars, ts))
     if cur.fetchone():
         cur.close()
         conn.close()
@@ -867,6 +875,40 @@ def delete_board_rankings(board_key):
 
 
 # ============================================================
+# API: 기존 중복 랭킹 일괄 정리 (관리자 전용, 1회성)
+# ============================================================
+@app.route("/api/rankings/dedup", methods=["POST"])
+def dedup_rankings():
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 실행할 수 있습니다."}), 403
+
+    conn = get_db()
+    cur = conn.cursor()
+    # 동일한 (nickname, typewriter, board_key, cpm, kpm, acc, completion, input_chars) 묶음 중
+    # created_ts가 가장 작은(가장 오래된) 첫 기록만 남기고 나머지 삭제
+    cur.execute("""
+        DELETE FROM rankings
+        WHERE id NOT IN (
+            SELECT DISTINCT ON (nickname, typewriter, board_key, cpm, kpm,
+                                ROUND(acc::numeric,2), ROUND(completion::numeric,2), input_chars)
+                   id
+            FROM rankings
+            ORDER BY nickname, typewriter, board_key, cpm, kpm,
+                     ROUND(acc::numeric,2), ROUND(completion::numeric,2), input_chars,
+                     created_ts ASC
+        )
+    """)
+    deleted = cur.rowcount
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "deleted": deleted, "msg": f"{deleted}개의 중복 기록이 삭제되었습니다."})
+
+
+# ============================================================
 # API: 보드 목록 (랭킹 탭 드롭다운용)
 # ============================================================
 @app.route("/api/boards", methods=["GET"])
@@ -926,6 +968,7 @@ def ping():
 # ============================================================
 @app.route("/api/texts", methods=["GET"])
 def get_texts():
+    import hashlib, json as _json
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT id, title, content, language FROM texts ORDER BY language, id")
@@ -940,7 +983,18 @@ def get_texts():
         if lang not in lang_set:
             lang_set.add(lang)
             languages.append(lang)
-    return jsonify({"ok": True, "texts": [dict(r) for r in rows], "languages": languages})
+    texts_list = [dict(r) for r in rows]
+    payload = {"ok": True, "texts": texts_list, "languages": languages}
+
+    # ETag: 텍스트 목록의 해시 → 변경 없으면 304 반환
+    etag = hashlib.md5(_json.dumps(texts_list, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    if request.headers.get("If-None-Match") == etag:
+        return "", 304
+
+    resp = jsonify(payload)
+    resp.headers["ETag"] = etag
+    resp.headers["Cache-Control"] = "no-cache"  # 매번 ETag 검증
+    return resp
 
 
 # ============================================================
@@ -1285,9 +1339,9 @@ def upload_chunk():
 
     chunk_data = request.files["chunk"].read()
 
-    # 단일 청크 최대 6MB (클라이언트는 4MB 사용)
-    if len(chunk_data) > 6 * 1024 * 1024:
-        return jsonify({"ok": False, "msg": "청크 크기는 6MB 이하여야 합니다."}), 400
+    # 단일 청크 최대 20MB (클라이언트는 16MB 사용)
+    if len(chunk_data) > 20 * 1024 * 1024:
+        return jsonify({"ok": False, "msg": "청크 크기는 20MB 이하여야 합니다."}), 400
 
     conn = get_db()
     cur = conn.cursor()
@@ -1303,7 +1357,63 @@ def upload_chunk():
 
 
 # ============================================================
-# API: 청크 업로드 — 파이널라이즈 (조합 후 저장)
+# 비동기 파이널라이즈 작업 상태 저장소 (메모리)
+# ============================================================
+_finalize_jobs = {}  # job_id -> {"status": "pending"|"done"|"error", "id": int, "msg": str}
+_finalize_lock = threading.Lock()
+
+def _do_finalize_bg(job_id, upload_id, filename, total_chunks, version, description, user_id, mime_type, filesize):
+    """백그라운드 스레드에서 청크 조합 수행 — HTTP 타임아웃 완전 우회"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        # PL/pgSQL 루프로 청크를 순차 이어붙이기 (hex 변환 없이 순수 bytea || 연산)
+        # string_agg + hex encode/decode 방식은 수 GB 파일에서 메모리 폭발 → 루프 방식 사용
+        cur.execute("""
+            DO $$
+            DECLARE
+                v_data BYTEA := ''::BYTEA;
+                rec RECORD;
+            BEGIN
+                FOR rec IN
+                    SELECT data FROM download_chunks
+                    WHERE upload_id = %s
+                    ORDER BY chunk_index
+                LOOP
+                    v_data := v_data || rec.data;
+                END LOOP;
+
+                INSERT INTO downloads (filename, filesize, mime_type, version, description, data, uploaded_by)
+                VALUES (%s, %s, %s, %s, %s, v_data, %s);
+            END $$;
+        """, (upload_id, filename, filesize, mime_type, version, description, user_id))
+
+        # 새로 삽입된 ID 가져오기
+        cur.execute("SELECT id FROM downloads WHERE filename = %s AND uploaded_by = %s ORDER BY id DESC LIMIT 1",
+                    (filename, user_id))
+        row = cur.fetchone()
+        new_id = row[0] if row else None
+
+        # 임시 청크 삭제
+        cur.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        with _finalize_lock:
+            _finalize_jobs[job_id] = {"status": "done", "id": new_id, "msg": "업로드 완료."}
+    except Exception as e:
+        with _finalize_lock:
+            _finalize_jobs[job_id] = {"status": "error", "msg": str(e)}
+        try:
+            conn.rollback()
+        except:
+            pass
+
+
+# ============================================================
+# API: 청크 업로드 — 파이널라이즈 시작 (즉시 반환, 백그라운드 조합)
 # ============================================================
 @app.route("/api/downloads/finalize", methods=["POST"])
 def finalize_upload():
@@ -1343,7 +1453,7 @@ def finalize_upload():
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    # 청크 개수 확인
+    # 청크 개수 및 전체 크기 확인
     cur.execute("SELECT COUNT(*) as cnt, COALESCE(SUM(length(data)), 0) as total_size FROM download_chunks WHERE upload_id = %s", (upload_id,))
     row = cur.fetchone()
     if not row or row["cnt"] < total_chunks:
@@ -1351,34 +1461,52 @@ def finalize_upload():
         return jsonify({"ok": False, "msg": f"청크가 부족합니다. ({row['cnt'] if row else 0}/{total_chunks})"}), 400
 
     filesize = row["total_size"]
+    cur.close(); conn.close()
 
     # 전체 파일 크기 제한: 5GB
     if filesize > 5 * 1024 * 1024 * 1024:
-        cur.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
-        cur.close(); conn.close()
+        conn2 = get_db(); c2 = conn2.cursor()
+        c2.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
+        conn2.commit(); c2.close(); conn2.close()
         return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
 
-    # ★ 핵심: Python RAM을 전혀 사용하지 않고 PostgreSQL 내부에서 직접 조합 후 저장
-    # decode(string_agg(encode(..., 'hex'), '' ORDER BY chunk_index), 'hex') 방식으로
-    # 모든 청크를 DB 엔진 안에서 이어붙여 downloads 테이블에 바로 INSERT
-    cur2 = conn.cursor()
-    cur2.execute("""
-        INSERT INTO downloads (filename, filesize, mime_type, version, description, data, uploaded_by)
-        SELECT %s, %s, %s, %s, %s,
-               decode(string_agg(encode(data, 'hex'), '' ORDER BY chunk_index), 'hex'),
-               %s
-        FROM download_chunks
-        WHERE upload_id = %s
-        RETURNING id
-    """, (filename, filesize, mime_type, version, description, user["user_id"], upload_id))
-    new_id = cur2.fetchone()[0]
+    # 백그라운드 스레드에서 조합 시작 — HTTP 즉시 반환 (타임아웃 우회)
+    job_id = f"fj_{upload_id}"
+    with _finalize_lock:
+        _finalize_jobs[job_id] = {"status": "pending", "id": None, "msg": ""}
 
-    # 임시 청크 삭제
-    cur2.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
-    cur2.close()
-    cur.close()
-    conn.close()
-    return jsonify({"ok": True, "id": new_id, "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
+    t = threading.Thread(
+        target=_do_finalize_bg,
+        args=(job_id, upload_id, filename, total_chunks, version, description,
+              user["user_id"], mime_type, filesize),
+        daemon=True
+    )
+    t.start()
+
+    return jsonify({"ok": True, "job_id": job_id, "status": "pending", "msg": "조합 시작됨"})
+
+
+
+# ============================================================
+# API: 파이널라이즈 상태 폴링
+# ============================================================
+@app.route("/api/downloads/finalize/status/<job_id>", methods=["GET"])
+def finalize_status(job_id):
+    with _finalize_lock:
+        job = _finalize_jobs.get(job_id)
+    if not job:
+        return jsonify({"ok": False, "status": "not_found"}), 404
+    if job["status"] == "done":
+        # 완료 후 메모리에서 제거
+        with _finalize_lock:
+            _finalize_jobs.pop(job_id, None)
+        return jsonify({"ok": True, "status": "done", "id": job["id"], "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
+    elif job["status"] == "error":
+        with _finalize_lock:
+            _finalize_jobs.pop(job_id, None)
+        return jsonify({"ok": False, "status": "error", "msg": job["msg"]})
+    else:
+        return jsonify({"ok": True, "status": "pending"})
 
 
 # ============================================================

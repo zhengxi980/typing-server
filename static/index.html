@@ -219,6 +219,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <button class="btn-secondary" onclick="rankAdminSelectAll(false)" style="padding:4px 10px;font-size:.8rem">전체 해제</button>
 <button class="btn-danger" onclick="rankAdminDeleteSelected()" style="padding:4px 10px;font-size:.8rem">선택 삭제</button>
 <button class="btn-danger" onclick="rankAdminDeleteBoard()" style="padding:4px 10px;font-size:.8rem">현재 보드 전체 삭제</button>
+<button class="btn-secondary" onclick="rankAdminDedup()" style="padding:4px 10px;font-size:.8rem;background:#f1f5f9">🧹 중복 기록 정리</button>
 <span id="rankAdminSelCount" style="font-size:.8rem;color:#92400e"></span>
 </div></div></div>
 
@@ -895,13 +896,11 @@ async function uploadDownloadFile(){
   if(!fileInput.files||!fileInput.files[0]){msgEl.textContent='파일을 선택해 주세요.';return;}
   const file=fileInput.files[0];
 
-  // 입력 즉시 초기화 (다음 파일 선택 가능)
   fileInput.value='';
   document.getElementById('dlVersionInput').value='';
   document.getElementById('dlDescInput').value='';
   msgEl.textContent='';
 
-  // 업로드 잡 카드 생성
   const jobId='job_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
   const uploadId='ul_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
   const queue=document.getElementById('dlUploadQueue');
@@ -932,36 +931,35 @@ async function uploadDownloadFile(){
   const speedEl=document.getElementById(jobId+'_speed');
 
   const setStatus=(msg,color='#64748b')=>{statusEl.textContent=msg;statusEl.style.color=color;};
+  const setErr=(msg)=>{setStatus('❌ '+msg,'#dc2626');bar.style.background='#dc2626';progEl.style.color='#dc2626';speedEl.textContent='';};
 
   // ── 업로드 설정 ──
-  const CHUNK_SIZE=4*1024*1024;       // 4MB 청크
-  const CONCURRENCY=4;                 // 4개 동시 병렬 업로드
+  const CHUNK_SIZE=16*1024*1024;   // 16MB 청크 (대용량 최적화)
+  const CONCURRENCY=6;              // 6개 동시 병렬
   const MAX_RETRY=5;
   const totalChunks=Math.ceil(file.size/CHUNK_SIZE);
 
-  let completedChunks=0;
   let uploadedBytes=0;
   const startTime=Date.now();
 
   const fmtSpeed=(bps)=>{
-    if(bps<1024)return bps.toFixed(0)+'B/s';
     if(bps<1024*1024)return (bps/1024).toFixed(1)+'KB/s';
     return (bps/(1024*1024)).toFixed(1)+'MB/s';
   };
   const fmtEta=(sec)=>{
-    if(!isFinite(sec)||sec<0)return '';
-    if(sec<60)return `(남은시간 ${Math.ceil(sec)}초)`;
-    return `(남은시간 ${Math.floor(sec/60)}분 ${Math.ceil(sec%60)}초)`;
+    if(!isFinite(sec)||sec<=0)return '';
+    if(sec<60)return `~${Math.ceil(sec)}초`;
+    return `~${Math.floor(sec/60)}분 ${Math.ceil(sec%60)}초`;
   };
-
-  const updateProgress=()=>{
+  const updateProgress=(extra=0)=>{
+    const bytes=Math.min(uploadedBytes+extra,file.size);
     const elapsed=(Date.now()-startTime)/1000||0.001;
-    const pct=Math.round(uploadedBytes/file.size*90);
+    const pct=Math.min(Math.round(bytes/file.size*90),90);
     bar.style.width=pct+'%';
-    const speed=uploadedBytes/elapsed;
-    const remaining=(file.size-uploadedBytes)/(speed||1);
-    progEl.textContent=`${fmtBytes(uploadedBytes)} / ${fmtBytes(file.size)} (${pct}%)`;
-    speedEl.textContent=speed>0?fmtSpeed(speed)+' '+fmtEta(remaining):'';
+    const speed=bytes/elapsed;
+    const remaining=(file.size-bytes)/(speed||1);
+    progEl.textContent=`${fmtBytes(bytes)} / ${fmtBytes(file.size)} (${pct}%)`;
+    speedEl.textContent=speed>1024?fmtSpeed(speed)+' '+fmtEta(remaining):'';
   };
 
   const sendChunk=(index)=>new Promise((resolve,reject)=>{
@@ -975,82 +973,98 @@ async function uploadDownloadFile(){
     const xhr=new XMLHttpRequest();
     xhr.open('POST','/api/downloads/chunk');
     if(currentUser?.token)xhr.setRequestHeader('Authorization','Bearer '+currentUser.token);
-    xhr.upload.onprogress=e=>{
-      // 각 청크의 진행률을 전체에 반영 (근사값)
-      if(e.lengthComputable){uploadedBytes=Math.min(uploadedBytes+e.loaded,file.size);updateProgress();}
-    };
+    xhr.upload.onprogress=e=>{if(e.lengthComputable)updateProgress(e.loaded);};
     xhr.onload=()=>{
       if(xhr.status===200){
-        try{const r=JSON.parse(xhr.responseText);if(r.ok){uploadedBytes=Math.min(start+chunkBytes,file.size);updateProgress();resolve();}else reject(new Error(r.msg||'서버 오류'));}
-        catch{reject(new Error('응답 파싱 오류'));}
-      } else {
-        reject(new Error(`HTTP ${xhr.status}`));
-      }
+        try{
+          const r=JSON.parse(xhr.responseText);
+          if(r.ok){uploadedBytes=Math.min(uploadedBytes+chunkBytes,file.size);updateProgress();resolve();}
+          else reject(new Error(r.msg||'서버 오류'));
+        }catch{reject(new Error('응답 파싱 오류'));}
+      }else{reject(new Error(`HTTP ${xhr.status}`));}
     };
     xhr.onerror=()=>reject(new Error('네트워크 오류'));
     xhr.ontimeout=()=>reject(new Error('타임아웃'));
-    xhr.timeout=180000;
+    xhr.timeout=300000; // 5분 (16MB 청크)
     xhr.send(fd);
   });
 
-  const sendChunkWithRetry=async(index)=>{
-    let lastErr=null;
+  const sendWithRetry=async(index)=>{
     for(let retry=0;retry<MAX_RETRY;retry++){
       try{await sendChunk(index);return;}
       catch(e){
-        lastErr=e;
-        if(retry<MAX_RETRY-1){
-          const wait=1000*Math.pow(2,retry);
-          setStatus(`청크 ${index+1} 재시도 (${retry+1}회)...`,'#f59e0b');
-          await new Promise(r=>setTimeout(r,wait));
-        }
+        if(retry===MAX_RETRY-1)throw e;
+        const wait=1000*Math.pow(2,retry);
+        setStatus(`청크 ${index+1} 재시도 (${retry+1}회)...`,'#f59e0b');
+        await new Promise(r=>setTimeout(r,wait));
       }
     }
-    throw lastErr;
   };
 
   try{
-    // 4개씩 병렬로 청크 전송
+    // 6개씩 병렬 전송
     setStatus(`업로드 중 (${CONCURRENCY}개 병렬)`,'#2563eb');
     for(let i=0;i<totalChunks;i+=CONCURRENCY){
       const batch=[];
-      for(let j=i;j<Math.min(i+CONCURRENCY,totalChunks);j++){
-        batch.push(sendChunkWithRetry(j));
-      }
+      for(let j=i;j<Math.min(i+CONCURRENCY,totalChunks);j++)batch.push(sendWithRetry(j));
       await Promise.all(batch);
-      completedChunks+=batch.length;
-      setStatus(`업로드 중... ${completedChunks}/${totalChunks} 청크`,'#2563eb');
+      setStatus(`청크 ${Math.min(i+CONCURRENCY,totalChunks)}/${totalChunks} 완료`,'#2563eb');
     }
 
-    // 파이널라이즈
-    setStatus('조합 중...','#64748b');
-    bar.style.width='95%';
-    progEl.textContent='서버에서 파일 조합 중...';
+    // 파이널라이즈 요청 (즉시 반환됨)
+    setStatus('서버에서 조합 중...','#64748b');
+    bar.style.width='93%';
+    progEl.textContent='서버에서 파일 조합 중... (파일 크기에 따라 수 분 소요)';
     speedEl.textContent='';
 
-    const r=await fetch('/api/downloads/finalize',{
+    const fRes=await fetch('/api/downloads/finalize',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+(currentUser?.token||'')},
       body:JSON.stringify({upload_id:uploadId,filename:file.name,total_chunks:totalChunks,version,description:desc})
     });
-    const rj=await r.json();
-    if(!rj?.ok) throw new Error(rj?.msg||'파이널라이즈 실패');
+    const fJson=await fRes.json();
+    if(!fJson?.ok)throw new Error(fJson?.msg||'파이널라이즈 요청 실패');
 
-    const totalElapsed=(Date.now()-startTime)/1000;
-    const avgSpeed=file.size/totalElapsed;
-    bar.style.width='100%';
-    bar.style.background='#16a34a';
-    progEl.textContent=fmtBytes(file.size)+' — 완료';
-    speedEl.textContent='평균 '+fmtSpeed(avgSpeed);
-    setStatus('✅ 완료','#16a34a');
-    setTimeout(()=>{card.style.transition='opacity .5s';card.style.opacity='0';setTimeout(()=>card.remove(),500);},4000);
-    loadDownloadList();
-  } catch(e){
-    setStatus('❌ '+e.message,'#dc2626');
-    bar.style.background='#dc2626';
-    progEl.style.color='#dc2626';
-    speedEl.textContent='';
-  }
+    const jobServerId=fJson.job_id;
+
+    // 폴링으로 완료 대기 (2초 간격, 최대 30분)
+    let dots=0;
+    const maxPolls=900;
+    for(let p=0;p<maxPolls;p++){
+      await new Promise(r=>setTimeout(r,2000));
+      dots=(dots+1)%4;
+      progEl.textContent='서버에서 파일 조합 중'+'.'.repeat(dots+1);
+      // 진행바 애니메이션 (93~98% 사이 왕복)
+      const pulse=93+2.5*(1+Math.sin(p*0.3));
+      bar.style.width=pulse+'%';
+
+      let pollJson;
+      try{
+        const pollRes=await fetch(`/api/downloads/finalize/status/${jobServerId}`,{
+          headers:{'Authorization':'Bearer '+(currentUser?.token||'')}
+        });
+        pollJson=await pollRes.json();
+      }catch{continue;}
+
+      if(pollJson?.status==='done'){
+        const totalElapsed=(Date.now()-startTime)/1000;
+        const avgSpeed=file.size/totalElapsed;
+        bar.style.width='100%';
+        bar.style.background='#16a34a';
+        progEl.textContent=fmtBytes(file.size)+' — 완료';
+        speedEl.textContent='평균 '+fmtSpeed(avgSpeed);
+        setStatus('✅ 완료','#16a34a');
+        setTimeout(()=>{card.style.transition='opacity .5s';card.style.opacity='0';setTimeout(()=>card.remove(),500);},4000);
+        loadDownloadList();
+        return;
+      }
+      if(pollJson?.status==='error'){
+        throw new Error(pollJson.msg||'서버 조합 오류');
+      }
+    }
+    throw new Error('조합 타임아웃 (30분 초과)');
+
+  }catch(e){setErr(e.message);}
 }
 
 async function deleteDownloadFile(id){
@@ -1104,7 +1118,31 @@ function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=documen
 function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">'+wt('select_text')+'</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+wt('unit_char')+')';s.appendChild(o);});if(pv)s.value=pv;}
 document.getElementById('langSelect').addEventListener('change',filterTexts);
 document.getElementById('textSelect').addEventListener('change',function(){if(this.value)startPractice();});
-async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
+async function loadTexts(){
+  try{
+    const cached=JSON.parse(localStorage.getItem('cachedTexts')||'null');
+    const etag=localStorage.getItem('textsEtag')||'';
+    const headers={'Content-Type':'application/json'};
+    if(currentUser?.token)headers['Authorization']='Bearer '+currentUser.token;
+    if(etag)headers['If-None-Match']=etag;
+    const res=await fetch(API+'/api/texts',{headers});
+    if(res.status===304){
+      // 변경 없음 — 이미 로딩된 캐시 그대로 사용 (재렌더링 불필요)
+      return;
+    }
+    if(res.ok){
+      const r=await res.json();
+      if(r?.ok){
+        populateTextSelect(r.texts,r.languages);
+        try{
+          localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));
+          const newEtag=res.headers.get('ETag');
+          if(newEtag)localStorage.setItem('textsEtag',newEtag);
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+}
 
 /* Settings */
 function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;sfxEnabled=(s.sfxEnabled==='on');document.getElementById('settingSfxEnabled').value=sfxEnabled?'on':'off';sfxStyle=s.sfxStyle||'typewriter';document.getElementById('settingSfxStyle').value=sfxStyle;sfxVolume=s.sfxVolume!=null?parseFloat(s.sfxVolume)/100:0.5;document.getElementById('settingSfxVolume').value=Math.round(sfxVolume*100);document.getElementById('sfxVolLabel').textContent=Math.round(sfxVolume*100)+'%';}catch(e){}applyFontSettings();}
@@ -1316,6 +1354,7 @@ function rankAdminSelectAll(on){document.querySelectorAll('.rank-chk').forEach(c
 function rankAdminUpdateCount(){const n=document.querySelectorAll('.rank-chk:checked').length;document.getElementById('rankAdminSelCount').textContent=n>0?n+wt('n_selected'):'';}
 async function rankAdminDeleteSelected(){if(!isAdmin())return;const chks=[...document.querySelectorAll('.rank-chk:checked')];if(chks.length===0){alert(wt('msg_no_sel_rank'));return;}if(!confirm(chks.length+wt('msg_confirm_del_ranks')))return;let ok=0;for(const c of chks){const id=c.dataset.id;if(!id)continue;const r=await api('/api/rankings/'+id,'DELETE');if(r?.ok)ok++;}alert(ok+wt('msg_del_rank_done'));loadRankings();}
 async function rankAdminDeleteBoard(){if(!isAdmin())return;const bk=document.getElementById('rankBoardSelect').value;if(!bk){alert(wt('msg_select_board'));return;}const bn=document.getElementById('rankBoardSelect').selectedOptions[0]?.textContent||bk;if(!confirm('"'+bn+'" '+wt('msg_confirm_del_board')))return;const r=await api('/api/rankings/board/'+encodeURIComponent(bk),'DELETE');if(r?.ok){alert(wt('msg_del_done'));loadRankings();}else{alert(serverMsg(r,'msg_fail'));}}
+async function rankAdminDedup(){if(!isAdmin())return;if(!confirm('모든 중복 기록(닉네임·타자기·텍스트·점수가 동일한 기록)을 정리합니다. 가장 오래된 첫 기록만 남깁니다. 계속할까요?'))return;const r=await api('/api/rankings/dedup','POST');if(r?.ok){alert(r.msg||'완료');loadRankings();}else{alert(r?.msg||'오류');}}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 /* Global hotkeys */
@@ -1340,7 +1379,16 @@ console.log('%c무단 복제, 변조, 재배포를 금지합니다. © 2024-2026
     // 최초 접속 → 모달 유지, 기본값 없음 (선택 강제)
     _wlang='ko'; // 모달 텍스트는 한/영 병기이므로 임시값
   }
-  document.getElementById('settingUILang').value=_wlang;applyWebLang();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
+  document.getElementById('settingUILang').value=_wlang;applyWebLang();preloadAllSfx();
+  // ① 캐시 즉시 표시 (로딩 대기 없음)
+  try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}
+  updateAuthUI();
+  // ② 랭킹은 await (순위표 표시 필요), 텍스트는 백그라운드 ETag 검증 (변경 없으면 즉시 완료)
+  const rp=loadRankings();
+  loadTexts(); // 백그라운드 — await 안 함, 캐시 이미 표시됨
+  if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}
+  await rp;})();
 </script>
 </body>
 </html>
