@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>禧禧打字網 - 免費線上打字練習 | XixiTyping</title>
+<!-- ── 저작권 보호 ── -->
+<meta name="author" content="XixiTyping (xixityping.com)">
+<meta name="copyright" content="© 2024-2026 XixiTyping. All rights reserved.">
+<meta name="google-site-verification" content="6CyPSuXNWrQkillA924a9c-vmaCvsBsMmS6nj250Tg0">
+<meta name="robots" content="index, follow">
+<meta name="description" content="免費線上打字練習軟體，支援中文/韓語/英語/日語，含排行榜與PC版。Free online typing practice with rankings. 무료 온라인 타자 연습.">
+<meta name="keywords" content="typing practice, 打字練習, 타자연습, タイピング練習, XixiTyping, 禧禧打字, online typing, 線上打字">
+<meta property="og:title" content="禧禧打字網 - 免費線上打字練習 | XixiTyping">
+<meta property="og:description" content="免費線上多語言打字練習，支援中文/韓語/英語/日語，含排行榜功能。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.xixityping.com/">
+<link rel="canonical" href="https://www.xixityping.com">
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Iansui&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:'Iansui','芫荽','Segoe UI','Malgun Gothic','맑은 고딕',sans-serif;background:#f3f4f6;color:#1f2937;min-height:100vh;display:flex;flex-direction:column}
+a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}
+button{cursor:pointer;border:none;border-radius:6px;padding:8px 18px;font-size:.9rem;font-weight:600;transition:opacity .15s}button:hover{opacity:.85}
+input,select,textarea{border:1px solid #d1d5db;border-radius:6px;padding:8px 12px;font-size:.9rem;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:#2563eb}
+.header{background:#1e293b;color:#f8fafc;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.5px;cursor:pointer;user-select:none}.header h1:hover{opacity:.8}.header h1 span{color:#60a5fa}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.header-right button{background:#334155;color:#e2e8f0;padding:6px 14px;font-size:.8rem}
+.header-right .btn-accent{background:#2563eb;color:#fff}.header-right .user-info{color:#94a3b8;font-size:.85rem}
+.tabs{display:flex;background:#e2e8f0;padding:0;border-bottom:2px solid #cbd5e1}
+.tab-btn{background:transparent;color:#475569;padding:10px 24px;border-radius:0;font-size:.9rem;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab-btn.active{background:#fff;color:#1e293b;border-bottom-color:#2563eb;font-weight:700}
+.main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:20px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+/* FIX#3: select row + button row always separate */
+.practice-select-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;justify-content:center}
+.practice-select-row select{min-width:120px}.practice-select-row #textSelect{min-width:200px}
+.practice-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+.btn-start{background:#2563eb;color:#fff}.btn-reset{background:#64748b;color:#fff}.btn-stop{background:#dc2626;color:#fff}
+.btn-stop:disabled{opacity:.4;cursor:not-allowed}
+.stats-bar{display:flex;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:.85rem;justify-content:center;position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.stat-item{display:flex;align-items:center;gap:4px}.stat-label{color:#64748b;font-weight:500}.stat-value{color:#1e293b;font-weight:700;font-variant-numeric:tabular-nums}
+.pause-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;justify-content:center;align-items:center;font-size:1.4rem;color:#fff;font-weight:700}
+.pause-overlay.active{display:flex}
+.prep-area{background:#fef9c3;border:2px dashed #d97706;border-radius:8px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.prep-area .prep-label{color:#92400e;font-size:.9rem;font-weight:600;white-space:nowrap}
+.prep-area .prep-input{flex:1;border:1px dashed #d97706;background:#fffef5;border-radius:4px;padding:8px 12px;font-size:1.05rem;font-family:var(--pf)}
+.prep-area .prep-input:focus{border-color:#b45309;outline:none}
+:root{--pf:'Iansui','芫荽','D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace;--pfs:18px;--plh:2;--pls:0.5px;--ppad:10px 14px}
+.line-practice-wrapper{position:relative}.line-practice-area{margin-bottom:16px}.line-block{margin-bottom:2px;cursor:text}
+.line-original{background:#fffbeb;border:1px solid #e5e7eb;border-bottom:none;border-radius:6px 6px 0 0;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);white-space:nowrap;overflow:hidden;min-height:28px;color:#6b21a8}
+.line-original .ch{color:#6b21a8;transition:color .05s}.line-original .ch.correct{color:#16a34a}
+.line-original .ch.incorrect{color:#fff;background:#ef4444;border-radius:2px}.line-original .ch.current{border-bottom:2px solid #2563eb;color:#6b21a8}
+.line-original .ch.space-incorrect{background:#fca5a5;border-radius:2px}
+.line-block.completed .line-original{background:#d9f99d;border-color:#84cc16}
+.line-block.completed .line-input{background:#f0fdf4;border-color:#84cc16;color:#166534}
+.line-input{width:100%;display:block;border:2px dashed #d1d5db;border-radius:0 0 6px 6px;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);outline:none;transition:border-color .2s,background .2s;margin-bottom:6px;background:#fff}
+.line-input:focus{border-color:#2563eb;border-style:solid;background:#eff6ff}
+/* FIX#6: class-based activation instead of :disabled */
+.line-input.inactive-line{background:#f9fafb;color:#9ca3af;border-style:dashed}
+.line-input.active-line{border-color:#2563eb;border-style:solid;background:#eff6ff}
+.practice-msg{text-align:center;color:#64748b;padding:40px 0;font-size:1rem}
+.hotkey-hint{text-align:center;color:#94a3b8;font-size:.8rem;margin-top:8px}
+.settings-section{background:#fff;border-radius:8px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px}
+.settings-section h3{font-size:1rem;margin-bottom:12px;color:#1e293b}
+.settings-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.settings-row label{font-size:.9rem;color:#475569;min-width:120px;font-weight:500}
+.admin-text-list{max-height:500px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px}
+.admin-text-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:8px}
+.admin-text-item:last-child{border-bottom:none}.admin-text-item:hover{background:#f8fafc}
+.admin-text-info{flex:1;min-width:0}.admin-text-title{font-weight:600;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-text-meta{font-size:.75rem;color:#94a3b8}.admin-text-actions{display:flex;gap:6px;flex-shrink:0}
+.admin-text-actions button{padding:4px 10px;font-size:.75rem}
+.ranking-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.ranking-table-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto}
+.ranking-table{min-width:100%;width:max-content;border-collapse:collapse;font-size:.85rem}
+.ranking-table th{background:#f1f5f9;color:#475569;font-weight:600;padding:10px 12px;text-align:center;border-bottom:2px solid #e2e8f0;border-right:1px dotted #e2e8f0;white-space:nowrap}
+.ranking-table th:last-child{border-right:none}
+.ranking-table td{padding:8px 12px;border-bottom:1px solid #f1f5f9;border-right:1px dotted #e2e8f0;white-space:nowrap;text-align:right}
+.ranking-table td:last-child{border-right:none}
+.ranking-table tbody tr:hover{background:#f8fafc}
+.ranking-table td.rank-num{color:#2563eb;font-weight:700;text-align:center}
+.ranking-table td.rank-date{text-align:center}
+.ranking-table td.rank-left{text-align:left}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;min-width:340px;max-width:560px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.15rem;margin-bottom:18px;color:#1e293b}
+.modal-field{margin-bottom:14px}.modal-field label{display:block;font-size:.85rem;color:#475569;margin-bottom:4px;font-weight:500}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn-primary{background:#2563eb;color:#fff}.btn-secondary{background:#e2e8f0;color:#475569}.btn-danger{background:#dc2626;color:#fff}
+.modal-msg{color:#dc2626;font-size:.85rem;margin-top:8px;min-height:20px}.modal-msg.success{color:#16a34a}
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.result-card{background:#f8fafc;border-radius:8px;padding:14px;text-align:center}
+.result-card .r-label{font-size:.8rem;color:#64748b;margin-bottom:4px}
+.result-card .r-value{font-size:1.4rem;font-weight:700;color:#1e293b}.result-card .r-value.highlight{color:#2563eb}
+.footer{text-align:center;padding:16px;color:#94a3b8;font-size:.8rem;border-top:1px solid #e2e8f0}
+.scroll-btn{position:fixed;right:12px;z-index:50;width:40px;height:40px;border-radius:50%;background:#334155;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:.6;transition:opacity .2s}
+.scroll-btn:hover{opacity:1}
+.scroll-btn.up{bottom:68px}.scroll-btn.down{bottom:20px}
+.admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.admin-controls select{min-width:100px}
+.admin-count{font-size:.85rem;color:#475569;font-weight:500}
+/* FIX#4: pending-item stacked layout for comment input */
+.pending-item{display:flex;flex-direction:column;padding:10px 14px;border-bottom:1px solid #f1f5f9;gap:6px}
+.pending-item:last-child{border-bottom:none}.pending-item:hover{background:#f8fafc}
+/* FIX#5: notification banner */
+.notif-banner{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:.88rem;color:#92400e;position:relative}
+.notif-banner .notif-close{position:absolute;top:8px;right:12px;cursor:pointer;font-weight:700;color:#b45309;font-size:1rem;background:none;border:none;padding:0}
+.notif-banner .notif-title{font-weight:700;margin-bottom:2px}
+@media(max-width:600px){.header{padding:10px 14px}.main{padding:12px}.stats-bar{gap:8px;padding:8px 10px;font-size:.78rem}.tab-btn{padding:8px 14px;font-size:.8rem}.prep-area{flex-direction:column;gap:6px}}
+</style>
+</head>
+<body>
+<div class="header"><h1 onclick="location.reload()"><span>禧禧</span>打字網</h1>
+<div class="header-right"><span class="user-info" id="userInfo">로그인하지 않음</span>
+<button id="btnLogin" class="btn-accent" onclick="showLoginModal()">로그인</button>
+<button id="btnSignup" onclick="showSignupModal()">회원가입</button>
+<button id="btnLogout" style="display:none" onclick="doLogout()">로그아웃</button></div></div>
+
+<div class="tabs" id="tabBar">
+<button class="tab-btn active" data-tab="practice">연습</button>
+<button class="tab-btn" data-tab="settings">설정</button>
+<button class="tab-btn" data-tab="ranking">랭킹</button>
+<button class="tab-btn" data-tab="account">계정</button>
+<button class="tab-btn" data-tab="download">다운로드</button>
+<button class="tab-btn" data-tab="admin" id="tabAdmin" style="display:none">관리</button>
+</div>
+
+<div class="main">
+<!-- FIX#5: notification area at top -->
+<div id="notifArea"></div>
+
+<!-- Practice -->
+<div class="tab-panel active" id="panel-practice">
+<!-- FIX#3: selects and buttons on separate rows -->
+<div class="practice-select-row">
+<select id="langSelect"><option value="">전체</option></select>
+<select id="textSelect"><option value="">텍스트를 선택해 주세요</option></select>
+</div>
+<div class="practice-btn-row">
+<button class="btn-reset" onclick="doReset()">초기화 (F11)</button>
+<button class="btn-stop" disabled data-state="stop" onclick="if(practicing){stopPractice();}else if(this.dataset.state==='result'){openModal('resultsModal');}">연습 종료 (F12)</button>
+</div>
+<div class="stats-bar" id="statsBar" style="display:none">
+<div class="stat-item"><span class="stat-label">시간</span><span class="stat-value" id="statTime">0:00</span></div>
+<div class="stat-item"><span class="stat-label">CPM</span><span class="stat-value" id="statCpm">0</span></div>
+<div class="stat-item"><span class="stat-label">타수(KPM)</span><span class="stat-value" id="statKpm">0</span></div>
+<div class="stat-item"><span class="stat-label">정확도</span><span class="stat-value" id="statAcc">0%</span></div>
+<div class="stat-item"><span class="stat-label">진행률</span><span class="stat-value" id="statProgress">0%</span></div>
+<div class="stat-item"><span class="stat-label">입력글자</span><span class="stat-value" id="statChars">0</span></div>
+<div class="stat-item"><span class="stat-label">총타수</span><span class="stat-value" id="statKeys">0</span></div>
+<div class="stat-item" id="pauseStatus" style="display:none"><span class="stat-value" style="color:#dc2626">⏸ 일시정지</span></div>
+</div>
+<div id="practiceArea" style="display:none">
+<div class="prep-area" id="prepArea"><span class="prep-label">準備區：</span><input class="prep-input" id="prepInput" placeholder="在這裡調整輸入法，按 Enter/↓ 開始計時"></div>
+<div class="line-practice-wrapper"><div class="line-practice-area" id="linePracticeArea"></div></div>
+<div class="hotkey-hint">Enter/Space(행끝): 다음 행 | Tab/Shift+Tab/↑↓: 행 이동 | BackSpace(행앞): 이전 행 | ESC: 일시정지</div>
+</div>
+<div class="practice-msg" id="practiceMsg">위에서 텍스트를 선택하고 <strong>시작</strong>을 누르세요.</div>
+</div>
+
+<!-- Settings -->
+<div class="tab-panel" id="panel-settings">
+<div class="settings-section"><h3 id="uiLangLabel">UI 언어</h3>
+<div class="settings-row"><label>Language</label>
+<select id="settingUILang" onchange="setWebLang(this.value)"><option value="ko">한국어</option><option value="zh">中文</option><option value="en">English</option><option value="ja">日本語</option></select></div></div>
+<div class="settings-section"><h3>연습 단위</h3>
+<div class="settings-row"><label>표시 형식</label>
+<select id="settingUnitMode"><option value="line">행 단위 (줄마다 분할)</option><option value="paragraph">문단 단위 (원본 줄바꿈 유지)</option></select></div>
+<p style="font-size:.8rem;color:#94a3b8;margin-top:4px">※ '행 단위'는 긴 문단을 창 너비에 맞게 여러 줄로 분할합니다.</p></div>
+<div class="settings-section"><h3>폰트 크기</h3>
+<div class="settings-row"><label>원문/입력</label><input type="number" id="settingFontSize" value="18" min="12" max="40" step="1" style="width:80px"><span style="font-size:.85rem;color:#94a3b8">px</span></div></div>
+<div class="settings-section"><h3>줄 간격</h3>
+<div class="settings-row"><label>line-height</label><input type="number" id="settingLineHeight" value="2" min="1.2" max="3" step="0.1" style="width:80px"></div></div>
+<div class="settings-section"><h3>자간</h3>
+<div class="settings-row"><label>letter-spacing</label><input type="number" id="settingLetterSpacing" value="0.5" min="0" max="5" step="0.1" style="width:80px"><span style="font-size:.85rem;color:#94a3b8">px</span></div></div>
+<div class="settings-section"><h3>키 입력 효과음</h3>
+<div class="settings-row"><label>효과음</label>
+<select id="settingSfxEnabled"><option value="on">켜기</option><option value="off">끄기</option></select></div>
+<div class="settings-row"><label>효과음 종류</label>
+<select id="settingSfxStyle"><option value="typewriter">전통 타자기</option><option value="retro">레트로</option><option value="analog">아날로그</option><option value="mechanical">기계음</option><option value="soft">소프트</option></select></div>
+<div class="settings-row"><label>음량</label><input type="range" id="settingSfxVolume" min="0" max="100" value="50" style="width:160px"><span id="sfxVolLabel" style="font-size:.85rem;color:#94a3b8;min-width:35px">50%</span></div>
+</div>
+<div class="settings-section"><h3>더 많은 타자 연습 텍스트 신청</h3>
+<p style="font-size:.85rem;color:#64748b;margin-bottom:12px">새 텍스트를 등록하고 싶다면 .txt 파일을 선택해서 업로드하세요. 관리자 승인 후 등록됩니다.</p>
+<div id="textRequestLogin" style="display:none"><p style="color:#dc2626;font-size:.85rem">로그인 후 이용할 수 있습니다.</p></div>
+<div id="textRequestForm" style="display:none">
+<div class="settings-row"><label>텍스트 파일</label><div style="display:flex;align-items:center;gap:8px"><button type="button" class="btn-secondary" id="reqFileBtn" onclick="document.getElementById('reqTextFile').click()" style="padding:4px 12px;font-size:.85rem">파일 선택</button><span id="reqFileName" style="font-size:.85rem;color:#94a3b8">선택된 파일 없음</span><input type="file" id="reqTextFile" accept=".txt" style="display:none" onchange="document.getElementById('reqFileName').textContent=this.files[0]?this.files[0].name:wt('no_file_chosen')"></div></div>
+<div class="settings-row"><label>언어</label><select id="reqTextLang"><option value="한국어">한국어</option><option value="中文">중국어</option><option value="영어">영어</option><option value="日本語">일본어</option></select></div>
+<button class="btn-primary" onclick="submitTextRequest()" style="font-size:.85rem;padding:6px 14px">신청하기</button>
+<div class="modal-msg" id="reqTextMsg"></div>
+</div></div>
+<div class="settings-section" id="pendingRequestsSection" style="display:none">
+<h3>승인 대기 텍스트 목록</h3>
+<button class="btn-secondary" onclick="loadPendingRequests()" style="margin-bottom:10px;font-size:.85rem;padding:5px 12px">새로고침</button>
+<div id="pendingRequestsList" style="max-height:400px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px"><div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div></div>
+</div></div>
+
+<!-- Ranking -->
+<div class="tab-panel" id="panel-ranking">
+<div class="ranking-controls"><select id="rankBoardSelect"><option value="">전체</option></select>
+<button class="btn-primary" onclick="loadRankings()" style="padding:6px 14px;font-size:.85rem">새로고침</button></div>
+<div class="ranking-table-wrap"><table class="ranking-table">
+<thead><tr><th style="min-width:50px">순위</th><th>닉네임</th><th>타자기</th><th>텍스트</th><th>CPM</th><th>KPM</th><th>정확도</th><th>완료율</th><th>총 입력</th><th>기록일</th></tr></thead>
+<tbody id="rankBody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">로딩 중...</td></tr></tbody>
+</table></div>
+<div id="rankAdminPanel" style="display:none;margin-top:12px;padding:12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<strong style="font-size:.9rem">🔧 관리자 랭킹 편집</strong>
+<button class="btn-secondary" onclick="rankAdminSelectAll(true)" style="padding:4px 10px;font-size:.8rem">전체 선택</button>
+<button class="btn-secondary" onclick="rankAdminSelectAll(false)" style="padding:4px 10px;font-size:.8rem">전체 해제</button>
+<button class="btn-danger" onclick="rankAdminDeleteSelected()" style="padding:4px 10px;font-size:.8rem">선택 삭제</button>
+<button class="btn-danger" onclick="rankAdminDeleteBoard()" style="padding:4px 10px;font-size:.8rem">현재 보드 전체 삭제</button>
+<span id="rankAdminSelCount" style="font-size:.8rem;color:#92400e"></span>
+</div></div></div>
+
+<!-- Account -->
+<div class="tab-panel" id="panel-account">
+<div id="accountLoggedOut"><div class="practice-msg"><span id="acctLoginMsg">로그인하면 랭킹 등록 등의 기능을 사용할 수 있습니다.</span><br><br>
+<button class="btn-primary" id="acctBtnLogin" onclick="showLoginModal()">로그인</button> <button class="btn-secondary" id="acctBtnSignup" onclick="showSignupModal()">회원가입</button></div></div>
+<div id="accountLoggedIn" style="display:none"><div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e2e8f0">
+<h3 id="acctInfoTitle" style="margin-bottom:16px">계정 정보</h3>
+<p style="margin-bottom:8px"><strong>ID:</strong> <span id="acctId">-</span></p>
+<p style="margin-bottom:20px"><strong id="acctNickLabel">닉네임:</strong> <span id="acctNick">-</span></p>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button class="btn-secondary" id="acctBtnFindId" onclick="showFindIdModal()">아이디 찾기</button>
+<button class="btn-secondary" id="acctBtnResetPw" onclick="showResetPwModal()">비밀번호 재설정</button>
+<button class="btn-danger" id="acctBtnWithdraw" onclick="showDeleteAccountModal()">회원탈퇴</button></div></div></div></div>
+
+<!-- Admin -->
+<div class="tab-panel" id="panel-download">
+<div class="settings-section">
+<h3 id="dlPanelTitle">📥 프로그램 다운로드</h3>
+<p id="dlPanelDesc" style="color:#64748b;margin:0 0 16px;font-size:.9rem">최신 버전의 타자 연습 프로그램을 다운로드하세요.</p>
+<div id="dlAdminUploadArea" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px">
+<h4 style="margin:0 0 12px;color:#1e293b;font-size:.95rem">📤 파일 업로드 (관리자)</h4>
+<div style="display:flex;flex-direction:column;gap:8px">
+<input type="file" id="dlFileInput" accept=".exe,.zip,.dmg,.pkg,.msi" style="font-size:.85rem">
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<input type="text" id="dlVersionInput" placeholder="버전 (예: v1.59.27)" style="flex:1;min-width:120px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:.85rem">
+<input type="text" id="dlDescInput" placeholder="설명 (선택사항)" style="flex:2;min-width:160px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:.85rem">
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<button class="btn-primary" id="dlUploadBtn" onclick="uploadDownloadFile()" style="padding:7px 18px">업로드</button>
+<span id="dlUploadMsg" style="font-size:.85rem;color:#64748b"></span>
+</div>
+<div id="dlUploadProgress" style="display:none;margin-top:8px">
+<div style="background:#e2e8f0;border-radius:4px;height:6px"><div id="dlProgressBar" style="background:#2563eb;height:6px;border-radius:4px;width:0%;transition:width .3s"></div></div>
+<span id="dlProgressText" style="font-size:.8rem;color:#64748b;margin-top:4px;display:block"></span>
+</div>
+</div>
+</div>
+<div id="dlFileList" style="display:flex;flex-direction:column;gap:10px">
+<div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div>
+</div>
+</div>
+</div>
+<div class="tab-panel" id="panel-admin">
+<div class="settings-section"><h3 id="adminMgmtTitle">서버 텍스트 관리 <span class="admin-count" id="adminTotalCount"></span></h3>
+<div class="admin-controls">
+<button class="btn-primary" id="adminBtnAdd" onclick="showAddTextModal()">새 텍스트 추가</button>
+<button class="btn-secondary" id="adminBtnRefresh" onclick="refreshAdminTextList()">새로고침</button>
+<select id="adminLangFilter"><option value="">전체</option></select>
+<button class="btn-secondary" id="adminBtnSelAll" onclick="adminSelectAll(true)" style="padding:5px 10px;font-size:.8rem">전체 선택</button>
+<button class="btn-secondary" id="adminBtnDeselAll" onclick="adminSelectAll(false)" style="padding:5px 10px;font-size:.8rem">전체 해제</button>
+<button class="btn-danger" id="adminBtnDelSel" onclick="adminDeleteSelected()" style="padding:5px 10px;font-size:.8rem">선택 삭제</button>
+<span class="admin-count" id="adminSelCount"></span>
+</div>
+<div class="admin-text-list" id="adminTextList"><div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div></div></div></div>
+</div>
+
+<div class="footer">禧禧打字網 (XixiTyping) — <span id="footerWebVer">웹 버전</span></div>
+<button class="scroll-btn up" onmousedown="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})" id="scrollTopBtn" title="맨 위로">▲</button>
+<button class="scroll-btn down" onmousedown="event.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" id="scrollBottomBtn" title="맨 아래로">▼</button>
+
+<!-- Modals -->
+<div class="modal-overlay" id="loginModal"><div class="modal"><h2>로그인</h2>
+<div class="modal-field"><label id="loginIdLabel">ID</label><input id="loginId" autocomplete="username"></div>
+<div class="modal-field"><label id="loginPwLabel">비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
+<div class="modal-msg" id="loginMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('loginModal')" id="loginBtnCancel">취소</button><button class="btn-primary" onclick="doLogin()" id="loginBtnSubmit">로그인</button></div></div></div>
+
+<div class="modal-overlay" id="signupModal"><div class="modal"><h2>회원가입</h2>
+<div class="modal-field"><label>ID (3자 이상)</label><input id="signupId" autocomplete="username"></div>
+<div class="modal-field"><label>비밀번호 (4자 이상)</label><input id="signupPw" type="password" autocomplete="new-password"></div>
+<div class="modal-field"><label>닉네임 (10자 이하)</label><input id="signupNick"></div>
+<div class="modal-field"><label>이메일</label><input id="signupEmail" type="email"></div>
+<div class="modal-msg" id="signupMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('signupModal')">취소</button><button class="btn-primary" onclick="doSignup()">가입</button></div></div></div>
+
+<div class="modal-overlay" id="resultsModal"><div class="modal"><h2>연습 결과</h2>
+<div class="results-grid">
+<div class="result-card"><div class="r-label" id="resCpmLabel">CPM (타/분)</div><div class="r-value highlight" id="resCpm">0</div></div>
+<div class="result-card"><div class="r-label" id="resKpmLabel">타수 (KPM)</div><div class="r-value" id="resKpm">0</div></div>
+<div class="result-card"><div class="r-label" id="resAccLabel">정확도</div><div class="r-value" id="resAcc">0%</div></div>
+<div class="result-card"><div class="r-label" id="resProgressLabel">진행률</div><div class="r-value" id="resProgress">0%</div></div>
+<div class="result-card"><div class="r-label" id="resTimeLabel">소요 시간</div><div class="r-value" id="resTime">0초</div></div>
+<div class="result-card"><div class="r-label" id="resCharsLabel">총 글자</div><div class="r-value" id="resChars">0</div></div></div>
+<div id="rankSubmitArea" style="display:none">
+<div class="modal-field"><label id="resTypewriterLabel">타자기 구분</label><input id="resTypewriter" placeholder="예) 한글 두벌식, 倉頡, 嘸蝦米"></div>
+<button class="btn-primary" onclick="submitRanking()" style="margin-top:8px;width:100%" id="btnSubmitRank">랭킹에 등록</button>
+<div class="modal-msg" id="rankSubmitMsg"></div></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resultsModal')" id="btnResultClose">닫기</button></div></div></div>
+
+<div class="modal-overlay" id="findIdModal"><div class="modal"><h2>아이디 찾기</h2>
+<div class="modal-field"><label id="findIdEmailLabel">이메일</label><input id="findIdEmail" type="email"></div>
+<div class="modal-msg" id="findIdMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('findIdModal')" id="findIdBtnClose">닫기</button><button class="btn-primary" onclick="doFindId()" id="findIdBtnFind">찾기</button></div></div></div>
+
+<div class="modal-overlay" id="resetPwModal"><div class="modal"><h2 id="resetPwTitle">비밀번호 재설정</h2>
+<div class="modal-field"><label>ID</label><input id="resetPwId"></div>
+<div class="modal-field"><label id="resetPwEmailLabel">이메일</label><input id="resetPwEmail" type="email"></div>
+<div class="modal-field"><label id="resetPwNewLabel">새 비밀번호</label><input id="resetPwNew" type="password"></div>
+<div class="modal-field"><label id="resetPwConfirmLabel">확인</label><input id="resetPwConfirm" type="password"></div>
+<div class="modal-msg" id="resetPwMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('resetPwModal')" id="resetPwBtnClose">닫기</button><button class="btn-primary" onclick="doResetPw()" id="resetPwBtnReset">재설정</button></div></div></div>
+
+<div class="modal-overlay" id="deleteAccountModal"><div class="modal"><h2>회원탈퇴</h2>
+<p style="color:#dc2626;font-weight:600;margin-bottom:16px">계정과 랭킹이 모두 삭제됩니다.</p>
+<div class="modal-field"><label>비밀번호</label><input id="delAcctPw" type="password"></div>
+<div class="modal-field"><label>'탈퇴' 입력</label><input id="delAcctConfirm"></div>
+<div class="modal-msg" id="delAcctMsg"></div>
+<div class="modal-actions"><button class="btn-secondary" onclick="closeModal('deleteAccountModal')" id="delAcctBtnCancel">취소</button><button class="btn-danger" onclick="doDeleteAccount()" id="delAcctBtnDelete">탈퇴</button></div></div></div>
+
+<div class="modal-overlay" id="editTextModal"><div class="modal" style="max-width:640px"><h2 id="editTextTitle">텍스트 편집</h2>
+<input type="hidden" id="editTextId">
+<div class="modal-field"><label id="editTextNameLabel">제목</label><input id="editTextName"></div>
+<div class="modal-field"><label id="editTextLangLabel">언어</label><select id="editTextLang"><option value="한국어">한국어</option><option value="中文">중국어</option><option value="영어">영어</option><option value="日本語">일본어</option></select></div>
+<div class="modal-field"><label>내용</label><textarea id="editTextContent" rows="12" style="font-family:var(--pf);font-size:.85rem;line-height:1.6"></textarea></div>
+<div class="modal-msg" id="editTextMsg"></div>
+<div class="modal-actions">
+<button class="btn-danger" id="btnDeleteText" onclick="doDeleteText()" style="margin-right:auto">삭제</button>
+<button class="btn-secondary" onclick="closeModal('editTextModal')" id="editBtnCancel">취소</button>
+<button class="btn-primary" onclick="doSaveText()" id="editBtnSave">저장</button></div></div></div>
+
+<div class="pause-overlay" id="pauseOverlay">⏸ 일시정지 — 아무 키를 누르거나 클릭하면 재개</div>
+
+<script>
+const API='',ADMIN_ID='zhengxi980';
+// ── UI 다국어 ──
+const WLANG={
+tab_practice:{ko:'연습',zh:'練習',en:'Practice',ja:'練習'},
+tab_settings:{ko:'설정',zh:'設定',en:'Settings',ja:'設定'},
+tab_ranking:{ko:'랭킹',zh:'排行榜',en:'Ranking',ja:'ランキング'},
+tab_account:{ko:'계정',zh:'帳號',en:'Account',ja:'アカウント'},
+tab_admin:{ko:'관리',zh:'管理',en:'Admin',ja:'管理'},
+tab_download:{ko:'다운로드',zh:'下載程式',en:'Download',ja:'ダウンロード'},
+btn_login:{ko:'로그인',zh:'登入',en:'Login',ja:'ログイン'},
+btn_signup:{ko:'회원가입',zh:'註冊',en:'Sign Up',ja:'新規登録'},
+btn_logout:{ko:'로그아웃',zh:'登出',en:'Logout',ja:'ログアウト'},
+not_logged_in:{ko:'로그인하지 않음',zh:'未登入',en:'Not logged in',ja:'未ログイン'},
+all:{ko:'전체',zh:'全部',en:'All',ja:'すべて'},
+select_text:{ko:'텍스트를 선택해 주세요',zh:'請選擇文本',en:'Select a text',ja:'テキストを選択してください'},
+btn_reset_f11:{ko:'초기화 (F11)',zh:'重置 (F11)',en:'Reset (F11)',ja:'リセット (F11)'},
+btn_stop_f12:{ko:'연습 종료 (F12)',zh:'結束練習 (F12)',en:'End Practice (F12)',ja:'練習終了 (F12)'},
+btn_result_f12:{ko:'결과 확인 (F12)',zh:'查看結果 (F12)',en:'View Results (F12)',ja:'結果確認 (F12)'},
+stat_time:{ko:'시간',zh:'時間',en:'Time',ja:'時間'},
+stat_cpm:{ko:'CPM',zh:'CPM',en:'CPM',ja:'CPM'},
+stat_kpm:{ko:'타수(KPM)',zh:'擊鍵(KPM)',en:'KPM',ja:'打鍵(KPM)'},
+stat_acc:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+stat_progress:{ko:'진행률',zh:'進度',en:'Progress',ja:'進行率'},
+stat_chars:{ko:'입력글자',zh:'輸入字數',en:'Input Chars',ja:'入力文字'},
+stat_keys:{ko:'총타수',zh:'總擊鍵',en:'Keystrokes',ja:'総打鍵'},
+pause:{ko:'⏸ 일시정지',zh:'⏸ 暫停',en:'⏸ Paused',ja:'⏸ 一時停止'},
+pause_overlay:{ko:'⏸ 일시정지 — 아무 키를 누르거나 클릭하면 재개',zh:'⏸ 暫停 — 按任意鍵或點擊以繼續',en:'⏸ Paused — Press any key or click to resume',ja:'⏸ 一時停止 — 任意のキーを押すかクリックで再開'},
+hotkey_hint:{ko:'Enter/Space(행끝): 다음 행 | Tab/Shift+Tab/↑↓: 행 이동 | BackSpace(행앞): 이전 행 | ESC: 일시정지',zh:'Enter/Space(行末): 下一行 | Tab/Shift+Tab/↑↓: 切換行 | BackSpace(行首): 上一行 | ESC: 暫停',en:'Enter/Space(end): Next line | Tab/Shift+Tab/↑↓: Move line | BackSpace(start): Prev line | ESC: Pause',ja:'Enter/Space(行末): 次の行 | Tab/Shift+Tab/↑↓: 行移動 | BackSpace(行頭): 前の行 | ESC: 一時停止'},
+practice_msg:{ko:'위에서 텍스트를 선택하고 <strong>시작</strong>을 누르세요.',zh:'請在上方選擇文本，然後按<strong>開始</strong>。',en:'Select a text above and press <strong>Start</strong>.',ja:'上でテキストを選択し、<strong>開始</strong>を押してください。'},
+prep_label:{ko:'準備區：',zh:'準備區：',en:'Prep:',ja:'準備：'},
+prep_placeholder:{ko:'在這裡調整輸入法，按 Enter/↓ 開始計時',zh:'在這裡調整輸入法，按 Enter/↓ 開始計時',en:'Adjust input method here, press Enter/↓ to start',ja:'ここで入力方式を調整し、Enter/↓で開始'},
+settings_unit:{ko:'연습 단위',zh:'練習單位',en:'Practice Unit',ja:'練習単位'},
+settings_unit_label:{ko:'표시 형식',zh:'顯示格式',en:'Display Mode',ja:'表示形式'},
+unit_line:{ko:'행 단위 (줄마다 분할)',zh:'行模式（逐行分割）',en:'Line mode (split per line)',ja:'行単位（行ごとに分割）'},
+unit_para:{ko:'문단 단위 (원본 줄바꿈 유지)',zh:'段落模式（保留原始換行）',en:'Paragraph mode (keep original)',ja:'段落単位（元の改行を保持）'},
+unit_note:{ko:"※ '행 단위'는 긴 문단을 창 너비에 맞게 여러 줄로 분할합니다.",zh:'※「行模式」會將長段落依視窗寬度分割為多行。',en:"※ 'Line mode' splits long paragraphs by window width.",ja:'※「行単位」では長い段落をウィンドウ幅に合わせて複数行に分割します。'},
+settings_font_size:{ko:'폰트 크기',zh:'字型大小',en:'Font Size',ja:'フォントサイズ'},
+lbl_original_input:{ko:'원문/입력',zh:'原文/輸入',en:'Original/Input',ja:'原文/入力'},
+settings_line_height:{ko:'줄 간격',zh:'行距',en:'Line Height',ja:'行間隔'},
+settings_letter_spacing:{ko:'자간',zh:'字距',en:'Letter Spacing',ja:'字間'},
+settings_sfx:{ko:'키 입력 효과음',zh:'按鍵音效',en:'Key Sound Effects',ja:'キー入力効果音'},
+lbl_sfx:{ko:'효과음',zh:'音效',en:'Sound',ja:'効果音'},
+sfx_on:{ko:'켜기',zh:'開',en:'On',ja:'オン'},
+sfx_off:{ko:'끄기',zh:'關',en:'Off',ja:'オフ'},
+lbl_sfx_type:{ko:'효과음 종류',zh:'音效類型',en:'Sound Type',ja:'効果音の種類'},
+sfx_typewriter:{ko:'전통 타자기',zh:'傳統打字機',en:'Typewriter',ja:'タイプライター'},
+sfx_retro:{ko:'레트로',zh:'復古',en:'Retro',ja:'レトロ'},
+sfx_analog:{ko:'아날로그',zh:'類比',en:'Analog',ja:'アナログ'},
+sfx_mechanical:{ko:'기계음',zh:'機械',en:'Mechanical',ja:'メカニカル'},
+sfx_soft:{ko:'소프트',zh:'輕柔',en:'Soft',ja:'ソフト'},
+lbl_volume:{ko:'음량',zh:'音量',en:'Volume',ja:'音量'},
+settings_text_request:{ko:'더 많은 타자 연습 텍스트 신청',zh:'申請更多打字練習文本',en:'Request More Practice Texts',ja:'タイピング練習テキストの追加申請'},
+text_req_desc:{ko:'새 텍스트를 등록하고 싶다면 .txt 파일을 선택해서 업로드하세요. 관리자 승인 후 등록됩니다.',zh:'若要新增文本，請選擇 .txt 檔案上傳。經管理員審核後即可使用。',en:'To add new text, select and upload a .txt file. Available after admin approval.',ja:'新しいテキストを登録したい場合は、.txtファイルをアップロードしてください。管理者の承認後に登録されます。'},
+text_req_login:{ko:'로그인 후 이용할 수 있습니다.',zh:'請先登入。',en:'Please log in first.',ja:'ログイン後に利用できます。'},
+lbl_text_file:{ko:'텍스트 파일',zh:'文本檔案',en:'Text File',ja:'テキストファイル'},
+lbl_lang:{ko:'언어',zh:'語言',en:'Language',ja:'言語'},
+btn_submit:{ko:'신청하기',zh:'提交',en:'Submit',ja:'送信'},
+pending_title:{ko:'승인 대기 텍스트 목록',zh:'待審核文本清單',en:'Pending Text Requests',ja:'承認待ちテキスト一覧'},
+btn_refresh:{ko:'새로고침',zh:'重新整理',en:'Refresh',ja:'更新'},
+loading:{ko:'로딩 중...',zh:'載入中...',en:'Loading...',ja:'読み込み中...'},
+no_data:{ko:'데이터 없음',zh:'無資料',en:'No data',ja:'データなし'},
+col_rank:{ko:'순위',zh:'排名',en:'Rank',ja:'順位'},
+col_nickname:{ko:'닉네임',zh:'暱稱',en:'Nickname',ja:'ニックネーム'},
+col_typewriter:{ko:'타자기',zh:'輸入法',en:'Typewriter',ja:'入力方式'},
+col_text:{ko:'텍스트',zh:'文本',en:'Text',ja:'テキスト'},
+col_acc:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+col_completion:{ko:'완료율',zh:'完成率',en:'Completion',ja:'完了率'},
+col_total_input:{ko:'총 입력',zh:'總輸入',en:'Total Input',ja:'総入力'},
+col_date:{ko:'기록일',zh:'日期',en:'Date',ja:'記録日'},
+rank_admin_title:{ko:'🔧 관리자 랭킹 편집',zh:'🔧 管理員排行編輯',en:'🔧 Admin Ranking Edit',ja:'🔧 管理者ランキング編集'},
+btn_select_all:{ko:'전체 선택',zh:'全選',en:'Select All',ja:'全選択'},
+btn_deselect_all:{ko:'전체 해제',zh:'全不選',en:'Deselect All',ja:'全解除'},
+btn_delete_selected:{ko:'선택 삭제',zh:'刪除所選',en:'Delete Selected',ja:'選択削除'},
+btn_delete_board:{ko:'현재 보드 전체 삭제',zh:'刪除當前全部排行',en:'Delete All in Board',ja:'現在のボード全削除'},
+n_selected:{ko:'개 선택됨',zh:'已選擇',en:' selected',ja:'件選択中'},
+account_title:{ko:'계정 정보',zh:'帳號資訊',en:'Account Info',ja:'アカウント情報'},
+account_logged_out:{ko:'로그인 후 이용할 수 있습니다.',zh:'請先登入。',en:'Please log in first.',ja:'ログイン後に利用できます。'},
+settings_ui_lang:{ko:'UI 언어',zh:'介面語言',en:'UI Language',ja:'UI言語'},
+result_title:{ko:'결과',zh:'結果',en:'Results',ja:'結果'},
+result_cpm:{ko:'분당 글자수 (CPM)',zh:'每分鐘字數 (CPM)',en:'Characters Per Minute (CPM)',ja:'文字/分 (CPM)'},
+result_kpm:{ko:'분당 타수 (KPM)',zh:'每分鐘擊鍵 (KPM)',en:'Keystrokes Per Minute (KPM)',ja:'打鍵/分 (KPM)'},
+result_acc:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+result_elapsed:{ko:'경과 시간',zh:'經過時間',en:'Elapsed Time',ja:'経過時間'},
+result_completion:{ko:'완료율',zh:'完成率',en:'Completion',ja:'完了率'},
+result_chars:{ko:'총 입력 글자수',zh:'總輸入字數',en:'Total Input Chars',ja:'総入力文字数'},
+btn_close:{ko:'닫기',zh:'關閉',en:'Close',ja:'閉じる'},
+btn_register_rank:{ko:'랭킹에 등록',zh:'記錄到排行榜',en:'Register Ranking',ja:'ランキング登録'},
+rank_submit_label:{ko:'타자기 구분:',zh:'輸入法：',en:'Typewriter:',ja:'入力方式：'},
+rank_submit_placeholder:{ko:'예) 창힐, 두벌식, QWERTY …',zh:'例）倉頡、注音、拼音 …',en:'e.g.) QWERTY, Dvorak …',ja:'例）ローマ字、かな入力 …'},
+login_title:{ko:'로그인',zh:'登入',en:'Login',ja:'ログイン'},
+lbl_password:{ko:'비밀번호',zh:'密碼',en:'Password',ja:'パスワード'},
+signup_title:{ko:'회원가입',zh:'註冊',en:'Sign Up',ja:'新規登録'},
+lbl_pw_confirm:{ko:'비밀번호 확인',zh:'確認密碼',en:'Confirm Password',ja:'パスワード確認'},
+lbl_nickname_rank:{ko:'닉네임 (랭킹 표시)',zh:'暱稱（排行顯示）',en:'Nickname (for ranking)',ja:'ニックネーム（ランキング表示用）'},
+lbl_email:{ko:'이메일',zh:'電子郵件',en:'Email',ja:'メール'},
+btn_cancel:{ko:'취소',zh:'取消',en:'Cancel',ja:'キャンセル'},
+btn_save:{ko:'저장',zh:'儲存',en:'Save',ja:'保存'},
+delete_account_title:{ko:'회원탈퇴',zh:'刪除帳號',en:'Delete Account',ja:'退会'},
+delete_warn:{ko:'계정 정보와 랭킹 기록이 모두 삭제됩니다.',zh:'帳號資訊和排行紀錄將被永久刪除。',en:'All account data and rankings will be deleted.',ja:'アカウント情報とランキング記録がすべて削除されます。'},
+delete_confirm_hint:{ko:"'탈퇴'를 입력하세요",zh:"請輸入「刪除」",en:"Type 'delete'",ja:"「退会」と入力してください"},
+delete_confirm_word:{ko:'탈퇴',zh:'刪除',en:'delete',ja:'退会'},
+btn_delete:{ko:'탈퇴',zh:'刪除',en:'Delete',ja:'退会'},
+user_suffix:{ko:' 님',zh:'',en:'',ja:'さん'},
+lbl_new_pw:{ko:'새 비밀번호',zh:'新密碼',en:'New Password',ja:'新しいパスワード'},
+lbl_confirm_pw:{ko:'확인',zh:'確認',en:'Confirm',ja:'確認'},
+lbl_del_confirm_input:{ko:"'탈퇴' 입력",zh:"輸入「刪除」",en:"Type 'delete'",ja:"「退会」と入力"},
+delete_warn_short:{ko:'계정과 랭킹이 모두 삭제됩니다.',zh:'帳號和排行紀錄將被永久刪除。',en:'All account data and rankings will be deleted.',ja:'アカウントとランキングがすべて削除されます。'},
+lbl_title:{ko:'제목',zh:'標題',en:'Title',ja:'タイトル'},
+lbl_content:{ko:'내용',zh:'內容',en:'Content',ja:'内容'},
+btn_add_text:{ko:'새 텍스트 추가',zh:'新增文本',en:'Add New Text',ja:'新規テキスト追加'},
+edit_text_title:{ko:'텍스트 편집',zh:'編輯文本',en:'Edit Text',ja:'テキスト編集'},
+btn_del_text:{ko:'삭제',zh:'刪除',en:'Delete',ja:'削除'},
+find_id_title:{ko:'아이디 찾기',zh:'找回帳號',en:'Find ID',ja:'ID検索'},
+reset_pw_title:{ko:'비밀번호 재설정',zh:'重設密碼',en:'Reset Password',ja:'パスワード再設定'},
+btn_find:{ko:'찾기',zh:'找回',en:'Find',ja:'検索'},
+btn_reset_action:{ko:'재설정',zh:'重設',en:'Reset',ja:'再設定'},
+btn_close_modal:{ko:'닫기',zh:'關閉',en:'Close',ja:'閉じる'},
+lang_korean:{ko:'한국어',zh:'韓語',en:'Korean',ja:'韓国語'},
+lang_chinese:{ko:'중국어',zh:'中文',en:'Chinese',ja:'中国語'},
+lang_english:{ko:'영어',zh:'英語',en:'English',ja:'英語'},
+lang_japanese:{ko:'일본어',zh:'日本語',en:'Japanese',ja:'日本語'},
+no_pending:{ko:'승인 대기 중인 요청 없음',zh:'沒有待審核的請求',en:'No pending requests',ja:'承認待ちのリクエストなし'},
+choose_file:{ko:'파일 선택',zh:'選擇檔案',en:'Choose File',ja:'ファイル選択'},
+no_file_chosen:{ko:'선택된 파일 없음',zh:'未選擇檔案',en:'No file chosen',ja:'ファイル未選択'},
+btn_find_id:{ko:'아이디 찾기',zh:'找回帳號',en:'Find ID',ja:'ID検索'},
+btn_reset_pw:{ko:'비밀번호 재설정',zh:'重設密碼',en:'Reset Password',ja:'パスワード再設定'},
+btn_withdraw:{ko:'회원탈퇴',zh:'刪除帳號',en:'Delete Account',ja:'退会'},
+acct_nickname:{ko:'닉네임:',zh:'暱稱：',en:'Nickname:',ja:'ニックネーム：'},
+acct_login_msg:{ko:'로그인하면 랭킹 등록 등의 기능을 사용할 수 있습니다.',zh:'登入後可使用排行榜等功能。',en:'Log in to access features like ranking registration.',ja:'ログインするとランキング登録などの機能が使えます。'},
+admin_text_mgmt:{ko:'서버 텍스트 관리',zh:'伺服器文本管理',en:'Server Text Management',ja:'サーバーテキスト管理'},
+admin_no_text:{ko:'텍스트 없음',zh:'沒有文本',en:'No texts',ja:'テキストなし'},
+unit_char:{ko:'자',zh:'字',en:' chars',ja:'字'},
+btn_edit:{ko:'편집',zh:'編輯',en:'Edit',ja:'編集'},
+lbl_id_min:{ko:'ID (3자 이상)',zh:'帳號（3字以上）',en:'ID (3+ chars)',ja:'ID（3文字以上）'},
+lbl_pw_min:{ko:'비밀번호 (4자 이상)',zh:'密碼（4字以上）',en:'Password (4+ chars)',ja:'パスワード（4文字以上）'},
+lbl_nick_max:{ko:'닉네임 (10자 이하)',zh:'暱稱（10字以下）',en:'Nickname (max 10)',ja:'ニックネーム（10文字以下）'},
+btn_join:{ko:'가입',zh:'註冊',en:'Sign Up',ja:'登録'},
+footer_web_ver:{ko:'웹 버전',zh:'網頁版',en:'Web Version',ja:'Web版'},
+msg_enter_id_pw:{ko:'ID와 비밀번호를 입력하세요.',zh:'請輸入帳號和密碼。',en:'Please enter ID and password.',ja:'IDとパスワードを入力してください。'},
+msg_login_fail:{ko:'로그인 실패',zh:'登入失敗',en:'Login failed',ja:'ログイン失敗'},
+msg_fill_all:{ko:'모든 항목을 입력하세요.',zh:'請填寫所有欄位。',en:'Please fill in all fields.',ja:'すべての項目を入力してください。'},
+msg_fail:{ko:'실패',zh:'失敗',en:'Failed',ja:'失敗'},
+msg_enter_email:{ko:'이메일을 입력하세요.',zh:'請輸入電子郵件。',en:'Please enter email.',ja:'メールアドレスを入力してください。'},
+msg_not_found:{ko:'없음',zh:'查無此帳號',en:'Not found',ja:'見つかりません'},
+msg_fill_all_short:{ko:'모든 항목 입력',zh:'請填寫所有欄位',en:'Fill in all fields',ja:'すべて入力してください'},
+msg_pw_mismatch:{ko:'비밀번호 불일치',zh:'密碼不一致',en:'Password mismatch',ja:'パスワード不一致'},
+msg_complete:{ko:'완료',zh:'完成',en:'Done',ja:'完了'},
+msg_withdraw_done:{ko:'탈퇴 완료',zh:'帳號已刪除',en:'Account deleted',ja:'退会完了'},
+msg_select_text:{ko:'텍스트를 선택하세요.',zh:'請選擇文本。',en:'Please select a text.',ja:'テキストを選択してください。'},
+msg_enter_typewriter:{ko:'타자기 구분을 입력하세요.',zh:'請輸入輸入法名稱。',en:'Please enter typewriter type.',ja:'入力方式を入力してください。'},
+msg_rank_done:{ko:'등록 완료!',zh:'登錄成功！',en:'Registered!',ja:'登録完了！'},
+msg_select_file:{ko:'파일을 선택하세요.',zh:'請選擇檔案。',en:'Please select a file.',ja:'ファイルを選択してください。'},
+msg_file_empty:{ko:'파일이 비어 있습니다.',zh:'檔案內容為空。',en:'File is empty.',ja:'ファイルが空です。'},
+msg_request_done:{ko:'신청 완료! 관리자 승인을 기다려 주세요.',zh:'申請完成！請等待管理員審核。',en:'Request submitted! Waiting for admin approval.',ja:'申請完了！管理者の承認をお待ちください。'},
+msg_approved:{ko:'✅ 승인됨',zh:'✅ 已批准',en:'✅ Approved',ja:'✅ 承認済み'},
+msg_rejected:{ko:'❌ 거절됨',zh:'❌ 已拒絕',en:'❌ Rejected',ja:'❌ 却下'},
+msg_reason:{ko:'사유',zh:'原因',en:'Reason',ja:'理由'},
+msg_notif_result:{ko:'텍스트 신청 결과',zh:'文本申請結果',en:'Text Request Result',ja:'テキスト申請結果'},
+unit_sec:{ko:'초',zh:'秒',en:'s',ja:'秒'},
+btn_download:{ko:'다운로드',zh:'下載',en:'Download',ja:'ダウンロード'},
+placeholder_comment:{ko:'코멘트 (사유)',zh:'備註（原因）',en:'Comment (reason)',ja:'コメント（理由）'},
+btn_approve:{ko:'승인',zh:'批准',en:'Approve',ja:'承認'},
+btn_reject:{ko:'거절',zh:'拒絕',en:'Reject',ja:'却下'},
+msg_confirm_approve:{ko:'이 텍스트를 승인하시겠습니까?',zh:'確定要批准這個文本嗎？',en:'Approve this text?',ja:'このテキストを承認しますか？'},
+msg_approve_done:{ko:'승인 완료',zh:'批准完成',en:'Approved',ja:'承認完了'},
+msg_confirm_reject:{ko:'이 요청을 거절하시겠습니까?',zh:'確定要拒絕這個請求嗎？',en:'Reject this request?',ja:'このリクエストを却下しますか？'},
+msg_reject_done:{ko:'거절 완료',zh:'拒絕完成',en:'Rejected',ja:'却下完了'},
+msg_sel_count:{ko:'{0}/{1}개 선택',zh:'{0}/{1} 已選',en:'{0}/{1} selected',ja:'{0}/{1}件選択'},
+msg_no_sel_text:{ko:'삭제할 텍스트를 선택하세요.',zh:'請選擇要刪除的文本。',en:'Select texts to delete.',ja:'削除するテキストを選択してください。'},
+msg_confirm_del_texts:{ko:'개의 텍스트를 삭제하시겠습니까?',zh:' 個文本，確定刪除嗎？',en:' text(s). Delete?',ja:'件のテキストを削除しますか？'},
+msg_title_content_needed:{ko:'제목과 내용 필요',zh:'請輸入標題和內容',en:'Title and content required',ja:'タイトルと内容が必要です'},
+msg_save_done:{ko:'저장 완료!',zh:'儲存成功！',en:'Saved!',ja:'保存完了！'},
+msg_confirm_delete:{ko:'삭제하시겠습니까?',zh:'確定刪除嗎？',en:'Delete?',ja:'削除しますか？'},
+msg_no_sel_rank:{ko:'삭제할 항목을 선택하세요.',zh:'請選擇要刪除的項目。',en:'Select items to delete.',ja:'削除する項目を選択してください。'},
+msg_confirm_del_ranks:{ko:'개의 기록을 삭제할까요?',zh:' 筆記錄，確定刪除嗎？',en:' record(s). Delete?',ja:'件の記録を削除しますか？'},
+msg_del_rank_done:{ko:'건 삭제 완료',zh:' 筆已刪除',en:' deleted',ja:'件削除完了'},
+msg_select_board:{ko:'특정 텍스트를 선택한 후 전체 삭제하세요. (전체 보드에서는 사용 불가)',zh:'請先選擇特定文本再刪除全部。（全部排行無法使用）',en:'Select a specific text first. (Not available for All)',ja:'特定のテキストを選択してから全削除してください。（全体ボードでは使用不可）'},
+msg_confirm_del_board:{ko:'보드의 모든 기록을 삭제할까요?',zh:'排行的所有記錄，確定刪除嗎？',en:' board? Delete all records?',ja:'ボードの全記録を削除しますか？'},
+msg_del_done:{ko:'삭제 완료',zh:'刪除完成',en:'Deleted',ja:'削除完了'},
+tooltip_top:{ko:'맨 위로',zh:'回到頂部',en:'Scroll to top',ja:'一番上へ'},
+tooltip_bottom:{ko:'맨 아래로',zh:'到底部',en:'Scroll to bottom',ja:'一番下へ'},
+result_cpm_label:{ko:'CPM (타/분)',zh:'CPM（字/分）',en:'CPM',ja:'CPM（字/分）'},
+result_kpm_label:{ko:'타수 (KPM)',zh:'擊鍵 (KPM)',en:'KPM',ja:'打鍵 (KPM)'},
+result_acc_label:{ko:'정확도',zh:'正確率',en:'Accuracy',ja:'正確率'},
+result_progress_label:{ko:'진행률',zh:'進度',en:'Progress',ja:'進行率'},
+result_time_label:{ko:'소요 시간',zh:'所用時間',en:'Elapsed Time',ja:'経過時間'},
+result_chars_label:{ko:'총 글자',zh:'總字數',en:'Total Chars',ja:'総文字数'},
+login_lbl_id:{ko:'ID',zh:'帳號',en:'ID',ja:'ID'},
+
+svr_login_required:{ko:'로그인이 필요합니다.',zh:'需要登入。',en:'Login required.',ja:'ログインが必要です。'},
+svr_fill_all_signup:{ko:'ID/비밀번호/닉네임을 모두 입력해 주세요.',zh:'請輸入ID、密碼和暱稱。',en:'Please enter ID, password, and nickname.',ja:'ID・パスワード・ニックネームをすべて入力してください。'},
+svr_id_min3:{ko:'ID는 3자 이상을 권장합니다.',zh:'ID至少需要3個字元。',en:'ID must be at least 3 characters.',ja:'IDは3文字以上必要です。'},
+svr_pw_min4:{ko:'비밀번호는 4자 이상을 권장합니다.',zh:'建議密碼至少4個字元。',en:'Password should be at least 4 characters.',ja:'パスワードは4文字以上を推奨します。'},
+svr_nick_max10:{ko:'닉네임은 10자 이하로 해 주세요.',zh:'暱稱請在10字以內。',en:'Nickname must be 10 characters or less.',ja:'ニックネームは10文字以内にしてください。'},
+svr_email_invalid:{ko:'이메일 형식이 올바르지 않습니다.',zh:'電子郵件格式不正確。',en:'Invalid email format.',ja:'メール形式が正しくありません。'},
+svr_dup_id:{ko:'이미 사용 중인 ID입니다.',zh:'此ID已被使用。',en:'This ID is already in use.',ja:'このIDは既に使用されています。'},
+svr_dup_nick:{ko:'이미 사용 중인 닉네임입니다.',zh:'此暱稱已被使用。',en:'This nickname is already in use.',ja:'このニックネームは既に使用されています。'},
+svr_dup_email:{ko:'이미 사용 중인 이메일입니다.',zh:'此電子郵件已被使用。',en:'This email is already in use.',ja:'このメールアドレスは既に使用されています。'},
+svr_enter_id_pw:{ko:'ID와 비밀번호를 입력해 주세요.',zh:'請輸入ID和密碼。',en:'Please enter ID and password.',ja:'IDとパスワードを入力してください。'},
+svr_wrong_id_pw:{ko:'ID 또는 비밀번호가 올바르지 않습니다.',zh:'ID或密碼不正確。',en:'Incorrect ID or password.',ja:'IDまたはパスワードが正しくありません。'},
+svr_enter_email:{ko:'이메일을 입력해 주세요.',zh:'請輸入電子郵件。',en:'Please enter your email.',ja:'メールアドレスを入力してください。'},
+svr_email_not_found:{ko:'해당 이메일로 가입된 계정을 찾을 수 없습니다.',zh:'找不到此電子郵件註冊的帳號。',en:'No account found for this email.',ja:'このメールで登録されたアカウントが見つかりません。'},
+svr_fill_all_reset:{ko:'ID, 이메일, 새 비밀번호를 모두 입력해 주세요.',zh:'請輸入ID、電子郵件和新密碼。',en:'Please enter ID, email, and new password.',ja:'ID・メール・新しいパスワードをすべて入力してください。'},
+svr_id_email_mismatch:{ko:'ID와 이메일이 일치하는 계정을 찾을 수 없습니다.',zh:'找不到ID和電子郵件匹配的帳號。',en:'No account found matching this ID and email.',ja:'IDとメールが一致するアカウントが見つかりません。'},
+svr_pw_reset_done:{ko:'비밀번호가 재설정되었습니다.',zh:'密碼已重設。',en:'Password has been reset.',ja:'パスワードがリセットされました。'},
+svr_email_changed:{ko:'이메일이 변경되었습니다.',zh:'電子郵件已變更。',en:'Email has been changed.',ja:'メールアドレスが変更されました。'},
+svr_pw_wrong:{ko:'비밀번호가 올바르지 않습니다.',zh:'密碼不正確。',en:'Incorrect password.',ja:'パスワードが正しくありません。'},
+svr_account_deleted:{ko:'계정이 삭제되었습니다.',zh:'帳號已刪除。',en:'Account has been deleted.',ja:'アカウントが削除されました。'},
+svr_no_board:{ko:'보드 정보가 없습니다.',zh:'沒有排行榜資訊。',en:'No board information.',ja:'ボード情報がありません。'},
+svr_enter_typewriter:{ko:'타자기 구분을 입력해 주세요.',zh:'請輸入打字機類型。',en:'Please enter typewriter type.',ja:'タイプライター区分を入力してください。'},
+svr_rank_duplicate:{ko:'이미 등록된 기록입니다.',zh:'此記錄已登錄。',en:'This record is already registered.',ja:'すでに登録されている記録です。'},
+svr_rank_registered:{ko:'랭킹에 등록되었습니다.',zh:'已登錄排行榜。',en:'Registered to ranking.',ja:'ランキングに登録されました。'},
+svr_record_not_found:{ko:'해당 기록을 찾을 수 없습니다.',zh:'找不到該記錄。',en:'Record not found.',ja:'該当する記録が見つかりません。'},
+svr_no_delete_perm:{ko:'삭제 권한이 없습니다.',zh:'沒有刪除權限。',en:'No permission to delete.',ja:'削除権限がありません。'},
+svr_deleted:{ko:'삭제되었습니다.',zh:'已刪除。',en:'Deleted.',ja:'削除されました。'},
+svr_admin_only_bulk_del:{ko:'관리자만 전체 삭제할 수 있습니다.',zh:'僅限管理員批量刪除。',en:'Only admin can bulk delete.',ja:'管理者のみ一括削除できます。'},
+svr_board_cleared:{ko:'해당 보드의 모든 기록이 삭제되었습니다.',zh:'此排行榜的所有記錄已刪除。',en:'All records on this board have been deleted.',ja:'このボードのすべての記録が削除されました。'},
+svr_admin_only_add:{ko:'관리자만 추가할 수 있습니다.',zh:'僅限管理員新增。',en:'Only admin can add.',ja:'管理者のみ追加できます。'},
+svr_admin_only_edit:{ko:'관리자만 수정할 수 있습니다.',zh:'僅限管理員修改。',en:'Only admin can edit.',ja:'管理者のみ編集できます。'},
+svr_admin_only_delete:{ko:'관리자만 삭제할 수 있습니다.',zh:'僅限管理員刪除。',en:'Only admin can delete.',ja:'管理者のみ削除できます。'},
+svr_enter_title_content:{ko:'제목과 내용을 입력해 주세요.',zh:'請輸入標題和內容。',en:'Please enter title and content.',ja:'タイトルと内容を入力してください。'},
+svr_text_req_submitted:{ko:'텍스트 요청이 등록되었습니다.',zh:'文本請求已提交。',en:'Text request submitted.',ja:'テキストリクエストが登録されました。'},
+svr_admin_only_approve:{ko:'관리자만 승인할 수 있습니다.',zh:'僅限管理員批准。',en:'Only admin can approve.',ja:'管理者のみ承認できます。'},
+svr_request_not_found:{ko:'요청을 찾을 수 없습니다.',zh:'找不到該請求。',en:'Request not found.',ja:'リクエストが見つかりません。'},
+svr_approved_done:{ko:'승인 완료. 텍스트가 등록되었습니다.',zh:'已批准，文本已登錄。',en:'Approved. Text has been registered.',ja:'承認完了。テキストが登録されました。'},
+svr_admin_only_reject:{ko:'관리자만 거절할 수 있습니다.',zh:'僅限管理員拒絕。',en:'Only admin can reject.',ja:'管理者のみ拒否できます。'},
+svr_rejected_done:{ko:'요청이 거절되었습니다.',zh:'請求已被拒絕。',en:'Request has been rejected.',ja:'リクエストが拒否されました。'},
+svr_admin_only:{ko:'관리자만 가능합니다.',zh:'僅限管理員。',en:'Admin only.',ja:'管理者のみ可能です。'},
+svr_version_updated:{ko:'버전 정보가 업데이트되었습니다.',zh:'版本資訊已更新。',en:'Version info updated.',ja:'バージョン情報が更新されました。'},
+svr_server_running:{ko:'타자 연습 서버 가동 중',zh:'打字練習伺服器運行中',en:'Typing practice server running',ja:'タイピング練習サーバー稼働中'},
+};
+let _wlang='ko';
+function wt(k){const e=WLANG[k];if(!e)return k;const v=e[_wlang];return v!=null?v:e.ko||k;}
+function serverMsg(r,fb){if(!r)return fb?wt(fb):'';if(r.msg_code){const t=wt(r.msg_code);if(t!==r.msg_code)return t;}return r.msg||( fb?wt(fb):'');}
+function langDisplayName(raw){const m={'한국어':'lang_korean','韓語':'lang_korean','Korean':'lang_korean','韓国語':'lang_korean','중국어':'lang_chinese','中文':'lang_chinese','Chinese':'lang_chinese','中国語':'lang_chinese','영어':'lang_english','英語':'lang_english','English':'lang_english','일본어':'lang_japanese','日本語':'lang_japanese','Japanese':'lang_japanese'};const k=m[raw];return k?wt(k):raw;}
+function setWebLang(code){if(['ko','zh','en','ja'].includes(code)){_wlang=code;localStorage.setItem('ui_lang',code);applyWebLang();}}
+function applyWebLang(){
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(b=>{
+const t=b.dataset.tab;if(t==='practice')b.textContent=wt('tab_practice');
+else if(t==='settings')b.textContent=wt('tab_settings');
+else if(t==='ranking')b.textContent=wt('tab_ranking');
+else if(t==='account')b.textContent=wt('tab_account');
+else if(t==='admin')b.textContent=wt('tab_admin');
+else if(t==='download')b.textContent=wt('tab_download')||'다운로드';
+});
+// Header buttons
+document.getElementById('btnLogin').textContent=wt('btn_login');
+document.getElementById('btnSignup').textContent=wt('btn_signup');
+document.getElementById('btnLogout').textContent=wt('btn_logout');
+if(!currentUser)document.getElementById('userInfo').textContent=wt('not_logged_in');
+else document.getElementById('userInfo').textContent=currentUser.nickname+wt('user_suffix');
+// Practice controls
+const langSel=document.getElementById('langSelect');
+if(langSel.options[0])langSel.options[0].textContent=wt('all');
+const tSel=document.getElementById('textSelect');
+if(tSel.options[0]&&!currentText)tSel.options[0].textContent=wt('select_text');
+document.querySelector('.btn-reset').textContent=wt('btn_reset_f11');
+const stopBtn=document.querySelector('.btn-stop');
+if(stopBtn){if(stopBtn.dataset.state==='result')stopBtn.textContent=wt('btn_result_f12');
+else stopBtn.textContent=wt('btn_stop_f12');}
+// Stats labels
+const slabels=[['stat_time','statTime'],['stat_cpm','statCpm'],['stat_kpm','statKpm'],['stat_acc','statAcc'],['stat_progress','statProgress'],['stat_chars','statChars'],['stat_keys','statKeys']];
+slabels.forEach(([k,id])=>{const el=document.getElementById(id);if(el){const p=el.parentElement;if(p){const lbl=p.querySelector('.stat-label');if(lbl)lbl.textContent=wt(k);}}});
+const ps=document.getElementById('pauseStatus');if(ps){const sv=ps.querySelector('.stat-value');if(sv)sv.textContent=wt('pause');}
+// Pause overlay
+document.getElementById('pauseOverlay').textContent=wt('pause_overlay');
+// Hotkey hint
+const hh=document.querySelector('.hotkey-hint');if(hh)hh.textContent=wt('hotkey_hint');
+// Practice msg
+const pm=document.getElementById('practiceMsg');if(pm&&!practicing&&!started)pm.innerHTML=wt('practice_msg');
+// Prep area
+const pl=document.querySelector('.prep-label');if(pl)pl.textContent=wt('prep_label');
+const pi=document.getElementById('prepInput');if(pi)pi.placeholder=wt('prep_placeholder');
+// Settings
+const sps=document.querySelectorAll('#panel-settings .settings-section h3');
+const settingsKeys=['settings_ui_lang','settings_unit','settings_font_size','settings_line_height','settings_letter_spacing','settings_sfx','settings_text_request'];
+sps.forEach((h,i)=>{if(settingsKeys[i])h.textContent=wt(settingsKeys[i]);});
+// Settings labels
+const sLabels=document.querySelectorAll('#panel-settings .settings-row label');
+const slKeys=['','settings_unit_label','lbl_original_input','','','lbl_sfx','lbl_sfx_type','lbl_volume','lbl_text_file','lbl_lang'];
+sLabels.forEach((l,i)=>{if(slKeys[i])l.textContent=wt(slKeys[i]);});
+// Unit mode options
+const usel=document.getElementById('settingUnitMode');
+if(usel){usel.options[0].textContent=wt('unit_line');usel.options[1].textContent=wt('unit_para');}
+// Unit note
+const unote=document.querySelector('#panel-settings .settings-section:nth-child(2) p');
+if(unote)unote.textContent=wt('unit_note');
+// SFX options
+const sfxEn=document.getElementById('settingSfxEnabled');
+if(sfxEn){sfxEn.options[0].textContent=wt('sfx_on');sfxEn.options[1].textContent=wt('sfx_off');}
+const sfxSt=document.getElementById('settingSfxStyle');
+if(sfxSt){const sfxK=['sfx_typewriter','sfx_retro','sfx_analog','sfx_mechanical','sfx_soft'];sfxSt.querySelectorAll('option').forEach((o,i)=>{if(sfxK[i])o.textContent=wt(sfxK[i]);});}
+// Text request
+const trDesc=document.querySelector('#panel-settings .settings-section:nth-child(7) > p');
+if(trDesc)trDesc.textContent=wt('text_req_desc');
+const trLogin=document.getElementById('textRequestLogin');
+if(trLogin)trLogin.innerHTML='<p style="color:#dc2626;font-size:.85rem">'+wt('text_req_login')+'</p>';
+const trBtn=document.querySelector('#textRequestForm .btn-primary');
+if(trBtn)trBtn.textContent=wt('btn_submit');
+// Pending
+const pdTitle=document.querySelector('#pendingRequestsSection h3');
+if(pdTitle)pdTitle.textContent=wt('pending_title');
+const pdRefresh=document.querySelector('#pendingRequestsSection .btn-secondary');
+if(pdRefresh)pdRefresh.textContent=wt('btn_refresh');
+// Ranking headers
+const ths=document.querySelectorAll('.ranking-table thead th');
+const thKeys=['col_rank','col_nickname','col_typewriter','col_text','','','col_acc','col_completion','col_total_input','col_date'];
+ths.forEach((th,i)=>{if(thKeys[i])th.textContent=wt(thKeys[i]);});
+// Ranking controls
+const rbs=document.getElementById('rankBoardSelect');
+if(rbs&&rbs.options[0])rbs.options[0].textContent=wt('all');
+const rrBtn=document.querySelector('.ranking-controls .btn-primary');
+if(rrBtn)rrBtn.textContent=wt('btn_refresh');
+// Ranking admin panel
+const rap=document.getElementById('rankAdminPanel');
+if(rap){const btns=rap.querySelectorAll('button');
+if(btns[0])btns[0].textContent=wt('btn_select_all');
+if(btns[1])btns[1].textContent=wt('btn_deselect_all');
+if(btns[2])btns[2].textContent=wt('btn_delete_selected');
+if(btns[3])btns[3].textContent=wt('btn_delete_board');
+const st=rap.querySelector('strong');if(st)st.textContent=wt('rank_admin_title');}
+// Account
+const acctTitle=document.querySelector('#panel-account .settings-section h3');
+if(acctTitle)acctTitle.textContent=wt('account_title');
+const acctLogout=document.getElementById('accountLoggedOut');
+if(acctLogout)acctLogout.innerHTML='<p>'+wt('account_logged_out')+'</p>';
+// Result modal headers
+const rsh=document.querySelectorAll('#resultsModal .result-row .result-label');
+const rsKeys=['result_cpm','result_kpm','result_acc','result_elapsed','result_completion','result_chars'];
+rsh.forEach((l,i)=>{if(rsKeys[i])l.textContent=wt(rsKeys[i]);});
+const rmTitle=document.querySelector('#resultsModal h2');
+if(rmTitle)rmTitle.textContent=wt('result_title');
+const rsClose=document.querySelector('#resultsModal .modal-actions .btn-secondary');
+if(rsClose)rsClose.textContent=wt('btn_close');
+// Rank submit in result modal
+const rsl=document.getElementById('rankSubmitArea');
+if(rsl){const lb=rsl.querySelector('label');if(lb)lb.textContent=wt('rank_submit_label');
+const inp=rsl.querySelector('input[type=text]');if(inp)inp.placeholder=wt('rank_submit_placeholder');
+const btn=rsl.querySelector('.btn-primary');if(btn)btn.textContent=wt('btn_register_rank');}
+// Login modal
+const lmTitle=document.querySelector('#loginModal h2');
+if(lmTitle)lmTitle.textContent=wt('login_title');
+// Signup modal
+const smTitle=document.querySelector('#signupModal h2');
+if(smTitle)smTitle.textContent=wt('signup_title');
+const smLabels=document.querySelectorAll('#signupModal .modal-field label');
+if(smLabels[0])smLabels[0].textContent=wt('lbl_id_min');
+if(smLabels[1])smLabels[1].textContent=wt('lbl_pw_min');
+if(smLabels[2])smLabels[2].textContent=wt('lbl_nick_max');
+if(smLabels[3])smLabels[3].textContent=wt('lbl_email');
+const smBtns=document.querySelectorAll('#signupModal .modal-actions button');
+if(smBtns[0])smBtns[0].textContent=wt('btn_cancel');
+if(smBtns[1])smBtns[1].textContent=wt('btn_join');
+// Delete account modal
+const dmTitle=document.querySelector('#deleteAccountModal h2');
+if(dmTitle)dmTitle.textContent=wt('delete_account_title');
+// UI language selector
+const uls=document.getElementById('settingUILang');
+if(uls)uls.value=_wlang;
+const ulLabel=document.getElementById('uiLangLabel');
+if(ulLabel)ulLabel.textContent=wt('settings_ui_lang');
+// [3] Login modal: password label, cancel, login buttons
+const lmLabels=document.querySelectorAll('#loginModal .modal-field label');
+if(lmLabels[1])lmLabels[1].textContent=wt('lbl_password');
+const lmBtns=document.querySelectorAll('#loginModal .modal-actions button');
+if(lmBtns[0])lmBtns[0].textContent=wt('btn_cancel');
+if(lmBtns[1])lmBtns[1].textContent=wt('btn_login');
+// [5] Find ID modal: title, email label, buttons
+const fiTitle=document.querySelector('#findIdModal h2');
+if(fiTitle)fiTitle.textContent=wt('find_id_title');
+const fiLabels=document.querySelectorAll('#findIdModal .modal-field label');
+if(fiLabels[0])fiLabels[0].textContent=wt('lbl_email');
+const fiBtns=document.querySelectorAll('#findIdModal .modal-actions button');
+if(fiBtns[0])fiBtns[0].textContent=wt('btn_close_modal');
+if(fiBtns[1])fiBtns[1].textContent=wt('btn_find');
+// [6] Reset PW modal: title, labels, buttons
+const rpTitle=document.querySelector('#resetPwModal h2');
+if(rpTitle)rpTitle.textContent=wt('reset_pw_title');
+const rpLabels=document.querySelectorAll('#resetPwModal .modal-field label');
+if(rpLabels[1])rpLabels[1].textContent=wt('lbl_email');
+if(rpLabels[2])rpLabels[2].textContent=wt('lbl_new_pw');
+if(rpLabels[3])rpLabels[3].textContent=wt('lbl_confirm_pw');
+const rpBtns=document.querySelectorAll('#resetPwModal .modal-actions button');
+if(rpBtns[0])rpBtns[0].textContent=wt('btn_close_modal');
+if(rpBtns[1])rpBtns[1].textContent=wt('btn_reset_action');
+// [7] Delete account modal: title, warning, labels, buttons
+const daWarn=document.querySelector('#deleteAccountModal > .modal > p');
+if(daWarn)daWarn.textContent=wt('delete_warn_short');
+const daLabels=document.querySelectorAll('#deleteAccountModal .modal-field label');
+if(daLabels[0])daLabels[0].textContent=wt('lbl_password');
+if(daLabels[1])daLabels[1].textContent=wt('lbl_del_confirm_input');
+const daBtns=document.querySelectorAll('#deleteAccountModal .modal-actions button');
+if(daBtns[0])daBtns[0].textContent=wt('btn_cancel');
+if(daBtns[1])daBtns[1].textContent=wt('btn_delete');
+// [8] Edit text modal: title already handled, labels, buttons
+const etLabels=document.querySelectorAll('#editTextModal .modal-field label');
+if(etLabels[0])etLabels[0].textContent=wt('lbl_title');
+if(etLabels[1])etLabels[1].textContent=wt('lbl_lang');
+if(etLabels[2])etLabels[2].textContent=wt('lbl_content');
+const etBtns=document.querySelectorAll('#editTextModal .modal-actions button');
+if(etBtns[0])etBtns[0].textContent=wt('btn_del_text');
+if(etBtns[1])etBtns[1].textContent=wt('btn_cancel');
+if(etBtns[2])etBtns[2].textContent=wt('btn_save');
+// [9] Practice language dropdown option names
+const langSelAll=document.getElementById('langSelect');
+if(langSelAll){for(let i=1;i<langSelAll.options.length;i++){langSelAll.options[i].textContent=langDisplayName(langSelAll.options[i].value);}}
+// [10] Text request: custom file button, filename, language dropdown
+const rfb=document.getElementById('reqFileBtn');if(rfb)rfb.textContent=wt('choose_file');
+const rfn=document.getElementById('reqFileName');if(rfn&&!document.getElementById('reqTextFile').files.length)rfn.textContent=wt('no_file_chosen');
+const rtl=document.getElementById('reqTextLang');
+if(rtl){const rlK=['lang_korean','lang_chinese','lang_english','lang_japanese'];rtl.querySelectorAll('option').forEach((o,i)=>{if(rlK[i])o.textContent=wt(rlK[i]);});}
+// [10] editTextLang dropdown
+const etlSel=document.getElementById('editTextLang');
+if(etlSel){const elk=['lang_korean','lang_chinese','lang_english','lang_japanese'];etlSel.querySelectorAll('option').forEach((o,i)=>{if(elk[i])o.textContent=wt(elk[i]);});}
+// [11] Pending empty (detect current text)
+const pdl=document.getElementById('pendingRequestsList');
+if(pdl){const pd=pdl.querySelector('div');if(pd&&!pdl.querySelector('.pending-item')){const t=pd.textContent.trim();if(t){const isLoading=t.includes('...')||t===wt('loading');pd.textContent=isLoading?wt('loading'):wt('no_pending');}}}
+// [13] Account tab
+const acctLoginMsg=document.getElementById('acctLoginMsg');if(acctLoginMsg)acctLoginMsg.textContent=wt('acct_login_msg');
+const acctBtnLogin=document.getElementById('acctBtnLogin');if(acctBtnLogin)acctBtnLogin.textContent=wt('btn_login');
+const acctBtnSignup=document.getElementById('acctBtnSignup');if(acctBtnSignup)acctBtnSignup.textContent=wt('btn_signup');
+const acctInfoTitle=document.getElementById('acctInfoTitle');if(acctInfoTitle)acctInfoTitle.textContent=wt('account_title');
+const acctNickLabel=document.getElementById('acctNickLabel');if(acctNickLabel)acctNickLabel.textContent=wt('acct_nickname');
+const acctBtnFindId=document.getElementById('acctBtnFindId');if(acctBtnFindId)acctBtnFindId.textContent=wt('btn_find_id');
+const acctBtnResetPw=document.getElementById('acctBtnResetPw');if(acctBtnResetPw)acctBtnResetPw.textContent=wt('btn_reset_pw');
+const acctBtnWithdraw=document.getElementById('acctBtnWithdraw');if(acctBtnWithdraw)acctBtnWithdraw.textContent=wt('btn_withdraw');
+// [14] Admin tab
+const adminMgmtTitle=document.getElementById('adminMgmtTitle');
+if(adminMgmtTitle){const cnt=document.getElementById('adminTotalCount');adminMgmtTitle.textContent=wt('admin_text_mgmt')+' ';if(cnt)adminMgmtTitle.appendChild(cnt);}
+const adminBtnAdd=document.getElementById('adminBtnAdd');if(adminBtnAdd)adminBtnAdd.textContent=wt('btn_add_text');
+const adminBtnRefresh=document.getElementById('adminBtnRefresh');if(adminBtnRefresh)adminBtnRefresh.textContent=wt('btn_refresh');
+const alf=document.getElementById('adminLangFilter');
+if(alf){if(alf.options[0])alf.options[0].textContent=wt('all');for(let i=1;i<alf.options.length;i++){alf.options[i].textContent=langDisplayName(alf.options[i].value);}}
+const adminBtnSelAll=document.getElementById('adminBtnSelAll');if(adminBtnSelAll)adminBtnSelAll.textContent=wt('btn_select_all');
+const adminBtnDeselAll=document.getElementById('adminBtnDeselAll');if(adminBtnDeselAll)adminBtnDeselAll.textContent=wt('btn_deselect_all');
+const adminBtnDelSel=document.getElementById('adminBtnDelSel');if(adminBtnDelSel)adminBtnDelSel.textContent=wt('btn_delete_selected');
+// [14] Admin loading/empty text
+const atl=document.getElementById('adminTextList');
+if(atl&&atl.children.length===1&&!atl.querySelector('.admin-text-item')){const d=atl.children[0];if(d)d.textContent=wt('loading');}
+// [15] Footer
+const fwv=document.getElementById('footerWebVer');if(fwv)fwv.textContent=wt('footer_web_ver');
+}
+
+let currentUser=null,allTexts=[],texts=[],languages=[];
+let currentText=null,practicing=false,started=false,paused=false;
+let startTime=null,timerInterval=null,keystrokes=0;
+let totalPausedMs=0,pauseStartTime=null;
+let lines=[],currentLineIdx=0,lineInputs=[],lineDisplays=[],lineBlocks=[];
+let unitMode='line',manualPause=false;
+let adminAllTexts=[];
+let rawParagraphs=[]; /* FIX#1: preserve original paragraphs for reflow */
+
+/* SFX */
+let sfxEnabled=false,sfxStyle='typewriter',sfxVolume=0.5;
+const sfxBuffers={};let sfxCtx=null;
+const SFX_URLS={typewriter:'/static/sfx/sfx_typewriter.wav',retro:'/static/sfx/sfx_retro.wav',analog:'/static/sfx/sfx_analog.wav',mechanical:'/static/sfx/sfx_mechanical.wav'};
+async function loadSfxBuffer(key){if(sfxBuffers[key])return;try{if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();const url=SFX_URLS[key];if(!url)return;const resp=await fetch(url);const ab=await resp.arrayBuffer();sfxBuffers[key]=await sfxCtx.decodeAudioData(ab);}catch(e){}}
+function playSfx(){if(!sfxEnabled)return;try{if(!sfxCtx)sfxCtx=new(window.AudioContext||window.webkitAudioContext)();if(sfxStyle==='soft'){const o=sfxCtx.createOscillator(),g=sfxCtx.createGain();o.connect(g);g.connect(sfxCtx.destination);const t=sfxCtx.currentTime;o.type='sine';o.frequency.setValueAtTime(600,t);g.gain.setValueAtTime(sfxVolume*0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);o.start(t);o.stop(t+0.04);return;}const buf=sfxBuffers[sfxStyle];if(!buf){loadSfxBuffer(sfxStyle);return;}const src=sfxCtx.createBufferSource(),g=sfxCtx.createGain();src.buffer=buf;src.connect(g);g.connect(sfxCtx.destination);g.gain.value=sfxVolume;src.start(0);}catch(e){}}
+function preloadAllSfx(){for(const k of Object.keys(SFX_URLS))loadSfxBuffer(k);}
+
+function normalizeFullwidth(s){let o='';for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);if(c>=0xFF10&&c<=0xFF19)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF21&&c<=0xFF3A)o+=String.fromCharCode(c-0xFEE0);else if(c>=0xFF41&&c<=0xFF5A)o+=String.fromCharCode(c-0xFEE0);else o+=s[i];}return o;}
+function stripLeadingBlanks(s){return s.replace(/^[\s\u3000\u00A0\t\u0020]+/,'');}
+
+async function api(ep,method='GET',data=null){const o={method,headers:{'Content-Type':'application/json'}};if(currentUser?.token)o.headers['Authorization']='Bearer '+currentUser.token;if(data)o.body=JSON.stringify(data);try{const r=await fetch(API+ep,o);return await r.json();}catch(e){return null;}}
+
+/* Tabs */
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{
+  const prevTab=document.querySelector('.tab-btn.active')?.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');document.getElementById('panel-'+b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='ranking')loadRankings();
+  if(b.dataset.tab==='admin')refreshAdminTextList();
+  if(b.dataset.tab==='download')loadDownloadList();
+  if(b.dataset.tab==='settings'){updateTextRequestUI();if(isAdmin())loadPendingRequests();}
+  if(prevTab==='practice'&&b.dataset.tab!=='practice'&&practicing&&started&&!paused){doPause(false,true);}
+  if(b.dataset.tab==='practice'&&paused&&practicing){document.getElementById('pauseOverlay').classList.add('active');}
+});});
+
+/* Auth */
+function isAdmin(){return currentUser?.user_id===ADMIN_ID;}
+function updateAuthUI(){const i=document.getElementById('userInfo');if(currentUser){i.textContent=currentUser.nickname+wt('user_suffix');document.getElementById('btnLogin').style.display='none';document.getElementById('btnSignup').style.display='none';document.getElementById('btnLogout').style.display='';document.getElementById('accountLoggedOut').style.display='none';document.getElementById('accountLoggedIn').style.display='';document.getElementById('acctId').textContent=currentUser.user_id;document.getElementById('acctNick').textContent=currentUser.nickname;document.getElementById('rankSubmitArea').style.display='';}else{i.textContent=wt('not_logged_in');document.getElementById('btnLogin').style.display='';document.getElementById('btnSignup').style.display='';document.getElementById('btnLogout').style.display='none';document.getElementById('accountLoggedOut').style.display='';document.getElementById('accountLoggedIn').style.display='none';document.getElementById('rankSubmitArea').style.display='none';}document.getElementById('tabAdmin').style.display=isAdmin()?'':'none';document.getElementById('rankAdminPanel').style.display=isAdmin()?'':'none';updateTextRequestUI();
+document.getElementById('dlAdminUploadArea').style.display=isAdmin()?'':'none';}
+
+// [15] Download tab
+function fmtBytes(b){if(b<1024)return b+'B';if(b<1024*1024)return (b/1024).toFixed(1)+'KB';return (b/(1024*1024)).toFixed(1)+'MB';}
+function fmtDate(s){const d=new Date(s);return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');}
+async function loadDownloadList(){
+  const list=document.getElementById('dlFileList');
+  list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div>';
+  const r=await api('/api/downloads','GET');
+  if(!r?.ok||!r.files||r.files.length===0){
+    list.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.9rem">등록된 파일이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML=r.files.map(f=>`
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="font-size:2rem;flex-shrink:0">💾</div>
+      <div style="flex:1;min-width:160px">
+        <div style="font-weight:700;color:#1e293b;font-size:.95rem">${esc(f.filename)}</div>
+        ${f.version?`<span style="display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:.75rem;font-weight:600;border-radius:4px;padding:1px 7px;margin:3px 0">${esc(f.version)}</span>`:''}
+        ${f.description?`<div style="color:#64748b;font-size:.82rem;margin-top:2px">${esc(f.description)}</div>`:''}
+        <div style="color:#94a3b8;font-size:.78rem;margin-top:4px">${fmtBytes(f.filesize)} · ${fmtDate(f.created_at)}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;align-items:center">
+        <a href="/api/downloads/${f.id}" download="${esc(f.filename)}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#2563eb;color:#fff;border-radius:7px;font-weight:700;font-size:.88rem;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">⬇ 다운로드</a>
+        ${isAdmin()?`<button onclick="deleteDownloadFile(${f.id})" style="padding:7px 12px;background:#fee2e2;color:#dc2626;border:none;border-radius:7px;font-weight:600;font-size:.82rem;cursor:pointer">삭제</button>`:''}
+      </div>
+    </div>`).join('');
+}
+async function uploadDownloadFile(){
+  const fileInput=document.getElementById('dlFileInput');
+  const version=document.getElementById('dlVersionInput').value.trim();
+  const desc=document.getElementById('dlDescInput').value.trim();
+  const msgEl=document.getElementById('dlUploadMsg');
+  const progressArea=document.getElementById('dlUploadProgress');
+  const progressBar=document.getElementById('dlProgressBar');
+  const progressText=document.getElementById('dlProgressText');
+  if(!fileInput.files||!fileInput.files[0]){msgEl.textContent='파일을 선택해 주세요.';return;}
+  const file=fileInput.files[0];
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('version',version);
+  fd.append('description',desc);
+  document.getElementById('dlUploadBtn').disabled=true;
+  msgEl.textContent='업로드 중...';
+  progressArea.style.display='';
+  progressBar.style.width='0%';
+  progressText.textContent='';
+  try{
+    await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/downloads');
+      if(currentUser?.token)xhr.setRequestHeader('Authorization','Bearer '+currentUser.token);
+      xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);progressBar.style.width=pct+'%';progressText.textContent=fmtBytes(e.loaded)+' / '+fmtBytes(e.total)+' ('+pct+'%)';}};
+      xhr.onload=()=>{const r=JSON.parse(xhr.responseText);if(r.ok){resolve(r);}else{reject(new Error(r.msg||'업로드 실패'));}};
+      xhr.onerror=()=>reject(new Error('네트워크 오류'));
+      xhr.send(fd);
+    });
+    msgEl.style.color='#16a34a';msgEl.textContent='업로드 완료!';
+    progressBar.style.width='100%';
+    fileInput.value='';
+    document.getElementById('dlVersionInput').value='';
+    document.getElementById('dlDescInput').value='';
+    setTimeout(()=>{progressArea.style.display='none';msgEl.textContent='';msgEl.style.color='';},2000);
+    loadDownloadList();
+  }catch(e){msgEl.style.color='#dc2626';msgEl.textContent=e.message;progressArea.style.display='none';}
+  document.getElementById('dlUploadBtn').disabled=false;
+}
+async function deleteDownloadFile(id){
+  if(!confirm('이 파일을 삭제하시겠습니까?'))return;
+  const r=await api('/api/downloads/'+id,'DELETE');
+  if(r?.ok){loadDownloadList();}else{alert(r?.msg||'삭제 실패');}
+}
+function showLoginModal(){openModal('loginModal');document.getElementById('loginId').focus();}
+function showSignupModal(){openModal('signupModal');document.getElementById('signupId').focus();}
+function showFindIdModal(){openModal('findIdModal');document.getElementById('findIdEmail').focus();}
+function showResetPwModal(){openModal('resetPwModal');document.getElementById('resetPwId').focus();}
+function showDeleteAccountModal(){openModal('deleteAccountModal');document.getElementById('delAcctPw').focus();}
+async function doLogin(){const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPw').value;if(!id||!pw){document.getElementById('loginMsg').textContent=wt('msg_enter_id_pw');return;}const r=await api('/api/login','POST',{user_id:id,password:pw});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('loginModal');updateAuthUI();checkNotifications();}else{document.getElementById('loginMsg').textContent=serverMsg(r,'msg_login_fail');}}
+async function doSignup(){const id=document.getElementById('signupId').value.trim(),pw=document.getElementById('signupPw').value,nk=document.getElementById('signupNick').value.trim(),em=document.getElementById('signupEmail').value.trim();if(!id||!pw||!nk||!em){document.getElementById('signupMsg').textContent=wt('msg_fill_all');return;}const r=await api('/api/signup','POST',{user_id:id,password:pw,nickname:nk,email:em});if(r?.ok){currentUser={user_id:r.user_id,nickname:r.nickname,token:r.token};localStorage.setItem('auth',JSON.stringify(currentUser));closeModal('signupModal');updateAuthUI();}else{document.getElementById('signupMsg').textContent=serverMsg(r,'msg_fail');}}
+async function doLogout(){await api('/api/logout','POST');currentUser=null;localStorage.removeItem('auth');updateAuthUI();document.getElementById('notifArea').innerHTML='';}
+async function doFindId(){const em=document.getElementById('findIdEmail').value.trim();if(!em){document.getElementById('findIdMsg').textContent=wt('msg_enter_email');return;}const r=await api('/api/find-id','POST',{email:em});const m=document.getElementById('findIdMsg');if(r?.ok){m.className='modal-msg success';m.textContent='ID: '+r.user_id;}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_not_found');}}
+async function doResetPw(){const id=document.getElementById('resetPwId').value.trim(),em=document.getElementById('resetPwEmail').value.trim(),p1=document.getElementById('resetPwNew').value,p2=document.getElementById('resetPwConfirm').value;if(!id||!em||!p1){document.getElementById('resetPwMsg').textContent=wt('msg_fill_all_short');return;}if(p1!==p2){document.getElementById('resetPwMsg').textContent=wt('msg_pw_mismatch');return;}const r=await api('/api/reset-password','POST',{user_id:id,email:em,new_password:p1});const m=document.getElementById('resetPwMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_complete');}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
+async function doDeleteAccount(){const pw=document.getElementById('delAcctPw').value,cf=document.getElementById('delAcctConfirm').value.trim();if(cf!==wt('delete_confirm_word')){document.getElementById('delAcctMsg').textContent=wt('delete_confirm_hint');return;}const r=await api('/api/delete-account','POST',{password:pw});if(r?.ok){currentUser=null;localStorage.removeItem('auth');closeModal('deleteAccountModal');updateAuthUI();alert(wt('msg_withdraw_done'));}else{document.getElementById('delAcctMsg').textContent=serverMsg(r,'msg_fail');}}
+
+/* FIX#5: Notification — check for text request results on login */
+async function checkNotifications(){
+  if(!currentUser||isAdmin())return;
+  const r=await api('/api/text-requests/notifications');
+  if(!r?.ok||!r.notifications?.length)return;
+  const area=document.getElementById('notifArea');let html='';const ids=[];
+  for(const n of r.notifications){
+    ids.push(n.id);
+    const st=n.status==='approved'?wt('msg_approved'):wt('msg_rejected');
+    const cm=n.review_comment?' — '+wt('msg_reason')+': '+esc(n.review_comment):'';
+    html+='<div class="notif-banner"><button class="notif-close" onclick="this.parentElement.remove()">✕</button><div class="notif-title">'+ wt('msg_notif_result')+': '+esc(n.title)+'</div>'+st+cm+'</div>';
+  }
+  area.innerHTML=html;
+  if(ids.length)api('/api/text-requests/notifications/ack','POST',{ids});
+}
+
+/* Modal helpers */
+function openModal(id){document.querySelectorAll('#'+id+' .modal-msg').forEach(m=>m.textContent='');document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){document.querySelectorAll('.modal-overlay.active:not(#pauseOverlay)').forEach(m=>m.classList.remove('active'));e.preventDefault();e.stopPropagation();return;}});
+document.getElementById('loginPw')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('signupEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
+
+/* Texts */
+function populateTextSelect(tl,ll){allTexts=tl;languages=ll||[];const ls=document.getElementById('langSelect'),pv=ls.value;ls.innerHTML='<option value="">'+wt('all')+'</option>';languages.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);ls.appendChild(o);});ls.value=pv;filterTexts();}
+function filterTexts(){const lang=document.getElementById('langSelect').value;texts=lang?allTexts.filter(t=>(t.language||'')===lang):[...allTexts];const s=document.getElementById('textSelect'),pv=s.value;s.innerHTML='<option value="">'+wt('select_text')+'</option>';texts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.title+' ('+t.content.length+wt('unit_char')+')';s.appendChild(o);});if(pv)s.value=pv;}
+document.getElementById('langSelect').addEventListener('change',filterTexts);
+document.getElementById('textSelect').addEventListener('change',function(){if(this.value)startPractice();});
+async function loadTexts(){const r=await api('/api/texts');if(r?.ok){populateTextSelect(r.texts,r.languages);try{localStorage.setItem('cachedTexts',JSON.stringify({texts:r.texts,languages:r.languages}));}catch(e){}}}
+
+/* Settings */
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem('webSettings')||'{}');unitMode=s.unitMode||'line';document.getElementById('settingUnitMode').value=unitMode;if(s.fontSize)document.getElementById('settingFontSize').value=s.fontSize;if(s.lineHeight)document.getElementById('settingLineHeight').value=s.lineHeight;if(s.letterSpacing!=null)document.getElementById('settingLetterSpacing').value=s.letterSpacing;sfxEnabled=(s.sfxEnabled==='on');document.getElementById('settingSfxEnabled').value=sfxEnabled?'on':'off';sfxStyle=s.sfxStyle||'typewriter';document.getElementById('settingSfxStyle').value=sfxStyle;sfxVolume=s.sfxVolume!=null?parseFloat(s.sfxVolume)/100:0.5;document.getElementById('settingSfxVolume').value=Math.round(sfxVolume*100);document.getElementById('sfxVolLabel').textContent=Math.round(sfxVolume*100)+'%';}catch(e){}applyFontSettings();}
+function saveSettings(){const s={unitMode:document.getElementById('settingUnitMode').value,fontSize:document.getElementById('settingFontSize').value,lineHeight:document.getElementById('settingLineHeight').value,letterSpacing:document.getElementById('settingLetterSpacing').value,sfxEnabled:document.getElementById('settingSfxEnabled').value,sfxStyle:document.getElementById('settingSfxStyle').value,sfxVolume:document.getElementById('settingSfxVolume').value};unitMode=s.unitMode;sfxEnabled=(s.sfxEnabled==='on');sfxStyle=s.sfxStyle;sfxVolume=parseInt(s.sfxVolume)/100;document.getElementById('sfxVolLabel').textContent=s.sfxVolume+'%';localStorage.setItem('webSettings',JSON.stringify(s));applyFontSettings();if(sfxEnabled&&SFX_URLS[sfxStyle])loadSfxBuffer(sfxStyle);}
+function applyFontSettings(){document.documentElement.style.setProperty('--pfs',document.getElementById('settingFontSize').value+'px');document.documentElement.style.setProperty('--plh',document.getElementById('settingLineHeight').value);document.documentElement.style.setProperty('--pls',document.getElementById('settingLetterSpacing').value+'px');}
+['settingUnitMode','settingFontSize','settingLineHeight','settingLetterSpacing','settingSfxEnabled','settingSfxStyle','settingSfxVolume'].forEach(id=>{document.getElementById(id).addEventListener('change',saveSettings);document.getElementById(id).addEventListener('input',saveSettings);});
+
+/* Text request */
+function updateTextRequestUI(){document.getElementById('textRequestLogin').style.display=currentUser?'none':'';document.getElementById('textRequestForm').style.display=currentUser?'':'none';document.getElementById('pendingRequestsSection').style.display=isAdmin()?'':'none';}
+async function submitTextRequest(){const fileInput=document.getElementById('reqTextFile'),lang=document.getElementById('reqTextLang').value,m=document.getElementById('reqTextMsg');if(!fileInput.files.length){m.textContent=wt('msg_select_file');return;}const file=fileInput.files[0],text=await file.text(),title=file.name.replace(/\.txt$/i,'').trim();if(!text.trim()){m.textContent=wt('msg_file_empty');return;}const r=await api('/api/text-requests','POST',{title,content:text.trim(),language:lang});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_request_done');fileInput.value='';}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
+
+/* FIX#4: Pending requests with comment input */
+async function loadPendingRequests(){
+  const r=await api('/api/text-requests');if(!r?.ok)return;
+  const list=document.getElementById('pendingRequestsList');
+  const pending=(r.requests||[]).filter(x=>x.status==='pending');
+  if(pending.length===0){list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('no_pending')+'</div>';return;}
+  list.innerHTML=pending.map(req=>{
+    const d=req.created_at?new Date(req.created_at).toLocaleString(_wlang==='ko'?'ko':_wlang==='zh'?'zh-TW':_wlang==='ja'?'ja':'en'):'';
+    return '<div class="pending-item">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">'+esc(req.title)+'</div>'+
+        '<div style="font-size:.75rem;color:#94a3b8">'+esc(req.nickname)+' · '+esc(req.language)+' · '+req.content.length+wt('unit_char')+' · '+d+'</div></div>'+
+        '<a href="data:text/plain;charset=utf-8,'+encodeURIComponent(req.content)+'" download="'+esc(req.title)+'.txt" style="padding:4px 10px;font-size:.75rem;background:#e2e8f0;border-radius:6px;color:#475569;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0">'+wt('btn_download')+'</a>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;align-items:center">'+
+        '<input type="text" id="reqComment'+req.id+'" placeholder="'+wt('placeholder_comment')+'" style="flex:1;padding:4px 8px;font-size:.8rem">'+
+        '<button class="btn-primary" style="padding:4px 10px;font-size:.75rem" onclick="approveRequest('+req.id+')">'+wt('btn_approve')+'</button>'+
+        '<button class="btn-danger" style="padding:4px 10px;font-size:.75rem" onclick="rejectRequest('+req.id+')">'+wt('btn_reject')+'</button>'+
+      '</div></div>';
+  }).join('');
+}
+async function approveRequest(id){if(!confirm(wt('msg_confirm_approve')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/approve','POST',{comment});if(r?.ok){alert(serverMsg(r,'msg_approve_done'));loadPendingRequests();loadTexts();}else{alert(serverMsg(r,'msg_fail'));}}
+async function rejectRequest(id){if(!confirm(wt('msg_confirm_reject')))return;const comment=(document.getElementById('reqComment'+id)?.value||'').trim();const r=await api('/api/text-requests/'+id+'/reject','POST',{comment});if(r?.ok){alert(wt('msg_reject_done'));loadPendingRequests();}else{alert(serverMsg(r,'msg_fail'));}}
+
+/* Admin text management */
+async function refreshAdminTextList(){const r=await api('/api/texts');if(!r?.ok)return;adminAllTexts=r.texts;const af=document.getElementById('adminLangFilter'),pv=af.value;const langs=[...new Set(r.texts.map(t=>t.language||'').filter(Boolean))];af.innerHTML='<option value="">'+wt('all')+'</option>';langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=langDisplayName(l);af.appendChild(o);});af.value=pv;renderAdminList();}
+document.getElementById('adminLangFilter').addEventListener('change',renderAdminList);
+function renderAdminList(){const lang=document.getElementById('adminLangFilter').value;const filtered=lang?adminAllTexts.filter(t=>(t.language||'')===lang):adminAllTexts;document.getElementById('adminTotalCount').textContent='('+filtered.length+')';document.getElementById('adminSelCount').textContent='';const l=document.getElementById('adminTextList');if(filtered.length===0){l.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">'+wt('admin_no_text')+'</div>';return;}l.innerHTML=filtered.map(t=>'<div class="admin-text-item"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0"><input type="checkbox" class="admin-chk" data-id="'+t.id+'" onchange="updateAdminSelCount()"></label><div class="admin-text-info"><div class="admin-text-title">'+esc(t.title)+'</div><div class="admin-text-meta">'+langDisplayName(t.language)+' · '+t.content.length+wt('unit_char')+'</div></div><div class="admin-text-actions"><button class="btn-primary" onclick="showEditTextModal('+t.id+')">'+wt('btn_edit')+'</button><button class="btn-danger" onclick="doDeleteTextDirect('+t.id+',\''+esc(t.title).replace(/'/g,"\\'")+'\')">'+wt('btn_del_text')+'</button></div></div>').join('');}
+function adminSelectAll(checked){document.querySelectorAll('.admin-chk').forEach(c=>c.checked=checked);updateAdminSelCount();}
+function updateAdminSelCount(){const sel=document.querySelectorAll('.admin-chk:checked').length;const total=document.querySelectorAll('.admin-chk').length;document.getElementById('adminSelCount').textContent=sel>0?wt('msg_sel_count').replace('{0}',sel).replace('{1}',total):'';}
+async function adminDeleteSelected(){const ids=[...document.querySelectorAll('.admin-chk:checked')].map(c=>parseInt(c.dataset.id));if(ids.length===0){alert(wt('msg_no_sel_text'));return;}if(!confirm(ids.length+wt('msg_confirm_del_texts')))return;for(const id of ids){await api('/api/texts/'+id,'DELETE');}await loadTexts();refreshAdminTextList();}
+function showAddTextModal(){document.getElementById('editTextTitle').textContent=wt('btn_add_text');document.getElementById('editTextId').value='';document.getElementById('editTextName').value='';document.getElementById('editTextLang').value='한국어';document.getElementById('editTextContent').value='';document.getElementById('btnDeleteText').style.display='none';openModal('editTextModal');document.getElementById('editTextName').focus();}
+function showEditTextModal(id){const t=allTexts.find(x=>x.id===id)||adminAllTexts.find(x=>x.id===id);if(!t)return;document.getElementById('editTextTitle').textContent=wt('edit_text_title');document.getElementById('editTextId').value=id;document.getElementById('editTextName').value=t.title;document.getElementById('editTextLang').value=t.language||'한국어';document.getElementById('editTextContent').value=t.content;document.getElementById('btnDeleteText').style.display='';openModal('editTextModal');}
+async function doSaveText(){const id=document.getElementById('editTextId').value,ti=document.getElementById('editTextName').value.trim(),la=document.getElementById('editTextLang').value,co=document.getElementById('editTextContent').value.trim(),m=document.getElementById('editTextMsg');if(!ti||!co){m.textContent=wt('msg_title_content_needed');return;}let r;if(id)r=await api('/api/texts/'+id,'PUT',{title:ti,content:co,language:la});else r=await api('/api/texts','POST',{title:ti,content:co,language:la});if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_save_done');await loadTexts();refreshAdminTextList();setTimeout(()=>closeModal('editTextModal'),600);}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
+async function doDeleteText(){const id=document.getElementById('editTextId').value;if(!id)return;if(!confirm(wt('msg_confirm_delete')))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){closeModal('editTextModal');await loadTexts();refreshAdminTextList();}}
+async function doDeleteTextDirect(id,title){if(!confirm('"'+title+'"  — '+wt('msg_confirm_delete')))return;const r=await api('/api/texts/'+id,'DELETE');if(r?.ok){await loadTexts();refreshAdminTextList();}}
+
+/* Pause */
+function doPause(manual=false,silent=false){if(!started||paused)return;paused=true;manualPause=manual;pauseStartTime=Date.now();if(!silent){document.getElementById('pauseOverlay').classList.add('active');}document.getElementById('pauseStatus').style.display='';}
+function doResume(){if(!paused)return;paused=false;manualPause=false;if(pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';if(lineInputs[currentLineIdx])lineInputs[currentLineIdx].focus();}
+
+/* Line split + FIX#1 reflow */
+function splitTextToLines(content){
+  rawParagraphs=content.split('\n').filter(l=>l.length>0).map(l=>stripLeadingBlanks(l)).filter(l=>l.length>0);
+  if(rawParagraphs.length===0)rawParagraphs=[stripLeadingBlanks(content)];
+  if(unitMode==='paragraph')return [...rawParagraphs];
+  return reflowLines();
+}
+function reflowLines(){
+  const m=document.createElement('div');
+  m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font-family:var(--pf);font-size:var(--pfs);letter-spacing:var(--pls);padding:0 14px;';
+  document.body.appendChild(m);
+  const maxW=(document.getElementById('linePracticeArea').clientWidth||900)-32;
+  const result=[];
+  for(const r of rawParagraphs){if(!r)continue;let ln='';for(let i=0;i<r.length;i++){const t=ln+r[i];m.textContent=t;if(m.offsetWidth>maxW&&ln.length>0){result.push(ln);ln=r[i];}else{ln=t;}}if(ln)result.push(ln);}
+  document.body.removeChild(m);
+  return result.length>0?result:[''];
+}
+
+/* FIX#1: Window resize → reflow lines, preserve typed text + stats */
+let _resizeTimer=null;
+window.addEventListener('resize',()=>{
+  if(!practicing||!currentText||unitMode!=='line'||lines.length===0)return;
+  clearTimeout(_resizeTimer);
+  _resizeTimer=setTimeout(doReflow,200);
+});
+function doReflow(){
+  if(!practicing||!currentText||unitMode!=='line')return;
+  const allTyped=lineInputs.map(inp=>inp.value).join('');
+  const newLines=reflowLines();
+  if(newLines.length===lines.length&&newLines.every((l,i)=>l===lines[i]))return; /* truly no change */
+  lines=newLines;
+  /* redistribute typed text across new lines */
+  const typedPerLine=[];let pos=0;
+  for(const ln of lines){typedPerLine.push(allTyped.slice(pos,pos+ln.length));pos+=ln.length;}
+  buildLineUI();
+  /* restore typed, highlights, completed */
+  for(let i=0;i<lines.length;i++){
+    if(typedPerLine[i]){
+      lineInputs[i].value=typedPerLine[i];
+      refreshHighlights(i,typedPerLine[i],lines[i],lineDisplays[i].children);
+      if(normalizeFullwidth(typedPerLine[i])===normalizeFullwidth(lines[i])&&typedPerLine[i].length===lines[i].length)
+        lineBlocks[i].classList.add('completed');
+    }
+  }
+  /* find correct current line */
+  let newCur=0;
+  for(let i=0;i<lines.length;i++){
+    if(lineInputs[i].value.length<lines[i].length&&!lineBlocks[i].classList.contains('completed')){newCur=i;break;}
+    if(i===lines.length-1)newCur=i;
+  }
+  activateLine(newCur);
+  if(started&&!paused)lineInputs[newCur].focus();
+}
+
+/* Practice */
+function startPractice(){const s=document.getElementById('textSelect'),id=parseInt(s.value);if(!id){alert(wt('msg_select_text'));return;}currentText=texts.find(t=>t.id===id);if(!currentText)return;fullReset();const _sb=document.querySelector('.btn-stop');_sb.textContent=wt('btn_stop_f12');_sb.dataset.state='stop';practicing=true;started=false;paused=false;keystrokes=0;startTime=null;totalPausedMs=0;
+document.getElementById('practiceArea').style.display='';document.getElementById('practiceMsg').style.display='none';document.getElementById('statsBar').style.display='';
+lines=splitTextToLines(currentText.content);currentLineIdx=0;buildLineUI();
+document.getElementById('prepArea').style.display='';const pr=document.getElementById('prepInput');pr.value='';pr.focus();}
+
+/* FIX#6: buildLineUI — NO disabled; class-based active/inactive; single active line */
+function buildLineUI(){const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
+lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}
+const inp=document.createElement('input');inp.type='text';inp.className='line-input'+(idx===0?' active-line':' inactive-line');inp.autocomplete='off';inp.spellcheck=false;
+block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
+inp.addEventListener('compositionstart',()=>{inp._composing=true;});
+inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});
+inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});
+inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
+/* FIX#6: click on input → switch to this line */
+inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){e.preventDefault();doResume();return;}if(idx!==currentLineIdx){e.preventDefault();switchToLine(idx);}});
+/* FIX#6: click on original text area → also switch */
+origDiv.addEventListener('mousedown',e=>{if(!practicing)return;e.preventDefault();if(paused){doResume();return;}if(idx!==currentLineIdx)switchToLine(idx);else inp.focus();});
+});}
+
+/* FIX#6: activate exactly one line, deactivate all others */
+function activateLine(idx){
+  lineInputs.forEach(inp=>{inp.classList.remove('active-line');inp.classList.add('inactive-line');});
+  currentLineIdx=idx;
+  lineInputs[idx].classList.add('active-line');lineInputs[idx].classList.remove('inactive-line');
+}
+function switchToLine(toIdx){if(toIdx<0||toIdx>=lineInputs.length||toIdx===currentLineIdx)return;activateLine(toIdx);lineInputs[toIdx].focus();updateCursorDisplay(toIdx);}
+function updateCursorDisplay(idx){const spans=lineDisplays[idx].children,typed=lineInputs[idx].value;for(let i=0;i<spans.length;i++){spans[i].classList.remove('current');if(i===typed.length)spans[i].classList.add('current');}}
+
+document.getElementById('prepInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key==='ArrowDown'){e.preventDefault();if(!practicing)return;started=true;document.querySelector('.btn-stop').disabled=false;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';if(lineInputs[0])lineInputs[0].focus();}
+});
+
+function handleLineKeydown(e,idx){if(!practicing)return;
+/* FIX#6: typing in non-active line → switch first */
+if(idx!==currentLineIdx&&e.key!=='Escape'){e.preventDefault();switchToLine(idx);return;}
+if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(paused)doResume();else doPause(true);return;}
+if(paused){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock'];if(!ig.includes(e.key)){e.preventDefault();doResume();}return;}
+if(!started&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!['F11','F12','Escape','Shift','Control','Alt','Meta'].includes(e.key)){started=true;document.querySelector('.btn-stop').disabled=false;startTime=Date.now();timerInterval=setInterval(updateStats,200);document.getElementById('prepArea').style.display='none';}
+if((e.key===' '||e.code==='Space')&&lineInputs[idx].value.length===0){e.preventDefault();return;}
+if(e.key.length===1||e.key==='Backspace'||e.key==='Enter'||e.key==='Process'||e.keyCode===229){keystrokes++;playSfx();}
+if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();keystrokes++;if(idx<lines.length-1)moveToLine(idx+1,idx);return;}
+if(e.key==='Tab'&&e.shiftKey){e.preventDefault();keystrokes++;if(idx>0)moveToLine(idx-1,idx);return;}
+if(e.key==='ArrowUp'){e.preventDefault();if(idx>0)switchToLine(idx-1);return;}
+if(e.key==='ArrowDown'){e.preventDefault();if(idx<lines.length-1)switchToLine(idx+1);return;}
+if(e.key==='Backspace'&&lineInputs[idx].selectionStart===0&&lineInputs[idx].selectionEnd===0){if(idx>0){e.preventDefault();moveToLine(idx-1,idx);return;}}
+if(e.key==='Enter'){e.preventDefault();if(idx<lines.length-1)moveToLine(idx+1,idx,true);else stopPractice();return;}}
+
+function moveToLine(toIdx,fromIdx,markComplete=false){if(markComplete)lineBlocks[fromIdx].classList.add('completed');activateLine(toIdx);lineInputs[toIdx].focus();updateCursorDisplay(toIdx);lineBlocks[toIdx].scrollIntoView({behavior:'smooth',block:'center'});}
+
+function handleLineInput(idx){if(!practicing||paused)return;
+/* FIX#6: ignore input in non-active line */
+if(idx!==currentLineIdx){lineInputs[idx].value='';return;}
+const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
+if(typed.length>0&&/^[\s\u3000\u00A0]/.test(typed)){typed=stripLeadingBlanks(typed);inp.value=typed;}
+const target=lines[idx],spans=lineDisplays[idx].children;
+if(typed.length>target.length){const overflow=typed.slice(target.length);inp.value=typed.slice(0,target.length);typed=inp.value;refreshHighlights(idx,typed,target,spans);updateStats();if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);const next=overflow.replace(/^ /,'');if(next){lineInputs[idx+1].value=next;handleLineInput(idx+1);}}else{stopPractice();}return;}
+refreshHighlights(idx,typed,target,spans);updateStats();
+if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(target);if(tN===gN&&idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);}}}
+
+function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}}
+
+function doReset(){
+  if(!practicing&&lines.length===0){fullReset();return;}
+  if(!practicing&&lines.length>0){startPractice();return;}
+  started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  keystrokes=0;currentLineIdx=0;
+  lineInputs.forEach(inp=>{inp.value='';inp.classList.remove('active-line');inp.classList.add('inactive-line');});
+  lineBlocks.forEach(b=>b.classList.remove('completed'));
+  lineDisplays.forEach((d,i)=>{const spans=d.children;for(let j=0;j<spans.length;j++){spans[j].className='ch';if(i===0&&j===0)spans[j].className='ch current';}});
+  lineInputs[0].classList.add('active-line');lineInputs[0].classList.remove('inactive-line');
+  document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';
+  document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';
+  document.getElementById('prepArea').style.display='';document.getElementById('prepInput').value='';document.getElementById('prepInput').focus();
+}
+function fullReset(){practicing=false;started=false;paused=false;manualPause=false;startTime=null;totalPausedMs=0;pauseStartTime=null;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}keystrokes=0;currentLineIdx=0;lines=[];lineInputs=[];lineDisplays=[];lineBlocks=[];rawParagraphs=[];document.getElementById('linePracticeArea').innerHTML='';document.getElementById('statTime').textContent='0:00';document.getElementById('statCpm').textContent='0';document.getElementById('statKpm').textContent='0';document.getElementById('statAcc').textContent='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statChars').textContent='0';document.getElementById('statKeys').textContent='0';document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';const _srb=document.querySelector('.btn-stop');_srb.disabled=true;_srb.textContent=wt('btn_stop_f12');_srb.dataset.state='stop';}
+
+function stopPractice(){if(!practicing)return;practicing=false;started=false;if(paused&&pauseStartTime){totalPausedMs+=(Date.now()-pauseStartTime);pauseStartTime=null;}paused=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null;}lineInputs.forEach(i=>{i.classList.remove('active-line');i.classList.add('inactive-line');});document.getElementById('pauseOverlay').classList.remove('active');document.getElementById('pauseStatus').style.display='none';const _spb=document.querySelector('.btn-stop');_spb.textContent=wt('btn_result_f12');_spb.dataset.state='result';showResults();}
+
+function getElapsed(){if(!startTime)return 0;let pe=totalPausedMs;if(paused&&pauseStartTime)pe+=(Date.now()-pauseStartTime);return Math.max(0,(Date.now()-startTime-pe))/1000;}
+function updateStats(){const el=getElapsed(),mn=Math.floor(el/60),sc=Math.floor(el%60);document.getElementById('statTime').textContent=mn+':'+String(sc).padStart(2,'0');if(el<=0)return;let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);document.getElementById('statCpm').textContent=Math.round(tc/(el/60));document.getElementById('statKpm').textContent=Math.round(keystrokes/(el/60));document.getElementById('statAcc').textContent=(tco>0?Math.round(tc/tco*100):0)+'%';document.getElementById('statProgress').textContent=Math.min(ttg>0?Math.round(ttl/ttg*100):0,100)+'%';document.getElementById('statChars').textContent=ttl;document.getElementById('statKeys').textContent=keystrokes;}
+
+/* Focus pause/resume */
+document.addEventListener('focusin',e=>{if(!practicing||!started)return;if(paused&&!manualPause&&lineInputs.includes(e.target))doResume();});
+document.addEventListener('focusout',e=>{if(!practicing||!started||paused)return;setTimeout(()=>{if(!practicing||!started||paused)return;const a=document.activeElement;if(lineInputs.includes(a)||a===document.getElementById('prepInput'))return;const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;if(activeTab!=='practice')return;if(a===document.body||a.classList.contains('scroll-btn'))return;doPause(false);},200);});
+document.getElementById('pauseOverlay').addEventListener('click',()=>{if(paused)doResume();});
+
+/* Results */
+function showResults(){const el=getElapsed();let tc=0,tco=0,ttl=0;for(let i=0;i<lines.length;i++){const ty=lineInputs[i]?normalizeFullwidth(lineInputs[i].value):'',tg=normalizeFullwidth(lines[i]),cm=Math.min(ty.length,tg.length);for(let j=0;j<cm;j++)if(ty[j]===tg[j])tc++;tco+=cm;ttl+=(lineInputs[i]?lineInputs[i].value.length:0);}const ttg=lines.reduce((s,l)=>s+l.length,0);
+const cpm=el>0?Math.round(tc/(el/60)):0,kpm=el>0?Math.round(keystrokes/(el/60)):0,acc=tco>0?Math.round(tc/tco*1000)/10:0,prog=ttg>0?Math.round(ttl/ttg*1000)/10:0;
+document.getElementById('resCpm').textContent=cpm;document.getElementById('resKpm').textContent=kpm;document.getElementById('resAcc').textContent=acc+'%';document.getElementById('resProgress').textContent=Math.min(prog,100)+'%';document.getElementById('resTime').textContent=el.toFixed(1)+wt('unit_sec');document.getElementById('resChars').textContent=ttl;
+window._lastResult={cpm,kpm,acc,progress:Math.min(prog,100),elapsed:el,chars:ttl,input_chars:ttl};document.getElementById('rankSubmitMsg').textContent='';if(currentUser)document.getElementById('rankSubmitArea').style.display='';openModal('resultsModal');}
+async function submitRanking(){if(!currentUser||!window._lastResult||!currentText)return;const tw=document.getElementById('resTypewriter').value.trim();if(!tw){document.getElementById('rankSubmitMsg').textContent=wt('msg_enter_typewriter');return;}const bk=await sha1(currentText.content);const r=await api('/api/rankings','POST',{board_key:bk,board_name:currentText.title,typewriter:tw,cpm:window._lastResult.cpm,kpm:window._lastResult.kpm,acc:window._lastResult.acc,completion:window._lastResult.progress,chars:window._lastResult.chars,input_chars:window._lastResult.input_chars,elapsed:window._lastResult.elapsed,created_at:new Date().toLocaleString('sv-SE').replace('T',' '),created_ts:Math.floor(Date.now()/1000)});const m=document.getElementById('rankSubmitMsg');if(r?.ok){m.className='modal-msg success';m.textContent=wt('msg_rank_done');}else{m.className='modal-msg';m.textContent=serverMsg(r,'msg_fail');}}
+async function sha1(t){const d=new TextEncoder().encode(t),h=await crypto.subtle.digest('SHA-1',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+
+/* Rankings */
+let _rankAllData=[];
+async function loadRankings(){const r=await api('/api/rankings');if(!r?.ok)return;const s=document.getElementById('rankBoardSelect'),cv=s.value;s.innerHTML='<option value="">'+wt('all')+'</option>';const meta=r.meta||{};for(const[k,m]of Object.entries(meta)){const o=document.createElement('option');o.value=k;o.textContent=m.name||k;s.appendChild(o);}s.value=cv;const fb=s.value;let all=[];for(const[bk,rows]of Object.entries(r.boards||{})){if(fb&&bk!==fb)continue;const bn=meta[bk]?.name||bk;for(const row of rows)all.push({...row,_boardName:bn,_boardKey:bk});}all.sort((a,b)=>b.cpm-a.cpm||b.created_ts-a.created_ts);_rankAllData=all;const adm=isAdmin();const cols=adm?11:10;const tb=document.getElementById('rankBody');if(all.length===0){tb.innerHTML='<tr><td colspan="'+cols+'" style="text-align:center;padding:30px;color:#94a3b8">'+wt('no_data')+'</td></tr>';return;}tb.innerHTML=all.slice(0,100).map((r,i)=>'<tr>'+(adm?'<td style="text-align:center;padding:4px"><input type="checkbox" class="rank-chk" data-idx="'+i+'" data-id="'+(r.id||'')+'" onchange="rankAdminUpdateCount()"></td>':'')+'<td class="rank-num">'+(i+1)+'</td><td class="rank-left">'+esc(r.nickname)+'</td><td class="rank-left">'+esc(r.typewriter)+'</td><td class="rank-left">'+esc(r._boardName)+'</td><td><strong>'+r.cpm+'</strong></td><td>'+r.kpm+'</td><td>'+(typeof r.acc==='number'?Math.round(r.acc):r.acc)+'%</td><td>'+(typeof r.completion==='number'?Math.round(r.completion):r.completion)+'%</td><td>'+(r.input_chars||0)+'</td><td class="rank-date">'+esc(r.created_at||'')+'</td></tr>').join('');const th=document.querySelector('.ranking-table thead tr');if(adm&&!th.querySelector('.rank-chk-th')){const chTh=document.createElement('th');chTh.className='rank-chk-th';chTh.style.cssText='min-width:36px;width:36px';chTh.textContent='✓';th.insertBefore(chTh,th.firstChild);}else if(!adm){const ex=th.querySelector('.rank-chk-th');if(ex)ex.remove();}}
+document.getElementById('rankBoardSelect').addEventListener('change',loadRankings);
+function rankAdminSelectAll(on){document.querySelectorAll('.rank-chk').forEach(c=>c.checked=on);rankAdminUpdateCount();}
+function rankAdminUpdateCount(){const n=document.querySelectorAll('.rank-chk:checked').length;document.getElementById('rankAdminSelCount').textContent=n>0?n+wt('n_selected'):'';}
+async function rankAdminDeleteSelected(){if(!isAdmin())return;const chks=[...document.querySelectorAll('.rank-chk:checked')];if(chks.length===0){alert(wt('msg_no_sel_rank'));return;}if(!confirm(chks.length+wt('msg_confirm_del_ranks')))return;let ok=0;for(const c of chks){const id=c.dataset.id;if(!id)continue;const r=await api('/api/rankings/'+id,'DELETE');if(r?.ok)ok++;}alert(ok+wt('msg_del_rank_done'));loadRankings();}
+async function rankAdminDeleteBoard(){if(!isAdmin())return;const bk=document.getElementById('rankBoardSelect').value;if(!bk){alert(wt('msg_select_board'));return;}const bn=document.getElementById('rankBoardSelect').selectedOptions[0]?.textContent||bk;if(!confirm('"'+bn+'" '+wt('msg_confirm_del_board')))return;const r=await api('/api/rankings/board/'+encodeURIComponent(bk),'DELETE');if(r?.ok){alert(wt('msg_del_done'));loadRankings();}else{alert(serverMsg(r,'msg_fail'));}}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+/* Global hotkeys */
+document.addEventListener('keydown',e=>{
+  if(document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){return;}
+  if(e.key==='Escape'&&practicing&&started){e.preventDefault();if(paused)doResume();else doPause(true);return;}
+  if(paused&&practicing&&started){const ig=['Shift','Control','Alt','Meta','CapsLock','NumLock','ScrollLock','F1','F2','F3','F4','F5','F6','F7','F8','F9'];if(!ig.includes(e.key)&&e.key!=='Escape'){e.preventDefault();doResume();return;}}
+  if(e.key==='F11'){e.preventDefault();doReset();}if(e.key==='F12'){e.preventDefault();if(document.querySelector('.btn-stop').disabled)return;if(practicing){stopPractice();}else if(document.querySelector('.btn-stop').dataset.state==='result'){openModal('resultsModal');}}});
+
+/* Init */
+/* ── 저작권 보호 ── */
+console.log('%c⚠ XixiTyping — 이 사이트의 소스 코드는 저작권법으로 보호됩니다.','color:#e74c3c;font-size:14px;font-weight:bold');
+console.log('%c무단 복제, 변조, 재배포를 금지합니다. © 2024-2026 xixityping.com','color:#e74c3c;font-size:12px');
+(async function init(){loadSettings();_wlang=localStorage.getItem('ui_lang')||'ko';document.getElementById('settingUILang').value=_wlang;applyWebLang();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
+</script>
+</body>
+</html>

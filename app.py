@@ -259,6 +259,20 @@ def init_db():
         WHERE created_at < NOW() - INTERVAL '%s days'
     """, (SESSION_MAX_AGE_DAYS,))
 
+    # v159: 프로그램 다운로드 파일 테이블
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS downloads (
+            id          SERIAL PRIMARY KEY,
+            filename    TEXT NOT NULL,
+            filesize    BIGINT NOT NULL DEFAULT 0,
+            version     TEXT NOT NULL DEFAULT '',
+            description TEXT NOT NULL DEFAULT '',
+            data        BYTEA NOT NULL,
+            uploaded_by TEXT NOT NULL,
+            created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
+
     # v144: 앱 메타 정보 테이블 (버전 관리 등)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS app_meta (
@@ -1200,6 +1214,122 @@ def update_version():
     cur.close()
     conn.close()
     return jsonify({"ok": True, "msg": "버전 정보가 업데이트되었습니다.", "msg_code": "svr_version_updated"})
+
+
+# ============================================================
+# API: 프로그램 다운로드 목록 (공개)
+# ============================================================
+@app.route("/api/downloads", methods=["GET"])
+def list_downloads():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT id, filename, filesize, version, description, uploaded_by, created_at
+        FROM downloads ORDER BY created_at DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["created_at"] = str(d["created_at"])
+        result.append(d)
+    return jsonify({"ok": True, "files": result})
+
+
+# ============================================================
+# API: 프로그램 파일 업로드 (관리자 전용)
+# ============================================================
+@app.route("/api/downloads", methods=["POST"])
+def upload_download():
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 업로드할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
+
+    if "file" not in request.files:
+        return jsonify({"ok": False, "msg": "파일이 없습니다.", "msg_code": "svr_no_file"}), 400
+
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"ok": False, "msg": "파일명이 없습니다.", "msg_code": "svr_no_filename"}), 400
+
+    version = str(request.form.get("version", "") or "").strip()
+    description = str(request.form.get("description", "") or "").strip()
+
+    data = f.read()
+    filesize = len(data)
+
+    # 파일 크기 제한: 200MB
+    if filesize > 200 * 1024 * 1024:
+        return jsonify({"ok": False, "msg": "파일 크기는 200MB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO downloads (filename, filesize, version, description, data, uploaded_by)
+        VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+    """, (f.filename, filesize, version, description, psycopg2.Binary(data), user["user_id"]))
+    new_id = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True, "id": new_id, "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
+
+
+# ============================================================
+# API: 프로그램 파일 다운로드
+# ============================================================
+@app.route("/api/downloads/<int:file_id>", methods=["GET"])
+def download_file(file_id):
+    from flask import Response
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT filename, data FROM downloads WHERE id = %s", (file_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
+
+    filename = row["filename"]
+    data = bytes(row["data"])
+
+    # 파일명 인코딩 (한글/특수문자 포함 대비)
+    import urllib.parse
+    encoded_filename = urllib.parse.quote(filename)
+
+    return Response(
+        data,
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+            "Content-Type": "application/octet-stream",
+            "Content-Length": str(len(data)),
+        }
+    )
+
+
+# ============================================================
+# API: 프로그램 파일 삭제 (관리자 전용)
+# ============================================================
+@app.route("/api/downloads/<int:file_id>", methods=["DELETE"])
+def delete_download(file_id):
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 삭제할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM downloads WHERE id = %s RETURNING id", (file_id,))
+    deleted = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not deleted:
+        return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
+    return jsonify({"ok": True, "msg": "삭제되었습니다.", "msg_code": "svr_deleted"})
 
 
 # ============================================================
