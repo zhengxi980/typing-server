@@ -265,12 +265,20 @@ def init_db():
             id          SERIAL PRIMARY KEY,
             filename    TEXT NOT NULL,
             filesize    BIGINT NOT NULL DEFAULT 0,
+            mime_type   TEXT NOT NULL DEFAULT 'application/octet-stream',
             version     TEXT NOT NULL DEFAULT '',
             description TEXT NOT NULL DEFAULT '',
             data        BYTEA NOT NULL,
             uploaded_by TEXT NOT NULL,
             created_at  TIMESTAMP NOT NULL DEFAULT NOW()
         )
+    """)
+    # mime_type 컬럼 없으면 추가 (기존 DB 호환)
+    cur.execute("""
+        DO $$ BEGIN
+            ALTER TABLE downloads ADD COLUMN mime_type TEXT NOT NULL DEFAULT 'application/octet-stream';
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END $$;
     """)
 
     # v144: 앱 메타 정보 테이블 (버전 관리 등)
@@ -1259,6 +1267,30 @@ def upload_download():
     version = str(request.form.get("version", "") or "").strip()
     description = str(request.form.get("description", "") or "").strip()
 
+    import mimetypes
+    filename = f.filename
+    ext = os.path.splitext(filename)[1].lower() if filename else ""
+
+    # 허용 확장자 목록 (실행 파일 + 압축 파일 + 문서 + 기타)
+    ALLOWED_EXTENSIONS = {
+        # 실행/설치
+        ".exe", ".msi", ".pkg", ".dmg", ".deb", ".rpm", ".appimage",
+        # 압축
+        ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".tgz",
+        ".tar.gz", ".tar.bz2", ".tar.xz", ".cab", ".iso",
+        # 문서/기타
+        ".pdf", ".txt", ".md", ".json", ".xml", ".csv",
+    }
+    # 복합 확장자 체크 (.tar.gz 등)
+    double_ext = "".join(os.path.splitext(os.path.splitext(filename)[0])[1:]) + ext
+    if ext not in ALLOWED_EXTENSIONS and double_ext not in ALLOWED_EXTENSIONS:
+        return jsonify({"ok": False, "msg": f"허용되지 않는 파일 형식입니다: {ext}", "msg_code": "svr_file_type_not_allowed"}), 400
+
+    # Content-Type 자동 결정
+    mime_type, _ = mimetypes.guess_type(filename)
+    if not mime_type:
+        mime_type = "application/octet-stream"
+
     data = f.read()
     filesize = len(data)
 
@@ -1269,9 +1301,9 @@ def upload_download():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO downloads (filename, filesize, version, description, data, uploaded_by)
-        VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-    """, (f.filename, filesize, version, description, psycopg2.Binary(data), user["user_id"]))
+        INSERT INTO downloads (filename, filesize, mime_type, version, description, data, uploaded_by)
+        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+    """, (f.filename, filesize, mime_type, version, description, psycopg2.Binary(data), user["user_id"]))
     new_id = cur.fetchone()[0]
     cur.close()
     conn.close()
@@ -1286,7 +1318,7 @@ def download_file(file_id):
     from flask import Response
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT filename, data FROM downloads WHERE id = %s", (file_id,))
+    cur.execute("SELECT filename, mime_type, data FROM downloads WHERE id = %s", (file_id,))
     row = cur.fetchone()
     cur.close()
     conn.close()
@@ -1296,15 +1328,17 @@ def download_file(file_id):
     filename = row["filename"]
     data = bytes(row["data"])
 
+    import mimetypes, urllib.parse
+    mime_type = row.get("mime_type") or "application/octet-stream"
+
     # 파일명 인코딩 (한글/특수문자 포함 대비)
-    import urllib.parse
     encoded_filename = urllib.parse.quote(filename)
 
     return Response(
         data,
         headers={
             "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
-            "Content-Type": "application/octet-stream",
+            "Content-Type": mime_type,
             "Content-Length": str(len(data)),
         }
     )

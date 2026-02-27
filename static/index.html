@@ -243,7 +243,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <div id="dlAdminUploadArea" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px">
 <h4 style="margin:0 0 12px;color:#1e293b;font-size:.95rem">📤 파일 업로드 (관리자)</h4>
 <div style="display:flex;flex-direction:column;gap:8px">
-<input type="file" id="dlFileInput" accept=".exe,.zip,.dmg,.pkg,.msi" style="font-size:.85rem">
+<input type="file" id="dlFileInput" style="font-size:.85rem">
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <input type="text" id="dlVersionInput" placeholder="버전 (예: v1.59.27)" style="flex:1;min-width:120px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:.85rem">
 <input type="text" id="dlDescInput" placeholder="설명 (선택사항)" style="flex:2;min-width:160px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:.85rem">
@@ -352,7 +352,7 @@ tab_settings:{ko:'설정',zh:'設定',en:'Settings',ja:'設定'},
 tab_ranking:{ko:'랭킹',zh:'排行榜',en:'Ranking',ja:'ランキング'},
 tab_account:{ko:'계정',zh:'帳號',en:'Account',ja:'アカウント'},
 tab_admin:{ko:'관리',zh:'管理',en:'Admin',ja:'管理'},
-tab_download:{ko:'다운로드',zh:'下載程式',en:'Download',ja:'ダウンロード'},
+tab_download:{ko:'자료 다운로드',zh:'資源下載',en:'Downloads',ja:'資料ダウンロード'},
 btn_login:{ko:'로그인',zh:'登入',en:'Login',ja:'ログイン'},
 btn_signup:{ko:'회원가입',zh:'註冊',en:'Sign Up',ja:'新規登録'},
 btn_logout:{ko:'로그아웃',zh:'登出',en:'Logout',ja:'ログアウト'},
@@ -832,6 +832,7 @@ document.getElementById('dlAdminUploadArea').style.display=isAdmin()?'':'none';}
 // [15] Download tab
 function fmtBytes(b){if(b<1024)return b+'B';if(b<1024*1024)return (b/1024).toFixed(1)+'KB';return (b/(1024*1024)).toFixed(1)+'MB';}
 function fmtDate(s){const d=new Date(s);return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');}
+function fileIcon(name){const e=(name.match(/\.([^.]+)$/)??[])[1]?.toLowerCase();const map={exe:'🖥️',msi:'🖥️',pkg:'📦',dmg:'💿',deb:'📦',rpm:'📦',appimage:'🖥️',zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',bz2:'🗜️',xz:'🗜️',tgz:'🗜️',cab:'🗜️',iso:'💿',pdf:'📄',txt:'📝',md:'📝',json:'📋',xml:'📋',csv:'📊'};return map[e]||'📁';}
 async function loadDownloadList(){
   const list=document.getElementById('dlFileList');
   list.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div>';
@@ -842,7 +843,7 @@ async function loadDownloadList(){
   }
   list.innerHTML=r.files.map(f=>`
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <div style="font-size:2rem;flex-shrink:0">💾</div>
+      <div style="font-size:2rem;flex-shrink:0">${fileIcon(f.filename)}</div>
       <div style="flex:1;min-width:160px">
         <div style="font-weight:700;color:#1e293b;font-size:.95rem">${esc(f.filename)}</div>
         ${f.version?`<span style="display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:.75rem;font-weight:600;border-radius:4px;padding:1px 7px;margin:3px 0">${esc(f.version)}</span>`:''}
