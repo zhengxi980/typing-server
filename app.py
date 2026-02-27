@@ -1514,7 +1514,7 @@ def download_file(file_id):
     lo_oid    = row["lo_oid"]
     encoded_filename = urllib.parse.quote(filename)
 
-    READ_CHUNK = 64 * 1024 * 1024  # 64MB씩
+    READ_CHUNK = 1 * 1024 * 1024  # 1MB씩 (v160: 64MB→1MB, 스트리밍 안정성 향상)
 
     if filepath and os.path.exists(filepath):
         # v161: 파일시스템 스트리밍 (가장 빠르고 안정적)
