@@ -43,8 +43,8 @@ ALLOWED_ORIGINS = [
 ]
 CORS(app, origins=ALLOWED_ORIGINS)
 
-# 스트리밍 업로드: Flask의 MAX_CONTENT_LENGTH 제한 없음 (파일 크기 제한은 앱 레벨에서 처리)
-# app.config['MAX_CONTENT_LENGTH'] 설정 안 함 → 무제한
+# 청크당 최대 32MB + multipart 오버헤드
+app.config['MAX_CONTENT_LENGTH'] = 40 * 1024 * 1024
 
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -1372,26 +1372,78 @@ def list_downloads():
 
 
 # ============================================================
-# API: 파일 업로드 — 스트리밍 직접 쓰기 (v161)
-# 청크 분할 없음, 브라우저가 파일을 그대로 스트리밍 전송
-# 서버는 스트림을 받아 디스크에 직접 씀 → DB 부하 없음
+# API: 청크 업로드 — 디스크 직접 이어쓰기 (v162)
+# 청크를 받을 때마다 디스크 임시파일에 append → finalize는 rename만
+# DB에는 절대 파일 데이터 저장 안 함
 # ============================================================
-@app.route("/api/downloads/upload", methods=["POST"])
-def upload_file_stream():
+@app.route("/api/downloads/chunk", methods=["POST"])
+def upload_chunk():
     user, err = require_login()
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
         return jsonify({"ok": False, "msg": "관리자만 업로드할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
 
-    import urllib.parse as _urlparse
-    filename    = _urlparse.unquote(request.headers.get("X-Filename", "").strip())
-    version     = _urlparse.unquote(request.headers.get("X-Version", "").strip())
-    description = _urlparse.unquote(request.headers.get("X-Description", "").strip())
-    content_length = request.headers.get("Content-Length", "0")
+    upload_id   = request.form.get("upload_id", "").strip()
+    chunk_index = request.form.get("chunk_index", "")
+    total_chunks_s = request.form.get("total_chunks", "0")
 
-    if not filename:
-        return jsonify({"ok": False, "msg": "X-Filename 헤더가 없습니다."}), 400
+    if not upload_id or chunk_index == "":
+        return jsonify({"ok": False, "msg": "upload_id 또는 chunk_index가 없습니다."}), 400
+    if "chunk" not in request.files:
+        return jsonify({"ok": False, "msg": "청크 데이터가 없습니다."}), 400
+
+    chunk_data   = request.files["chunk"].read()
+    chunk_idx    = int(chunk_index)
+    total_chunks = int(total_chunks_s) if total_chunks_s else 0
+
+    if len(chunk_data) > 64 * 1024 * 1024:  # 64MB 한도
+        return jsonify({"ok": False, "msg": "청크 크기는 64MB 이하여야 합니다."}), 400
+
+    # 임시파일: UPLOAD_DIR/<upload_id>.tmp
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+$', upload_id):
+        return jsonify({"ok": False, "msg": "잘못된 upload_id입니다."}), 400
+
+    tmp_path = os.path.join(UPLOAD_DIR, upload_id + ".tmp")
+
+    try:
+        # chunk_idx==0 이면 새 파일, 아니면 append
+        mode = "wb" if chunk_idx == 0 else "ab"
+        with open(tmp_path, mode) as f_out:
+            f_out.write(chunk_data)
+
+        return jsonify({"ok": True, "chunk_index": chunk_idx})
+    except Exception as e:
+        import traceback
+        print(f"[upload_chunk] {traceback.format_exc()}")
+        return jsonify({"ok": False, "msg": f"청크 저장 오류: {str(e)}"}), 500
+
+
+# ============================================================
+# API: 파이널라이즈 — 임시파일 rename + DB 메타 등록 (즉시 완료)
+# ============================================================
+@app.route("/api/downloads/finalize", methods=["POST"])
+def finalize_upload():
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 업로드할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
+
+    data         = request.get_json(force=True, silent=True) or {}
+    upload_id    = str(data.get("upload_id",    "") or "").strip()
+    filename     = str(data.get("filename",     "") or "").strip()
+    total_chunks = int(data.get("total_chunks", 0) or 0)
+    version      = str(data.get("version",      "") or "").strip()
+    description  = str(data.get("description",  "") or "").strip()
+
+    if not upload_id or not filename or not total_chunks:
+        return jsonify({"ok": False, "msg": "필수 파라미터가 없습니다."}), 400
+
+    import re, mimetypes, uuid
+    if not re.match(r'^[a-zA-Z0-9_-]+$', upload_id):
+        return jsonify({"ok": False, "msg": "잘못된 upload_id입니다."}), 400
 
     ext = os.path.splitext(filename)[1].lower()
     ALLOWED_EXTENSIONS = {
@@ -1403,64 +1455,40 @@ def upload_file_stream():
     if ext not in ALLOWED_EXTENSIONS and double_ext not in ALLOWED_EXTENSIONS:
         return jsonify({"ok": False, "msg": f"허용되지 않는 파일 형식입니다: {ext}", "msg_code": "svr_file_type_not_allowed"}), 400
 
-    import mimetypes, uuid
+    tmp_path   = os.path.join(UPLOAD_DIR, upload_id + ".tmp")
+    final_path = os.path.join(UPLOAD_DIR, uuid.uuid4().hex)
+
+    if not os.path.exists(tmp_path):
+        return jsonify({"ok": False, "msg": "임시 파일을 찾을 수 없습니다. 처음부터 다시 업로드하세요."}), 400
+
+    filesize = os.path.getsize(tmp_path)
+
+    if filesize > 5 * 1024 * 1024 * 1024:
+        os.remove(tmp_path)
+        return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
+
+    # 임시파일 → 최종파일 (rename: 즉시, 복사 없음)
+    os.rename(tmp_path, final_path)
+
     mime_type, _ = mimetypes.guess_type(filename)
     if not mime_type:
         mime_type = "application/octet-stream"
 
-    # 고유 파일명으로 저장 (원본 파일명은 DB에 보존)
-    safe_id   = uuid.uuid4().hex
-    save_path = os.path.join(UPLOAD_DIR, safe_id)
-    tmp_path  = save_path + ".tmp"
+    conn = get_db()
+    cur  = conn.cursor()
+    cur.execute("""
+        INSERT INTO downloads (filename, filesize, mime_type, version, description, filepath, uploaded_by)
+        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+    """, (filename, filesize, mime_type, version, description, final_path, user["user_id"]))
+    new_id = cur.fetchone()[0]
+    cur.close()
+    conn.close()
 
-    try:
-        WRITE_CHUNK = 4 * 1024 * 1024  # 4MB씩 읽어서 씀
-        written = 0
-        MAX_SIZE = 5 * 1024 * 1024 * 1024  # 5GB 제한
-
-        with open(tmp_path, "wb") as f_out:
-            stream = request.stream
-            while True:
-                buf = stream.read(WRITE_CHUNK)
-                if not buf:
-                    break
-                written += len(buf)
-                if written > MAX_SIZE:
-                    f_out.close()
-                    os.remove(tmp_path)
-                    return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
-                f_out.write(buf)
-
-        # 완성 후 .tmp 제거
-        os.rename(tmp_path, save_path)
-        filesize = written
-
-        # DB에 메타데이터만 저장
-        conn = get_db()
-        cur  = conn.cursor()
-        cur.execute("""
-            INSERT INTO downloads (filename, filesize, mime_type, version, description, filepath, uploaded_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (filename, filesize, mime_type, version, description, save_path, user["user_id"]))
-        new_id = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-
-        return jsonify({"ok": True, "id": new_id, "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
-
-    except Exception as e:
-        # 실패 시 임시 파일 정리
-        for p in [tmp_path, save_path]:
-            try:
-                if os.path.exists(p):
-                    os.remove(p)
-            except Exception:
-                pass
-        import traceback
-        print(f"[upload_file_stream] 오류:\n{traceback.format_exc()}")
-        return jsonify({"ok": False, "msg": f"업로드 오류: {str(e)}"}), 500
+    return jsonify({"ok": True, "id": new_id, "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
 
 
+# ============================================================
+# API: 프로그램 파일 다운로드 — 파일시스템 스트리밍
 # ============================================================
 # API: 프로그램 파일 다운로드 — 파일시스템 스트리밍
 # ============================================================
