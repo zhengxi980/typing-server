@@ -43,6 +43,9 @@ ALLOWED_ORIGINS = [
 ]
 CORS(app, origins=ALLOWED_ORIGINS)
 
+# 최대 요청 크기: 청크 단위 업로드를 위해 20MB로 제한 (청크당 최대 10MB)
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
@@ -279,6 +282,20 @@ def init_db():
             ALTER TABLE downloads ADD COLUMN mime_type TEXT NOT NULL DEFAULT 'application/octet-stream';
         EXCEPTION WHEN duplicate_column THEN NULL;
         END $$;
+    """)
+    # v159: 청크 업로드 임시 테이블
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS download_chunks (
+            upload_id   TEXT NOT NULL,
+            chunk_index INTEGER NOT NULL,
+            data        BYTEA NOT NULL,
+            created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (upload_id, chunk_index)
+        )
+    """)
+    # 24시간 이상 된 미완성 청크 정리
+    cur.execute("""
+        DELETE FROM download_chunks WHERE created_at < NOW() - INTERVAL '24 hours'
     """)
 
     # v144: 앱 메타 정보 테이블 (버전 관리 등)
@@ -1247,64 +1264,112 @@ def list_downloads():
 
 
 # ============================================================
-# API: 프로그램 파일 업로드 (관리자 전용)
+# API: 청크 업로드 — 청크 1개 수신
 # ============================================================
-@app.route("/api/downloads", methods=["POST"])
-def upload_download():
+@app.route("/api/downloads/chunk", methods=["POST"])
+def upload_chunk():
     user, err = require_login()
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
         return jsonify({"ok": False, "msg": "관리자만 업로드할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
 
-    if "file" not in request.files:
-        return jsonify({"ok": False, "msg": "파일이 없습니다.", "msg_code": "svr_no_file"}), 400
+    upload_id = request.form.get("upload_id", "").strip()
+    chunk_index = request.form.get("chunk_index", "")
+    if not upload_id or chunk_index == "":
+        return jsonify({"ok": False, "msg": "upload_id 또는 chunk_index가 없습니다."}), 400
 
-    f = request.files["file"]
-    if not f.filename:
-        return jsonify({"ok": False, "msg": "파일명이 없습니다.", "msg_code": "svr_no_filename"}), 400
+    if "chunk" not in request.files:
+        return jsonify({"ok": False, "msg": "청크 데이터가 없습니다."}), 400
 
-    version = str(request.form.get("version", "") or "").strip()
-    description = str(request.form.get("description", "") or "").strip()
+    chunk_data = request.files["chunk"].read()
 
-    import mimetypes
-    filename = f.filename
-    ext = os.path.splitext(filename)[1].lower() if filename else ""
-
-    # 허용 확장자 목록 (실행 파일 + 압축 파일 + 문서 + 기타)
-    ALLOWED_EXTENSIONS = {
-        # 실행/설치
-        ".exe", ".msi", ".pkg", ".dmg", ".deb", ".rpm", ".appimage",
-        # 압축
-        ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".tgz",
-        ".tar.gz", ".tar.bz2", ".tar.xz", ".cab", ".iso",
-        # 문서/기타
-        ".pdf", ".txt", ".md", ".json", ".xml", ".csv",
-    }
-    # 복합 확장자 체크 (.tar.gz 등)
-    double_ext = "".join(os.path.splitext(os.path.splitext(filename)[0])[1:]) + ext
-    if ext not in ALLOWED_EXTENSIONS and double_ext not in ALLOWED_EXTENSIONS:
-        return jsonify({"ok": False, "msg": f"허용되지 않는 파일 형식입니다: {ext}", "msg_code": "svr_file_type_not_allowed"}), 400
-
-    # Content-Type 자동 결정
-    mime_type, _ = mimetypes.guess_type(filename)
-    if not mime_type:
-        mime_type = "application/octet-stream"
-
-    data = f.read()
-    filesize = len(data)
-
-    # 파일 크기 제한: 200MB
-    if filesize > 200 * 1024 * 1024:
-        return jsonify({"ok": False, "msg": "파일 크기는 200MB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
+    # 단일 청크 최대 10MB
+    if len(chunk_data) > 10 * 1024 * 1024:
+        return jsonify({"ok": False, "msg": "청크 크기는 10MB 이하여야 합니다."}), 400
 
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
+        INSERT INTO download_chunks (upload_id, chunk_index, data)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (upload_id, chunk_index) DO UPDATE SET data = EXCLUDED.data
+    """, (upload_id, int(chunk_index), psycopg2.Binary(chunk_data)))
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+# ============================================================
+# API: 청크 업로드 — 파이널라이즈 (조합 후 저장)
+# ============================================================
+@app.route("/api/downloads/finalize", methods=["POST"])
+def finalize_upload():
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 업로드할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
+
+    data = request.get_json(force=True, silent=True) or {}
+    upload_id = str(data.get("upload_id", "") or "").strip()
+    filename = str(data.get("filename", "") or "").strip()
+    total_chunks = int(data.get("total_chunks", 0) or 0)
+    version = str(data.get("version", "") or "").strip()
+    description = str(data.get("description", "") or "").strip()
+
+    if not upload_id or not filename or not total_chunks:
+        return jsonify({"ok": False, "msg": "필수 파라미터가 없습니다."}), 400
+
+    ext = os.path.splitext(filename)[1].lower() if filename else ""
+    ALLOWED_EXTENSIONS = {
+        ".exe", ".msi", ".pkg", ".dmg", ".deb", ".rpm", ".appimage",
+        ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".tgz",
+        ".cab", ".iso",
+        ".pdf", ".txt", ".md", ".json", ".xml", ".csv",
+    }
+    # 복합 확장자 체크
+    double_ext = "".join(os.path.splitext(os.path.splitext(filename)[0])[1:]) + ext
+    if ext not in ALLOWED_EXTENSIONS and double_ext not in ALLOWED_EXTENSIONS:
+        return jsonify({"ok": False, "msg": f"허용되지 않는 파일 형식입니다: {ext}", "msg_code": "svr_file_type_not_allowed"}), 400
+
+    import mimetypes
+    mime_type, _ = mimetypes.guess_type(filename)
+    if not mime_type:
+        mime_type = "application/octet-stream"
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # 청크 개수 확인
+    cur.execute("SELECT COUNT(*) as cnt FROM download_chunks WHERE upload_id = %s", (upload_id,))
+    row = cur.fetchone()
+    if not row or row["cnt"] < total_chunks:
+        cur.close(); conn.close()
+        return jsonify({"ok": False, "msg": f"청크가 부족합니다. ({row['cnt'] if row else 0}/{total_chunks})"}), 400
+
+    # 청크 순서대로 가져와서 조합
+    cur.execute("SELECT data FROM download_chunks WHERE upload_id = %s ORDER BY chunk_index", (upload_id,))
+    chunks = cur.fetchall()
+    full_data = b"".join(bytes(c["data"]) for c in chunks)
+    filesize = len(full_data)
+
+    # 전체 파일 크기 제한: 5GB
+    if filesize > 5 * 1024 * 1024 * 1024:
+        cur.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
+        cur.close(); conn.close()
+        return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
+
+    cur2 = conn.cursor()
+    cur2.execute("""
         INSERT INTO downloads (filename, filesize, mime_type, version, description, data, uploaded_by)
         VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-    """, (f.filename, filesize, mime_type, version, description, psycopg2.Binary(data), user["user_id"]))
-    new_id = cur.fetchone()[0]
+    """, (filename, filesize, mime_type, version, description, psycopg2.Binary(full_data), user["user_id"]))
+    new_id = cur2.fetchone()[0]
+
+    # 임시 청크 삭제
+    cur2.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
+    cur2.close()
     cur.close()
     conn.close()
     return jsonify({"ok": True, "id": new_id, "msg": "업로드 완료.", "msg_code": "svr_upload_done"})

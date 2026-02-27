@@ -353,6 +353,8 @@ tab_ranking:{ko:'랭킹',zh:'排行榜',en:'Ranking',ja:'ランキング'},
 tab_account:{ko:'계정',zh:'帳號',en:'Account',ja:'アカウント'},
 tab_admin:{ko:'관리',zh:'管理',en:'Admin',ja:'管理'},
 tab_download:{ko:'자료 다운로드',zh:'資源下載',en:'Downloads',ja:'資料ダウンロード'},
+dl_panel_title:{ko:'📥 자료 다운로드',zh:'📥 資源下載',en:'📥 Downloads',ja:'📥 資料ダウンロード'},
+dl_panel_desc:{ko:'타자연습 프로그램/RIME 입력기 프로그램 등 여러 자료들을 다운로드할 수 있습니다.',zh:'可以下載打字練習程式／RIME輸入法程式等各類資源。',en:'Download typing practice software, RIME input method, and other resources.',ja:'タイピング練習ソフト・RIME入力ソフトなど各種資料をダウンロードできます。'},
 btn_login:{ko:'로그인',zh:'登入',en:'Login',ja:'ログイン'},
 btn_signup:{ko:'회원가입',zh:'註冊',en:'Sign Up',ja:'新規登録'},
 btn_logout:{ko:'로그아웃',zh:'登出',en:'Logout',ja:'ログアウト'},
@@ -786,6 +788,9 @@ const atl=document.getElementById('adminTextList');
 if(atl&&atl.children.length===1&&!atl.querySelector('.admin-text-item')){const d=atl.children[0];if(d)d.textContent=wt('loading');}
 // [15] Footer
 const fwv=document.getElementById('footerWebVer');if(fwv)fwv.textContent=wt('footer_web_ver');
+// [16] Download panel
+const dlTitle=document.getElementById('dlPanelTitle');if(dlTitle)dlTitle.textContent=wt('dl_panel_title');
+const dlDesc=document.getElementById('dlPanelDesc');if(dlDesc)dlDesc.textContent=wt('dl_panel_desc');
 }
 
 let currentUser=null,allTexts=[],texts=[],languages=[];
@@ -864,35 +869,65 @@ async function uploadDownloadFile(){
   const progressArea=document.getElementById('dlUploadProgress');
   const progressBar=document.getElementById('dlProgressBar');
   const progressText=document.getElementById('dlProgressText');
-  if(!fileInput.files||!fileInput.files[0]){msgEl.textContent='파일을 선택해 주세요.';return;}
+  if(!fileInput.files||!fileInput.files[0]){msgEl.style.color='#dc2626';msgEl.textContent='파일을 선택해 주세요.';return;}
   const file=fileInput.files[0];
-  const fd=new FormData();
-  fd.append('file',file);
-  fd.append('version',version);
-  fd.append('description',desc);
+  const CHUNK_SIZE=5*1024*1024; // 5MB per chunk
+  const totalChunks=Math.ceil(file.size/CHUNK_SIZE);
+  const uploadId='ul_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+
   document.getElementById('dlUploadBtn').disabled=true;
-  msgEl.textContent='업로드 중...';
+  msgEl.style.color='#64748b';
   progressArea.style.display='';
   progressBar.style.width='0%';
-  progressText.textContent='';
+
+  const sendChunk=(index)=>new Promise((resolve,reject)=>{
+    const start=index*CHUNK_SIZE;
+    const blob=file.slice(start,start+CHUNK_SIZE);
+    const fd=new FormData();
+    fd.append('upload_id',uploadId);
+    fd.append('chunk_index',String(index));
+    fd.append('chunk',blob,'chunk');
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST','/api/downloads/chunk');
+    if(currentUser?.token)xhr.setRequestHeader('Authorization','Bearer '+currentUser.token);
+    xhr.onload=()=>{try{const r=JSON.parse(xhr.responseText);if(r.ok)resolve();else reject(new Error(r.msg||'청크 업로드 실패'));}catch{reject(new Error('응답 파싱 오류'));}};
+    xhr.onerror=()=>reject(new Error('네트워크 오류'));
+    xhr.ontimeout=()=>reject(new Error('타임아웃'));
+    xhr.timeout=120000; // 2분
+    xhr.send(fd);
+  });
+
   try{
-    await new Promise((resolve,reject)=>{
-      const xhr=new XMLHttpRequest();
-      xhr.open('POST','/api/downloads');
-      if(currentUser?.token)xhr.setRequestHeader('Authorization','Bearer '+currentUser.token);
-      xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);progressBar.style.width=pct+'%';progressText.textContent=fmtBytes(e.loaded)+' / '+fmtBytes(e.total)+' ('+pct+'%)';}};
-      xhr.onload=()=>{const r=JSON.parse(xhr.responseText);if(r.ok){resolve(r);}else{reject(new Error(r.msg||'업로드 실패'));}};
-      xhr.onerror=()=>reject(new Error('네트워크 오류'));
-      xhr.send(fd);
-    });
-    msgEl.style.color='#16a34a';msgEl.textContent='업로드 완료!';
+    for(let i=0;i<totalChunks;i++){
+      msgEl.textContent=`청크 업로드 중... (${i+1}/${totalChunks})`;
+      const pct=Math.round(i/totalChunks*90);
+      progressBar.style.width=pct+'%';
+      progressText.textContent=fmtBytes(Math.min((i+1)*CHUNK_SIZE,file.size))+' / '+fmtBytes(file.size)+' ('+pct+'%)';
+      // 실패 시 최대 3회 재시도
+      let lastErr;
+      for(let retry=0;retry<3;retry++){
+        try{await sendChunk(i);lastErr=null;break;}
+        catch(e){lastErr=e;await new Promise(r=>setTimeout(r,1000*(retry+1)));}
+      }
+      if(lastErr)throw lastErr;
+    }
+    // 파이널라이즈
+    msgEl.textContent='파일 조합 중...';
+    progressBar.style.width='95%';
+    const r=await api('/api/downloads/finalize','POST',{upload_id:uploadId,filename:file.name,total_chunks:totalChunks,version,description:desc});
+    if(!r?.ok)throw new Error(r?.msg||'파이널라이즈 실패');
     progressBar.style.width='100%';
+    progressText.textContent=fmtBytes(file.size)+' 완료';
+    msgEl.style.color='#16a34a';msgEl.textContent='업로드 완료!';
     fileInput.value='';
     document.getElementById('dlVersionInput').value='';
     document.getElementById('dlDescInput').value='';
-    setTimeout(()=>{progressArea.style.display='none';msgEl.textContent='';msgEl.style.color='';},2000);
+    setTimeout(()=>{progressArea.style.display='none';msgEl.textContent='';msgEl.style.color='';},3000);
     loadDownloadList();
-  }catch(e){msgEl.style.color='#dc2626';msgEl.textContent=e.message;progressArea.style.display='none';}
+  }catch(e){
+    msgEl.style.color='#dc2626';msgEl.textContent='오류: '+e.message;
+    progressArea.style.display='none';
+  }
   document.getElementById('dlUploadBtn').disabled=false;
 }
 async function deleteDownloadFile(id){
