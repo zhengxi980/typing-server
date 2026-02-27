@@ -280,6 +280,33 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 <button class="scroll-btn down" onmousedown="event.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" id="scrollBottomBtn" title="맨 아래로">▼</button>
 
 <!-- Modals -->
+<!-- 언어 선택 모달 (최초 접속 시) -->
+<div class="modal-overlay active" id="langSelectModal" style="z-index:9999">
+  <div class="modal" style="max-width:380px;text-align:center;padding:32px 28px">
+    <div style="font-size:2rem;margin-bottom:8px">🌐</div>
+    <h2 style="margin:0 0 6px;font-size:1.2rem" id="langModalTitle">언어를 선택하세요</h2>
+    <p style="color:#64748b;font-size:.85rem;margin:0 0 24px" id="langModalDesc">Please select your UI language</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="selectLang('ko')" style="padding:16px 8px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-size:1rem;transition:all .15s" onmouseover="this.style.borderColor='#2563eb';this.style.background='#eff6ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <div style="font-size:1.5rem">🇰🇷</div>
+        <div style="font-weight:700;margin-top:4px">한국어</div>
+      </button>
+      <button onclick="selectLang('zh')" style="padding:16px 8px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-size:1rem;transition:all .15s" onmouseover="this.style.borderColor='#2563eb';this.style.background='#eff6ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <div style="font-size:1.5rem">🇹🇼</div>
+        <div style="font-weight:700;margin-top:4px">中文</div>
+      </button>
+      <button onclick="selectLang('en')" style="padding:16px 8px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-size:1rem;transition:all .15s" onmouseover="this.style.borderColor='#2563eb';this.style.background='#eff6ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <div style="font-size:1.5rem">🇺🇸</div>
+        <div style="font-weight:700;margin-top:4px">English</div>
+      </button>
+      <button onclick="selectLang('ja')" style="padding:16px 8px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-size:1rem;transition:all .15s" onmouseover="this.style.borderColor='#2563eb';this.style.background='#eff6ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+        <div style="font-size:1.5rem">🇯🇵</div>
+        <div style="font-weight:700;margin-top:4px">日本語</div>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="loginModal"><div class="modal"><h2>로그인</h2>
 <div class="modal-field"><label id="loginIdLabel">ID</label><input id="loginId" autocomplete="username"></div>
 <div class="modal-field"><label id="loginPwLabel">비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"></div>
@@ -1060,6 +1087,12 @@ async function checkNotifications(){
 }
 
 /* Modal helpers */
+function selectLang(code){
+  setWebLang(code);
+  const el=document.getElementById('langSelectModal');
+  if(el){el.style.transition='opacity .3s';el.style.opacity='0';setTimeout(()=>el.remove(),300);}
+}
+
 function openModal(id){document.querySelectorAll('#'+id+' .modal-msg').forEach(m=>m.textContent='');document.getElementById(id).classList.add('active');}
 function closeModal(id){document.getElementById(id).classList.remove('active');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-overlay.active:not(#pauseOverlay)')){document.querySelectorAll('.modal-overlay.active:not(#pauseOverlay)').forEach(m=>m.classList.remove('active'));e.preventDefault();e.stopPropagation();return;}});
@@ -1296,7 +1329,18 @@ document.addEventListener('keydown',e=>{
 /* ── 저작권 보호 ── */
 console.log('%c⚠ XixiTyping — 이 사이트의 소스 코드는 저작권법으로 보호됩니다.','color:#e74c3c;font-size:14px;font-weight:bold');
 console.log('%c무단 복제, 변조, 재배포를 금지합니다. © 2024-2026 xixityping.com','color:#e74c3c;font-size:12px');
-(async function init(){loadSettings();_wlang=localStorage.getItem('ui_lang')||'ko';document.getElementById('settingUILang').value=_wlang;applyWebLang();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
+(async function init(){loadSettings();
+  const savedLang=localStorage.getItem('ui_lang');
+  if(savedLang){
+    // 이미 언어 선택함 → 모달 즉시 제거
+    const lm=document.getElementById('langSelectModal');
+    if(lm)lm.remove();
+    _wlang=savedLang;
+  } else {
+    // 최초 접속 → 모달 유지, 기본값 없음 (선택 강제)
+    _wlang='ko'; // 모달 텍스트는 한/영 병기이므로 임시값
+  }
+  document.getElementById('settingUILang').value=_wlang;applyWebLang();preloadAllSfx();try{const c=JSON.parse(localStorage.getItem('cachedTexts'));if(c?.texts?.length>0)populateTextSelect(c.texts,c.languages||[]);}catch(e){}try{const s=JSON.parse(localStorage.getItem('auth'));if(s?.token)currentUser=s;}catch(e){}updateAuthUI();const tp=loadTexts(),rp=loadRankings();if(currentUser){api('/api/rankings').then(r=>{if(!r){currentUser=null;localStorage.removeItem('auth');updateAuthUI();}});checkNotifications();}await Promise.all([tp,rp]);})();
 </script>
 </body>
 </html>
