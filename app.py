@@ -43,11 +43,16 @@ ALLOWED_ORIGINS = [
 ]
 CORS(app, origins=ALLOWED_ORIGINS)
 
-# 최대 요청 크기: 청크 단위 업로드를 위해 8MB로 제한 (청크당 최대 4MB)
-app.config['MAX_CONTENT_LENGTH'] = 24 * 1024 * 1024  # 16MB 청크 + 오버헤드
+# 스트리밍 업로드: Flask의 MAX_CONTENT_LENGTH 제한 없음 (파일 크기 제한은 앱 레벨에서 처리)
+# app.config['MAX_CONTENT_LENGTH'] 설정 안 함 → 무제한
 
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+# 파일 저장 디렉토리: Railway 볼륨 마운트 경로 또는 로컬 폴백
+# Railway에서는 볼륨을 /data 에 마운트하면 됨
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/data/uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 ADMIN_ID = "zhengxi980"
 
@@ -279,26 +284,22 @@ def init_db():
             description TEXT NOT NULL DEFAULT '',
             data        BYTEA,
             lo_oid      OID,
+            filepath    TEXT,
             uploaded_by TEXT NOT NULL,
             created_at  TIMESTAMP NOT NULL DEFAULT NOW()
         )
     """)
     # 기존 DB 호환: 컬럼 추가
-    cur.execute("""
-        DO $$ BEGIN
-            ALTER TABLE downloads ADD COLUMN mime_type TEXT NOT NULL DEFAULT 'application/octet-stream';
-        EXCEPTION WHEN duplicate_column THEN NULL; END $$;
-    """)
-    cur.execute("""
-        DO $$ BEGIN
-            ALTER TABLE downloads ADD COLUMN lo_oid OID;
-        EXCEPTION WHEN duplicate_column THEN NULL; END $$;
-    """)
-    cur.execute("""
-        DO $$ BEGIN
-            ALTER TABLE downloads ALTER COLUMN data DROP NOT NULL;
-        EXCEPTION WHEN OTHERS THEN NULL; END $$;
-    """)
+    for col_sql in [
+        "ALTER TABLE downloads ADD COLUMN mime_type TEXT NOT NULL DEFAULT 'application/octet-stream'",
+        "ALTER TABLE downloads ADD COLUMN lo_oid OID",
+        "ALTER TABLE downloads ADD COLUMN filepath TEXT",
+        "ALTER TABLE downloads ALTER COLUMN data DROP NOT NULL",
+    ]:
+        try:
+            cur.execute(f"DO $$ BEGIN {col_sql}; EXCEPTION WHEN OTHERS THEN NULL; END $$;")
+        except Exception:
+            pass
     # v160: Large Object 업로드 세션 테이블 (청크 추적용)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS upload_sessions (
@@ -1371,119 +1372,26 @@ def list_downloads():
 
 
 # ============================================================
-# API: 청크 업로드 — Large Object 방식 (v160)
-# 청크가 도착할 때마다 LO에 직접 append → finalize 즉시 완료
+# API: 파일 업로드 — 스트리밍 직접 쓰기 (v161)
+# 청크 분할 없음, 브라우저가 파일을 그대로 스트리밍 전송
+# 서버는 스트림을 받아 디스크에 직접 씀 → DB 부하 없음
 # ============================================================
-@app.route("/api/downloads/chunk", methods=["POST"])
-def upload_chunk():
+@app.route("/api/downloads/upload", methods=["POST"])
+def upload_file_stream():
     user, err = require_login()
     if err:
         return err
     if user["user_id"] != ADMIN_ID:
         return jsonify({"ok": False, "msg": "관리자만 업로드할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
 
-    upload_id = request.form.get("upload_id", "").strip()
-    chunk_index = request.form.get("chunk_index", "")
-    total_chunks_str = request.form.get("total_chunks", "")
+    import urllib.parse as _urlparse
+    filename    = _urlparse.unquote(request.headers.get("X-Filename", "").strip())
+    version     = _urlparse.unquote(request.headers.get("X-Version", "").strip())
+    description = _urlparse.unquote(request.headers.get("X-Description", "").strip())
+    content_length = request.headers.get("Content-Length", "0")
 
-    if not upload_id or chunk_index == "":
-        return jsonify({"ok": False, "msg": "upload_id 또는 chunk_index가 없습니다."}), 400
-    if "chunk" not in request.files:
-        return jsonify({"ok": False, "msg": "청크 데이터가 없습니다."}), 400
-
-    chunk_data = request.files["chunk"].read()
-    chunk_idx = int(chunk_index)
-    total_chunks = int(total_chunks_str) if total_chunks_str else 0
-
-    if len(chunk_data) > 20 * 1024 * 1024:
-        return jsonify({"ok": False, "msg": "청크 크기는 20MB 이하여야 합니다."}), 400
-
-    # Large Object는 반드시 autocommit=False 트랜잭션 안에서만 동작
-    conn = get_db_tx()
-    try:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        if chunk_idx == 0:
-            # 첫 청크: Large Object 생성 + 세션 등록
-            lobj = conn.lobject(0, "wb")
-            lobj.write(chunk_data)
-            lo_oid = lobj.oid
-            lobj.close()
-
-            # 기존 세션 있으면 정리
-            cur.execute("SELECT lo_oid FROM upload_sessions WHERE upload_id = %s", (upload_id,))
-            existing = cur.fetchone()
-            if existing:
-                try:
-                    old_lo = conn.lobject(existing["lo_oid"], "n")
-                    old_lo.unlink()
-                except Exception:
-                    pass
-                cur.execute("DELETE FROM upload_sessions WHERE upload_id = %s", (upload_id,))
-
-            cur.execute("""
-                INSERT INTO upload_sessions (upload_id, lo_oid, total_chunks, received_chunks, filesize)
-                VALUES (%s, %s, %s, 1, %s)
-            """, (upload_id, lo_oid, total_chunks, len(chunk_data)))
-        else:
-            # 이후 청크: 기존 LO에 append
-            cur.execute("SELECT lo_oid, received_chunks, filesize FROM upload_sessions WHERE upload_id = %s", (upload_id,))
-            session = cur.fetchone()
-            if not session:
-                conn.rollback()
-                cur.close()
-                conn.close()
-                return jsonify({"ok": False, "msg": "세션을 찾을 수 없습니다. 처음부터 다시 시도하세요."}), 400
-
-            lobj = conn.lobject(session["lo_oid"], "ab")
-            lobj.write(chunk_data)
-            lobj.close()
-
-            cur.execute("""
-                UPDATE upload_sessions
-                SET received_chunks = received_chunks + 1,
-                    filesize = filesize + %s
-                WHERE upload_id = %s
-            """, (len(chunk_data), upload_id))
-
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({"ok": True, "chunk_index": chunk_idx})
-    except Exception as e:
-        try:
-            conn.rollback()
-        except Exception:
-            pass
-        try:
-            conn.close()
-        except Exception:
-            pass
-        import traceback
-        print(f"[upload_chunk] 오류: {traceback.format_exc()}")
-        return jsonify({"ok": False, "msg": f"청크 저장 오류: {str(e)}"}), 500
-
-
-# ============================================================
-# API: 파이널라이즈 — 즉시 완료 (LO 이미 조합됨)
-# ============================================================
-@app.route("/api/downloads/finalize", methods=["POST"])
-def finalize_upload():
-    user, err = require_login()
-    if err:
-        return err
-    if user["user_id"] != ADMIN_ID:
-        return jsonify({"ok": False, "msg": "관리자만 업로드할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
-
-    data = request.get_json(force=True, silent=True) or {}
-    upload_id = str(data.get("upload_id", "") or "").strip()
-    filename   = str(data.get("filename", "") or "").strip()
-    total_chunks = int(data.get("total_chunks", 0) or 0)
-    version    = str(data.get("version", "") or "").strip()
-    description = str(data.get("description", "") or "").strip()
-
-    if not upload_id or not filename or not total_chunks:
-        return jsonify({"ok": False, "msg": "필수 파라미터가 없습니다."}), 400
+    if not filename:
+        return jsonify({"ok": False, "msg": "X-Filename 헤더가 없습니다."}), 400
 
     ext = os.path.splitext(filename)[1].lower()
     ALLOWED_EXTENSIONS = {
@@ -1495,60 +1403,66 @@ def finalize_upload():
     if ext not in ALLOWED_EXTENSIONS and double_ext not in ALLOWED_EXTENSIONS:
         return jsonify({"ok": False, "msg": f"허용되지 않는 파일 형식입니다: {ext}", "msg_code": "svr_file_type_not_allowed"}), 400
 
-    import mimetypes
+    import mimetypes, uuid
     mime_type, _ = mimetypes.guess_type(filename)
     if not mime_type:
         mime_type = "application/octet-stream"
 
-    # Large Object 트랜잭션 필요
-    conn = get_db_tx()
+    # 고유 파일명으로 저장 (원본 파일명은 DB에 보존)
+    safe_id   = uuid.uuid4().hex
+    save_path = os.path.join(UPLOAD_DIR, safe_id)
+    tmp_path  = save_path + ".tmp"
+
     try:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT lo_oid, received_chunks, filesize FROM upload_sessions WHERE upload_id = %s", (upload_id,))
-        session = cur.fetchone()
+        WRITE_CHUNK = 4 * 1024 * 1024  # 4MB씩 읽어서 씀
+        written = 0
+        MAX_SIZE = 5 * 1024 * 1024 * 1024  # 5GB 제한
 
-        if not session:
-            conn.rollback(); cur.close(); conn.close()
-            return jsonify({"ok": False, "msg": "업로드 세션을 찾을 수 없습니다."}), 400
+        with open(tmp_path, "wb") as f_out:
+            stream = request.stream
+            while True:
+                buf = stream.read(WRITE_CHUNK)
+                if not buf:
+                    break
+                written += len(buf)
+                if written > MAX_SIZE:
+                    f_out.close()
+                    os.remove(tmp_path)
+                    return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
+                f_out.write(buf)
 
-        if session["received_chunks"] < total_chunks:
-            conn.rollback(); cur.close(); conn.close()
-            return jsonify({"ok": False, "msg": f"청크가 부족합니다. ({session['received_chunks']}/{total_chunks})"}), 400
+        # 완성 후 .tmp 제거
+        os.rename(tmp_path, save_path)
+        filesize = written
 
-        filesize = session["filesize"]
-        lo_oid   = session["lo_oid"]
-
-        if filesize > 5 * 1024 * 1024 * 1024:
-            lobj = conn.lobject(lo_oid, "n"); lobj.unlink()
-            cur.execute("DELETE FROM upload_sessions WHERE upload_id = %s", (upload_id,))
-            conn.commit(); cur.close(); conn.close()
-            return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
-
-        # LO OID만 저장 (데이터 이동 없음 — 즉시 완료)
-        cur2 = conn.cursor()
-        cur2.execute("""
-            INSERT INTO downloads (filename, filesize, mime_type, version, description, lo_oid, uploaded_by)
+        # DB에 메타데이터만 저장
+        conn = get_db()
+        cur  = conn.cursor()
+        cur.execute("""
+            INSERT INTO downloads (filename, filesize, mime_type, version, description, filepath, uploaded_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (filename, filesize, mime_type, version, description, lo_oid, user["user_id"]))
-        new_id = cur2.fetchone()[0]
-
-        cur2.execute("DELETE FROM upload_sessions WHERE upload_id = %s", (upload_id,))
-        conn.commit()
-        cur2.close(); cur.close(); conn.close()
+        """, (filename, filesize, mime_type, version, description, save_path, user["user_id"]))
+        new_id = cur.fetchone()[0]
+        cur.close()
+        conn.close()
 
         return jsonify({"ok": True, "id": new_id, "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
+
     except Exception as e:
-        try: conn.rollback()
-        except Exception: pass
-        try: conn.close()
-        except Exception: pass
+        # 실패 시 임시 파일 정리
+        for p in [tmp_path, save_path]:
+            try:
+                if os.path.exists(p):
+                    os.remove(p)
+            except Exception:
+                pass
         import traceback
-        print(f"[finalize_upload] 오류: {traceback.format_exc()}")
-        return jsonify({"ok": False, "msg": f"파이널라이즈 오류: {str(e)}"}), 500
+        print(f"[upload_file_stream] 오류:\n{traceback.format_exc()}")
+        return jsonify({"ok": False, "msg": f"업로드 오류: {str(e)}"}), 500
 
 
 # ============================================================
-# API: 프로그램 파일 다운로드 — Large Object 스트리밍
+# API: 프로그램 파일 다운로드 — 파일시스템 스트리밍
 # ============================================================
 @app.route("/api/downloads/<int:file_id>", methods=["GET"])
 def download_file(file_id):
@@ -1556,28 +1470,48 @@ def download_file(file_id):
     import urllib.parse
 
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT filename, mime_type, filesize, lo_oid, data FROM downloads WHERE id = %s", (file_id,))
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT filename, mime_type, filesize, filepath, lo_oid, data FROM downloads WHERE id = %s", (file_id,))
     row = cur.fetchone()
     cur.close()
+    conn.close()
 
     if not row:
-        conn.close()
         return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
 
     filename  = row["filename"]
     mime_type = row.get("mime_type") or "application/octet-stream"
     filesize  = row["filesize"]
+    filepath  = row["filepath"]
     lo_oid    = row["lo_oid"]
     encoded_filename = urllib.parse.quote(filename)
 
-    READ_CHUNK = 64 * 1024 * 1024  # 64MB씩 스트리밍
+    READ_CHUNK = 64 * 1024 * 1024  # 64MB씩
 
-    if lo_oid:
-        # v160: Large Object 스트리밍 (트랜잭션 커넥션 필요)
-        conn.close()  # 메타 조회용 autocommit 연결 닫기
-        lo_conn = get_db_tx()  # LO 전용 트랜잭션 연결
+    if filepath and os.path.exists(filepath):
+        # v161: 파일시스템 스트리밍 (가장 빠르고 안정적)
+        def generate_fs():
+            with open(filepath, "rb") as f_in:
+                while True:
+                    chunk = f_in.read(READ_CHUNK)
+                    if not chunk:
+                        break
+                    yield chunk
 
+        return Response(
+            stream_with_context(generate_fs()),
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+                "Content-Type": mime_type,
+                "Content-Length": str(filesize),
+                "X-Accel-Buffering": "no",
+                "Cache-Control": "no-store",
+            }
+        )
+
+    elif lo_oid:
+        # v160 fallback: Large Object
+        lo_conn = get_db_tx()
         def generate_lo():
             try:
                 lobj = lo_conn.lobject(lo_oid, "rb")
@@ -1602,11 +1536,10 @@ def download_file(file_id):
                 "Cache-Control": "no-store",
             }
         )
-    else:
-        # 구버전 BYTEA 방식 (하위 호환)
-        conn.close()
-        dl_conn = get_db()
 
+    else:
+        # v159 fallback: BYTEA
+        dl_conn = get_db()
         def generate_bytea():
             dl_cur = dl_conn.cursor()
             try:
@@ -1640,6 +1573,7 @@ def download_file(file_id):
 
 # ============================================================
 # API: 프로그램 파일 삭제 (관리자 전용)
+
 # ============================================================
 @app.route("/api/downloads/<int:file_id>", methods=["DELETE"])
 def delete_download(file_id):
@@ -1649,24 +1583,34 @@ def delete_download(file_id):
     if user["user_id"] != ADMIN_ID:
         return jsonify({"ok": False, "msg": "관리자만 삭제할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
 
-    conn = get_db_tx()  # LO unlink는 트랜잭션 필요
+    conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT id, lo_oid FROM downloads WHERE id = %s", (file_id,))
+    cur.execute("SELECT id, filepath, lo_oid FROM downloads WHERE id = %s", (file_id,))
     row = cur.fetchone()
     if not row:
-        conn.rollback(); cur.close(); conn.close()
+        cur.close(); conn.close()
         return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
 
-    # Large Object 삭제
+    # 파일시스템 파일 삭제
+    if row["filepath"]:
+        try:
+            if os.path.exists(row["filepath"]):
+                os.remove(row["filepath"])
+        except Exception:
+            pass
+
+    # Large Object 삭제 (구버전 호환)
     if row["lo_oid"]:
         try:
-            lobj = conn.lobject(row["lo_oid"], "n")
+            lo_conn = get_db_tx()
+            lobj = lo_conn.lobject(row["lo_oid"], "n")
             lobj.unlink()
+            lo_conn.commit()
+            lo_conn.close()
         except Exception:
             pass
 
     cur.execute("DELETE FROM downloads WHERE id = %s", (file_id,))
-    conn.commit()
     cur.close(); conn.close()
     return jsonify({"ok": True, "msg": "삭제되었습니다.", "msg_code": "svr_deleted"})
 
