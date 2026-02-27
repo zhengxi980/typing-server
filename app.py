@@ -271,19 +271,57 @@ def init_db():
             mime_type   TEXT NOT NULL DEFAULT 'application/octet-stream',
             version     TEXT NOT NULL DEFAULT '',
             description TEXT NOT NULL DEFAULT '',
-            data        BYTEA NOT NULL,
+            data        BYTEA,
+            lo_oid      OID,
             uploaded_by TEXT NOT NULL,
             created_at  TIMESTAMP NOT NULL DEFAULT NOW()
         )
     """)
-    # mime_type 컬럼 없으면 추가 (기존 DB 호환)
+    # 기존 DB 호환: 컬럼 추가
     cur.execute("""
         DO $$ BEGIN
             ALTER TABLE downloads ADD COLUMN mime_type TEXT NOT NULL DEFAULT 'application/octet-stream';
-        EXCEPTION WHEN duplicate_column THEN NULL;
-        END $$;
+        EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     """)
-    # v159: 청크 업로드 임시 테이블
+    cur.execute("""
+        DO $$ BEGIN
+            ALTER TABLE downloads ADD COLUMN lo_oid OID;
+        EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    """)
+    cur.execute("""
+        DO $$ BEGIN
+            ALTER TABLE downloads ALTER COLUMN data DROP NOT NULL;
+        EXCEPTION WHEN OTHERS THEN NULL; END $$;
+    """)
+    # v160: Large Object 업로드 세션 테이블 (청크 추적용)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS upload_sessions (
+            upload_id       TEXT PRIMARY KEY,
+            lo_oid          OID NOT NULL,
+            total_chunks    INTEGER NOT NULL,
+            received_chunks INTEGER NOT NULL DEFAULT 0,
+            filesize        BIGINT NOT NULL DEFAULT 0,
+            filename        TEXT NOT NULL DEFAULT '',
+            version         TEXT NOT NULL DEFAULT '',
+            description     TEXT NOT NULL DEFAULT '',
+            mime_type       TEXT NOT NULL DEFAULT 'application/octet-stream',
+            uploaded_by     TEXT NOT NULL DEFAULT '',
+            created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
+    # 24시간 이상 된 미완성 세션 및 관련 Large Object 정리
+    cur.execute("""
+        SELECT lo_oid FROM upload_sessions
+        WHERE created_at < NOW() - INTERVAL '24 hours'
+    """)
+    old_oids = [r[0] for r in cur.fetchall()]
+    for oid in old_oids:
+        try:
+            cur.execute("SELECT lo_unlink(%s)", (oid,))
+        except Exception:
+            pass
+    cur.execute("DELETE FROM upload_sessions WHERE created_at < NOW() - INTERVAL '24 hours'")
+    # 이전 방식 임시 테이블도 정리
     cur.execute("""
         CREATE TABLE IF NOT EXISTS download_chunks (
             upload_id   TEXT NOT NULL,
@@ -291,13 +329,9 @@ def init_db():
             data        BYTEA NOT NULL,
             created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
             PRIMARY KEY (upload_id, chunk_index)
-        );
-        CREATE INDEX IF NOT EXISTS idx_dl_chunks_uid ON download_chunks (upload_id, chunk_index);
+        )
     """)
-    # 24시간 이상 된 미완성 청크 정리
-    cur.execute("""
-        DELETE FROM download_chunks WHERE created_at < NOW() - INTERVAL '24 hours'
-    """)
+    cur.execute("DELETE FROM download_chunks WHERE created_at < NOW() - INTERVAL '1 hour'")
 
     # v144: 앱 메타 정보 테이블 (버전 관리 등)
     cur.execute("""
@@ -1319,7 +1353,8 @@ def list_downloads():
 
 
 # ============================================================
-# API: 청크 업로드 — 청크 1개 수신
+# API: 청크 업로드 — Large Object 방식 (v160)
+# 청크가 도착할 때마다 LO에 직접 append → finalize 즉시 완료
 # ============================================================
 @app.route("/api/downloads/chunk", methods=["POST"])
 def upload_chunk():
@@ -1331,89 +1366,84 @@ def upload_chunk():
 
     upload_id = request.form.get("upload_id", "").strip()
     chunk_index = request.form.get("chunk_index", "")
+    total_chunks_str = request.form.get("total_chunks", "")
+
     if not upload_id or chunk_index == "":
         return jsonify({"ok": False, "msg": "upload_id 또는 chunk_index가 없습니다."}), 400
-
     if "chunk" not in request.files:
         return jsonify({"ok": False, "msg": "청크 데이터가 없습니다."}), 400
 
     chunk_data = request.files["chunk"].read()
+    chunk_idx = int(chunk_index)
+    total_chunks = int(total_chunks_str) if total_chunks_str else 0
 
-    # 단일 청크 최대 20MB (클라이언트는 16MB 사용)
     if len(chunk_data) > 20 * 1024 * 1024:
         return jsonify({"ok": False, "msg": "청크 크기는 20MB 이하여야 합니다."}), 400
 
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO download_chunks (upload_id, chunk_index, data)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (upload_id, chunk_index) DO UPDATE SET data = EXCLUDED.data
-    """, (upload_id, int(chunk_index), psycopg2.Binary(chunk_data)))
-    conn.commit()  # 명시적 커밋으로 락 즉시 해제 → 병렬 청크 충돌 방지
-    cur.close()
-    conn.close()
-    return jsonify({"ok": True})
-
-
-# ============================================================
-# 비동기 파이널라이즈 작업 상태 저장소 (메모리)
-# ============================================================
-_finalize_jobs = {}  # job_id -> {"status": "pending"|"done"|"error", "id": int, "msg": str}
-_finalize_lock = threading.Lock()
-
-def _do_finalize_bg(job_id, upload_id, filename, total_chunks, version, description, user_id, mime_type, filesize):
-    """백그라운드 스레드에서 청크 조합 수행 — HTTP 타임아웃 완전 우회"""
     try:
-        conn = get_db()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # PL/pgSQL 루프로 청크를 순차 이어붙이기 (hex 변환 없이 순수 bytea || 연산)
-        # string_agg + hex encode/decode 방식은 수 GB 파일에서 메모리 폭발 → 루프 방식 사용
-        cur.execute("""
-            DO $$
-            DECLARE
-                v_data BYTEA := ''::BYTEA;
-                rec RECORD;
-            BEGIN
-                FOR rec IN
-                    SELECT data FROM download_chunks
-                    WHERE upload_id = %s
-                    ORDER BY chunk_index
-                LOOP
-                    v_data := v_data || rec.data;
-                END LOOP;
+        if chunk_idx == 0:
+            # 첫 청크: Large Object 생성 + 세션 등록
+            lobj = conn.lobject(0, "wb")
+            lobj.write(chunk_data)
+            lo_oid = lobj.oid
+            lobj.close()
 
-                INSERT INTO downloads (filename, filesize, mime_type, version, description, data, uploaded_by)
-                VALUES (%s, %s, %s, %s, %s, v_data, %s);
-            END $$;
-        """, (upload_id, filename, filesize, mime_type, version, description, user_id))
+            # 기존 세션 있으면 정리
+            cur.execute("SELECT lo_oid FROM upload_sessions WHERE upload_id = %s", (upload_id,))
+            old = cur.fetchone()
+            if old:
+                try:
+                    old_lo = conn.lobject(old["lo_oid"], "n")
+                    old_lo.unlink()
+                except Exception:
+                    pass
+                cur.execute("DELETE FROM upload_sessions WHERE upload_id = %s", (upload_id,))
 
-        # 새로 삽입된 ID 가져오기
-        cur.execute("SELECT id FROM downloads WHERE filename = %s AND uploaded_by = %s ORDER BY id DESC LIMIT 1",
-                    (filename, user_id))
-        row = cur.fetchone()
-        new_id = row[0] if row else None
+            cur.execute("""
+                INSERT INTO upload_sessions (upload_id, lo_oid, total_chunks, received_chunks, filesize)
+                VALUES (%s, %s, %s, 1, %s)
+            """, (upload_id, lo_oid, total_chunks, len(chunk_data)))
+        else:
+            # 이후 청크: 기존 LO에 append
+            cur.execute("SELECT lo_oid, received_chunks, filesize FROM upload_sessions WHERE upload_id = %s", (upload_id,))
+            session = cur.fetchone()
+            if not session:
+                cur.close()
+                conn.close()
+                return jsonify({"ok": False, "msg": "세션을 찾을 수 없습니다. 처음부터 다시 시도하세요."}), 400
 
-        # 임시 청크 삭제
-        cur.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
+            lobj = conn.lobject(session["lo_oid"], "ab")
+            lobj.write(chunk_data)
+            lobj.close()
+
+            cur.execute("""
+                UPDATE upload_sessions
+                SET received_chunks = received_chunks + 1,
+                    filesize = filesize + %s
+                WHERE upload_id = %s
+            """, (len(chunk_data), upload_id))
+
         conn.commit()
         cur.close()
         conn.close()
-
-        with _finalize_lock:
-            _finalize_jobs[job_id] = {"status": "done", "id": new_id, "msg": "업로드 완료."}
+        return jsonify({"ok": True, "chunk_index": chunk_idx})
     except Exception as e:
-        with _finalize_lock:
-            _finalize_jobs[job_id] = {"status": "error", "msg": str(e)}
         try:
             conn.rollback()
-        except:
+        except Exception:
             pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+        return jsonify({"ok": False, "msg": f"청크 저장 오류: {str(e)}"}), 500
 
 
 # ============================================================
-# API: 청크 업로드 — 파이널라이즈 시작 (즉시 반환, 백그라운드 조합)
+# API: 파이널라이즈 — 즉시 완료 (LO 이미 조합됨)
 # ============================================================
 @app.route("/api/downloads/finalize", methods=["POST"])
 def finalize_upload():
@@ -1425,22 +1455,20 @@ def finalize_upload():
 
     data = request.get_json(force=True, silent=True) or {}
     upload_id = str(data.get("upload_id", "") or "").strip()
-    filename = str(data.get("filename", "") or "").strip()
+    filename   = str(data.get("filename", "") or "").strip()
     total_chunks = int(data.get("total_chunks", 0) or 0)
-    version = str(data.get("version", "") or "").strip()
+    version    = str(data.get("version", "") or "").strip()
     description = str(data.get("description", "") or "").strip()
 
     if not upload_id or not filename or not total_chunks:
         return jsonify({"ok": False, "msg": "필수 파라미터가 없습니다."}), 400
 
-    ext = os.path.splitext(filename)[1].lower() if filename else ""
+    ext = os.path.splitext(filename)[1].lower()
     ALLOWED_EXTENSIONS = {
         ".exe", ".msi", ".pkg", ".dmg", ".deb", ".rpm", ".appimage",
         ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".tgz",
-        ".cab", ".iso",
-        ".pdf", ".txt", ".md", ".json", ".xml", ".csv",
+        ".cab", ".iso", ".pdf", ".txt", ".md", ".json", ".xml", ".csv",
     }
-    # 복합 확장자 체크
     double_ext = "".join(os.path.splitext(os.path.splitext(filename)[0])[1:]) + ext
     if ext not in ALLOWED_EXTENSIONS and double_ext not in ALLOWED_EXTENSIONS:
         return jsonify({"ok": False, "msg": f"허용되지 않는 파일 형식입니다: {ext}", "msg_code": "svr_file_type_not_allowed"}), 400
@@ -1451,122 +1479,133 @@ def finalize_upload():
         mime_type = "application/octet-stream"
 
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT lo_oid, received_chunks, filesize FROM upload_sessions WHERE upload_id = %s", (upload_id,))
+        session = cur.fetchone()
 
-    # 청크 개수 및 전체 크기 확인
-    cur.execute("SELECT COUNT(*) as cnt, COALESCE(SUM(length(data)), 0) as total_size FROM download_chunks WHERE upload_id = %s", (upload_id,))
-    row = cur.fetchone()
-    if not row or row["cnt"] < total_chunks:
-        cur.close(); conn.close()
-        return jsonify({"ok": False, "msg": f"청크가 부족합니다. ({row['cnt'] if row else 0}/{total_chunks})"}), 400
+        if not session:
+            cur.close(); conn.close()
+            return jsonify({"ok": False, "msg": "업로드 세션을 찾을 수 없습니다."}), 400
 
-    filesize = row["total_size"]
-    cur.close(); conn.close()
+        if session["received_chunks"] < total_chunks:
+            cur.close(); conn.close()
+            return jsonify({"ok": False, "msg": f"청크가 부족합니다. ({session['received_chunks']}/{total_chunks})"}), 400
 
-    # 전체 파일 크기 제한: 5GB
-    if filesize > 5 * 1024 * 1024 * 1024:
-        conn2 = get_db(); c2 = conn2.cursor()
-        c2.execute("DELETE FROM download_chunks WHERE upload_id = %s", (upload_id,))
-        conn2.commit(); c2.close(); conn2.close()
-        return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
+        filesize = session["filesize"]
+        lo_oid   = session["lo_oid"]
 
-    # 백그라운드 스레드에서 조합 시작 — HTTP 즉시 반환 (타임아웃 우회)
-    job_id = f"fj_{upload_id}"
-    with _finalize_lock:
-        _finalize_jobs[job_id] = {"status": "pending", "id": None, "msg": ""}
+        if filesize > 5 * 1024 * 1024 * 1024:
+            lobj = conn.lobject(lo_oid, "n"); lobj.unlink()
+            cur.execute("DELETE FROM upload_sessions WHERE upload_id = %s", (upload_id,))
+            conn.commit(); cur.close(); conn.close()
+            return jsonify({"ok": False, "msg": "파일 크기는 5GB 이하여야 합니다.", "msg_code": "svr_file_too_large"}), 400
 
-    t = threading.Thread(
-        target=_do_finalize_bg,
-        args=(job_id, upload_id, filename, total_chunks, version, description,
-              user["user_id"], mime_type, filesize),
-        daemon=True
-    )
-    t.start()
+        # LO OID만 저장 (데이터 이동 없음 — 즉시 완료)
+        cur2 = conn.cursor()
+        cur2.execute("""
+            INSERT INTO downloads (filename, filesize, mime_type, version, description, lo_oid, uploaded_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+        """, (filename, filesize, mime_type, version, description, lo_oid, user["user_id"]))
+        new_id = cur2.fetchone()[0]
 
-    return jsonify({"ok": True, "job_id": job_id, "status": "pending", "msg": "조합 시작됨"})
+        cur2.execute("DELETE FROM upload_sessions WHERE upload_id = %s", (upload_id,))
+        conn.commit()
+        cur2.close(); cur.close(); conn.close()
 
-
-
-# ============================================================
-# API: 파이널라이즈 상태 폴링
-# ============================================================
-@app.route("/api/downloads/finalize/status/<job_id>", methods=["GET"])
-def finalize_status(job_id):
-    with _finalize_lock:
-        job = _finalize_jobs.get(job_id)
-    if not job:
-        return jsonify({"ok": False, "status": "not_found"}), 404
-    if job["status"] == "done":
-        # 완료 후 메모리에서 제거
-        with _finalize_lock:
-            _finalize_jobs.pop(job_id, None)
-        return jsonify({"ok": True, "status": "done", "id": job["id"], "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
-    elif job["status"] == "error":
-        with _finalize_lock:
-            _finalize_jobs.pop(job_id, None)
-        return jsonify({"ok": False, "status": "error", "msg": job["msg"]})
-    else:
-        return jsonify({"ok": True, "status": "pending"})
+        return jsonify({"ok": True, "id": new_id, "msg": "업로드 완료.", "msg_code": "svr_upload_done"})
+    except Exception as e:
+        try: conn.rollback()
+        except Exception: pass
+        try: conn.close()
+        except Exception: pass
+        return jsonify({"ok": False, "msg": f"파이널라이즈 오류: {str(e)}"}), 500
 
 
 # ============================================================
-# API: 프로그램 파일 다운로드
+# API: 프로그램 파일 다운로드 — Large Object 스트리밍
 # ============================================================
 @app.route("/api/downloads/<int:file_id>", methods=["GET"])
 def download_file(file_id):
     from flask import Response, stream_with_context
     import urllib.parse
 
-    # 메타정보만 먼저 조회 (data 제외)
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT filename, mime_type, filesize FROM downloads WHERE id = %s", (file_id,))
+    cur.execute("SELECT filename, mime_type, filesize, lo_oid, data FROM downloads WHERE id = %s", (file_id,))
     row = cur.fetchone()
     cur.close()
-    conn.close()
 
     if not row:
+        conn.close()
         return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
 
-    filename = row["filename"]
+    filename  = row["filename"]
     mime_type = row.get("mime_type") or "application/octet-stream"
-    filesize = row["filesize"]
+    filesize  = row["filesize"]
+    lo_oid    = row["lo_oid"]
     encoded_filename = urllib.parse.quote(filename)
 
-    # 64MB 단위 스트리밍 — 커넥션 1개 재사용, 루프당 DB 오버헤드 최소화
-    STREAM_CHUNK = 64 * 1024 * 1024
+    READ_CHUNK = 64 * 1024 * 1024  # 64MB씩 스트리밍
 
-    def generate():
+    if lo_oid:
+        # v160: Large Object 스트리밍
+        def generate_lo():
+            try:
+                lobj = conn.lobject(lo_oid, "rb")
+                while True:
+                    chunk = lobj.read(READ_CHUNK)
+                    if not chunk:
+                        break
+                    yield bytes(chunk)
+                lobj.close()
+            finally:
+                conn.close()
+
+        return Response(
+            stream_with_context(generate_lo()),
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+                "Content-Type": mime_type,
+                "Content-Length": str(filesize),
+                "X-Accel-Buffering": "no",
+                "Cache-Control": "no-store",
+            }
+        )
+    else:
+        # 구버전 BYTEA 방식 (하위 호환)
+        conn.close()
         dl_conn = get_db()
-        dl_cur = dl_conn.cursor()
-        try:
-            offset = 0
-            while offset < filesize:
-                length = min(STREAM_CHUNK, filesize - offset)
-                dl_cur.execute(
-                    "SELECT substring(data from %s for %s) FROM downloads WHERE id = %s",
-                    (offset + 1, length, file_id)
-                )
-                chunk_row = dl_cur.fetchone()
-                if not chunk_row or not chunk_row[0]:
-                    break
-                yield bytes(chunk_row[0])
-                offset += length
-        finally:
-            dl_cur.close()
-            dl_conn.close()
 
-    return Response(
-        stream_with_context(generate()),
-        headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8\'\'{encoded_filename}",
-            "Content-Type": mime_type,
-            "Content-Length": str(filesize),
-            # Nginx/Railway 프록시 버퍼링 비활성화 → 클라이언트로 즉시 전달
-            "X-Accel-Buffering": "no",
-            "Cache-Control": "no-store",
-        }
-    )
+        def generate_bytea():
+            dl_cur = dl_conn.cursor()
+            try:
+                offset = 0
+                while offset < filesize:
+                    length = min(READ_CHUNK, filesize - offset)
+                    dl_cur.execute(
+                        "SELECT substring(data from %s for %s) FROM downloads WHERE id = %s",
+                        (offset + 1, length, file_id)
+                    )
+                    chunk_row = dl_cur.fetchone()
+                    if not chunk_row or not chunk_row[0]:
+                        break
+                    yield bytes(chunk_row[0])
+                    offset += length
+            finally:
+                dl_cur.close()
+                dl_conn.close()
+
+        return Response(
+            stream_with_context(generate_bytea()),
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+                "Content-Type": mime_type,
+                "Content-Length": str(filesize),
+                "X-Accel-Buffering": "no",
+                "Cache-Control": "no-store",
+            }
+        )
 
 
 # ============================================================
@@ -1581,13 +1620,24 @@ def delete_download(file_id):
         return jsonify({"ok": False, "msg": "관리자만 삭제할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
 
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM downloads WHERE id = %s RETURNING id", (file_id,))
-    deleted = cur.fetchone()
-    cur.close()
-    conn.close()
-    if not deleted:
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT id, lo_oid FROM downloads WHERE id = %s", (file_id,))
+    row = cur.fetchone()
+    if not row:
+        cur.close(); conn.close()
         return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
+
+    # Large Object 삭제
+    if row["lo_oid"]:
+        try:
+            lobj = conn.lobject(row["lo_oid"], "n")
+            lobj.unlink()
+        except Exception:
+            pass
+
+    cur.execute("DELETE FROM downloads WHERE id = %s", (file_id,))
+    conn.commit()
+    cur.close(); conn.close()
     return jsonify({"ok": True, "msg": "삭제되었습니다.", "msg_code": "svr_deleted"})
 
 
