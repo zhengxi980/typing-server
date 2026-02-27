@@ -43,8 +43,8 @@ ALLOWED_ORIGINS = [
 ]
 CORS(app, origins=ALLOWED_ORIGINS)
 
-# 최대 요청 크기: 청크 단위 업로드를 위해 20MB로 제한 (청크당 최대 10MB)
-app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+# 최대 요청 크기: 청크 단위 업로드를 위해 5MB로 제한 (청크당 최대 2MB)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 # Railway가 자동으로 제공하는 DATABASE_URL 환경변수 사용
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -1284,9 +1284,9 @@ def upload_chunk():
 
     chunk_data = request.files["chunk"].read()
 
-    # 단일 청크 최대 10MB
-    if len(chunk_data) > 10 * 1024 * 1024:
-        return jsonify({"ok": False, "msg": "청크 크기는 10MB 이하여야 합니다."}), 400
+    # 단일 청크 최대 3MB (클라이언트는 2MB 사용)
+    if len(chunk_data) > 3 * 1024 * 1024:
+        return jsonify({"ok": False, "msg": "청크 크기는 3MB 이하여야 합니다."}), 400
 
     conn = get_db()
     cur = conn.cursor()

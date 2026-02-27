@@ -250,14 +250,12 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 </div>
 <div style="display:flex;align-items:center;gap:10px">
 <button class="btn-primary" id="dlUploadBtn" onclick="uploadDownloadFile()" style="padding:7px 18px">업로드</button>
-<span id="dlUploadMsg" style="font-size:.85rem;color:#64748b"></span>
-</div>
-<div id="dlUploadProgress" style="display:none;margin-top:8px">
-<div style="background:#e2e8f0;border-radius:4px;height:6px"><div id="dlProgressBar" style="background:#2563eb;height:6px;border-radius:4px;width:0%;transition:width .3s"></div></div>
-<span id="dlProgressText" style="font-size:.8rem;color:#64748b;margin-top:4px;display:block"></span>
+<span id="dlUploadMsg" style="font-size:.85rem;color:#dc2626"></span>
 </div>
 </div>
 </div>
+<!-- 업로드 진행 큐 -->
+<div id="dlUploadQueue" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
 <div id="dlFileList" style="display:flex;flex-direction:column;gap:10px">
 <div style="padding:20px;text-align:center;color:#94a3b8">로딩 중...</div>
 </div>
@@ -866,23 +864,53 @@ async function uploadDownloadFile(){
   const version=document.getElementById('dlVersionInput').value.trim();
   const desc=document.getElementById('dlDescInput').value.trim();
   const msgEl=document.getElementById('dlUploadMsg');
-  const progressArea=document.getElementById('dlUploadProgress');
-  const progressBar=document.getElementById('dlProgressBar');
-  const progressText=document.getElementById('dlProgressText');
-  if(!fileInput.files||!fileInput.files[0]){msgEl.style.color='#dc2626';msgEl.textContent='파일을 선택해 주세요.';return;}
-  const file=fileInput.files[0];
-  const CHUNK_SIZE=5*1024*1024; // 5MB per chunk
-  const totalChunks=Math.ceil(file.size/CHUNK_SIZE);
-  const uploadId='ul_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
 
-  document.getElementById('dlUploadBtn').disabled=true;
-  msgEl.style.color='#64748b';
-  progressArea.style.display='';
-  progressBar.style.width='0%';
+  if(!fileInput.files||!fileInput.files[0]){msgEl.textContent='파일을 선택해 주세요.';return;}
+  const file=fileInput.files[0];
+
+  // 입력 즉시 초기화 (다음 파일 선택 가능)
+  fileInput.value='';
+  document.getElementById('dlVersionInput').value='';
+  document.getElementById('dlDescInput').value='';
+  msgEl.textContent='';
+
+  // 업로드 잡 카드 생성
+  const jobId='job_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  const uploadId='ul_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  const queue=document.getElementById('dlUploadQueue');
+  const card=document.createElement('div');
+  card.id=jobId;
+  card.style.cssText='background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:.85rem';
+  card.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
+      <div>
+        <span style="font-weight:700;color:#1e293b">${esc(file.name)}</span>
+        <span style="color:#94a3b8;margin-left:6px">${fmtBytes(file.size)}</span>
+        ${version?`<span style="display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:.75rem;font-weight:600;border-radius:4px;padding:1px 6px;margin-left:6px">${esc(version)}</span>`:''}
+      </div>
+      <span id="${jobId}_status" style="color:#64748b;white-space:nowrap;font-size:.8rem">준비 중...</span>
+    </div>
+    <div style="background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden">
+      <div id="${jobId}_bar" style="background:#2563eb;height:6px;border-radius:4px;width:0%;transition:width .2s"></div>
+    </div>
+    <div id="${jobId}_text" style="color:#64748b;font-size:.78rem;margin-top:4px"></div>`;
+  queue.insertBefore(card, queue.firstChild);
+
+  const bar=document.getElementById(jobId+'_bar');
+  const statusEl=document.getElementById(jobId+'_status');
+  const textEl=document.getElementById(jobId+'_text');
+
+  const setStatus=(msg,color='#64748b')=>{statusEl.textContent=msg;statusEl.style.color=color;};
+  const setPct=(pct,detail='')=>{bar.style.width=pct+'%';textEl.textContent=detail;};
+
+  // 청크 설정: 2MB 청크, 최대 5회 재시도, 지수 백오프
+  const CHUNK_SIZE=2*1024*1024;
+  const totalChunks=Math.ceil(file.size/CHUNK_SIZE);
+  const MAX_RETRY=5;
 
   const sendChunk=(index)=>new Promise((resolve,reject)=>{
     const start=index*CHUNK_SIZE;
-    const blob=file.slice(start,start+CHUNK_SIZE);
+    const blob=file.slice(start,Math.min(start+CHUNK_SIZE,file.size));
     const fd=new FormData();
     fd.append('upload_id',uploadId);
     fd.append('chunk_index',String(index));
@@ -890,46 +918,70 @@ async function uploadDownloadFile(){
     const xhr=new XMLHttpRequest();
     xhr.open('POST','/api/downloads/chunk');
     if(currentUser?.token)xhr.setRequestHeader('Authorization','Bearer '+currentUser.token);
-    xhr.onload=()=>{try{const r=JSON.parse(xhr.responseText);if(r.ok)resolve();else reject(new Error(r.msg||'청크 업로드 실패'));}catch{reject(new Error('응답 파싱 오류'));}};
+    xhr.onload=()=>{
+      if(xhr.status===200){
+        try{const r=JSON.parse(xhr.responseText);if(r.ok)resolve();else reject(new Error(r.msg||'서버 오류'));}
+        catch{reject(new Error('응답 파싱 오류'));}
+      } else {
+        reject(new Error(`HTTP ${xhr.status}`));
+      }
+    };
     xhr.onerror=()=>reject(new Error('네트워크 오류'));
     xhr.ontimeout=()=>reject(new Error('타임아웃'));
-    xhr.timeout=120000; // 2분
+    xhr.timeout=180000; // 3분
     xhr.send(fd);
   });
 
   try{
     for(let i=0;i<totalChunks;i++){
-      msgEl.textContent=`청크 업로드 중... (${i+1}/${totalChunks})`;
       const pct=Math.round(i/totalChunks*90);
-      progressBar.style.width=pct+'%';
-      progressText.textContent=fmtBytes(Math.min((i+1)*CHUNK_SIZE,file.size))+' / '+fmtBytes(file.size)+' ('+pct+'%)';
-      // 실패 시 최대 3회 재시도
-      let lastErr;
-      for(let retry=0;retry<3;retry++){
-        try{await sendChunk(i);lastErr=null;break;}
-        catch(e){lastErr=e;await new Promise(r=>setTimeout(r,1000*(retry+1)));}
+      const uploaded=Math.min((i+1)*CHUNK_SIZE,file.size);
+      setPct(pct, `${fmtBytes(i*CHUNK_SIZE)} / ${fmtBytes(file.size)} (${pct}%)`);
+      setStatus(`청크 ${i+1}/${totalChunks}`);
+
+      let lastErr=null;
+      for(let retry=0;retry<MAX_RETRY;retry++){
+        try{
+          await sendChunk(i);
+          lastErr=null;
+          break;
+        } catch(e){
+          lastErr=e;
+          if(retry<MAX_RETRY-1){
+            const wait=1000*Math.pow(2,retry); // 1s,2s,4s,8s,16s
+            setStatus(`재시도 ${retry+1}/${MAX_RETRY-1} (${Math.round(wait/1000)}초 후)`, '#f59e0b');
+            await new Promise(r=>setTimeout(r,wait));
+          }
+        }
       }
-      if(lastErr)throw lastErr;
+      if(lastErr) throw lastErr;
     }
+
     // 파이널라이즈
-    msgEl.textContent='파일 조합 중...';
-    progressBar.style.width='95%';
-    const r=await api('/api/downloads/finalize','POST',{upload_id:uploadId,filename:file.name,total_chunks:totalChunks,version,description:desc});
-    if(!r?.ok)throw new Error(r?.msg||'파이널라이즈 실패');
-    progressBar.style.width='100%';
-    progressText.textContent=fmtBytes(file.size)+' 완료';
-    msgEl.style.color='#16a34a';msgEl.textContent='업로드 완료!';
-    fileInput.value='';
-    document.getElementById('dlVersionInput').value='';
-    document.getElementById('dlDescInput').value='';
-    setTimeout(()=>{progressArea.style.display='none';msgEl.textContent='';msgEl.style.color='';},3000);
+    setStatus('조합 중...','#64748b');
+    setPct(95,'서버에서 파일 조합 중...');
+
+    const r=await fetch('/api/downloads/finalize',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(currentUser?.token||'')},
+      body:JSON.stringify({upload_id:uploadId,filename:file.name,total_chunks:totalChunks,version,description:desc})
+    });
+    const rj=await r.json();
+    if(!rj?.ok) throw new Error(rj?.msg||'파이널라이즈 실패');
+
+    setPct(100, fmtBytes(file.size)+' — 완료');
+    setStatus('✅ 완료','#16a34a');
+    bar.style.background='#16a34a';
+    // 3초 후 카드 페이드 제거
+    setTimeout(()=>{card.style.transition='opacity .5s';card.style.opacity='0';setTimeout(()=>card.remove(),500);},3000);
     loadDownloadList();
-  }catch(e){
-    msgEl.style.color='#dc2626';msgEl.textContent='오류: '+e.message;
-    progressArea.style.display='none';
+  } catch(e){
+    setStatus('❌ '+e.message,'#dc2626');
+    bar.style.background='#dc2626';
+    textEl.style.color='#dc2626';
   }
-  document.getElementById('dlUploadBtn').disabled=false;
 }
+
 async function deleteDownloadFile(id){
   if(!confirm('이 파일을 삭제하시겠습니까?'))return;
   const r=await api('/api/downloads/'+id,'DELETE');
