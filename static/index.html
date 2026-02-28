@@ -55,7 +55,8 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 :root{--pf:'Iansui','芫荽','D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace;--pfs:18px;--plh:2;--pls:0.5px;--ppad:10px 14px}
 .line-practice-wrapper{position:relative}.line-practice-area{margin-bottom:16px}.line-block{margin-bottom:2px;cursor:text}
 .line-original{background:#fffbeb;border:1px solid #e5e7eb;border-bottom:none;border-radius:6px 6px 0 0;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);white-space:nowrap;overflow:hidden;min-height:28px;color:#6b21a8}
-.line-original.para-wrap{white-space:pre-wrap;word-break:break-all;overflow:visible}
+.line-original.para-wrap{white-space:pre-wrap;word-break:break-all;overflow-y:auto;max-height:50vh}
+textarea.line-input.para-input{resize:none;overflow-y:auto;box-sizing:border-box;max-height:50vh}
 textarea.line-input{resize:none;overflow:hidden;box-sizing:border-box}
 .line-original .ch{color:#6b21a8;transition:color .05s}.line-original .ch.correct{color:#16a34a}
 .line-original .ch.incorrect{color:#fff;background:#ef4444;border-radius:2px}.line-original .ch.current{border-bottom:2px solid #2563eb;color:#6b21a8}
@@ -1265,7 +1266,7 @@ function buildLineUI(){const area=document.getElementById('linePracticeArea');ar
 const isPara=(unitMode==='paragraph');
 lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original'+(isPara?' para-wrap':'');for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}
 let inp;
-if(isPara){inp=document.createElement('textarea');inp.rows=1;inp.className='line-input'+(idx===0?' active-line':' inactive-line');}
+if(isPara){inp=document.createElement('textarea');inp.rows=1;inp.className='line-input para-input'+(idx===0?' active-line':' inactive-line');}
 else{inp=document.createElement('input');inp.type='text';inp.className='line-input'+(idx===0?' active-line':' inactive-line');}
 inp.autocomplete='off';inp.spellcheck=false;
 block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
@@ -1283,11 +1284,23 @@ if(isPara){requestAnimationFrame(()=>{for(let i=0;i<lines.length;i++)syncParaHei
 function syncParaHeight(idx){
   if(unitMode!=='paragraph')return;
   const orig=lineDisplays[idx],inp=lineInputs[idx];if(!orig||!inp)return;
-  const oh=orig.scrollHeight;
+  /* 입력란: 내용에 맞게 높이 조절 (CSS max-height:50vh가 상한) */
   inp.style.height='auto';
-  const ih=inp.scrollHeight;
-  const h=Math.max(oh,ih,36)+'px';
-  inp.style.height=h;
+  inp.style.height=Math.max(inp.scrollHeight,36)+'px';
+  /* 원문란 자동 스크롤: 현재 타이핑 위치(.current)가 보이도록 */
+  scrollParaToCurrent(idx);
+}
+function scrollParaToCurrent(idx){
+  const orig=lineDisplays[idx];if(!orig)return;
+  const cur=orig.querySelector('.ch.current')||orig.querySelector('.ch:last-child');
+  if(!cur)return;
+  const oRect=orig.getBoundingClientRect();
+  const cRect=cur.getBoundingClientRect();
+  /* 현재 글자가 원문란 보이는 영역 밖이면 스크롤 */
+  if(cRect.top<oRect.top||cRect.bottom>oRect.bottom){
+    const scrollTarget=cur.offsetTop-orig.clientHeight/2;
+    orig.scrollTop=Math.max(0,scrollTarget);
+  }
 }
 
 /* FIX#6: activate exactly one line, deactivate all others */
@@ -1331,7 +1344,7 @@ if(typed.length>target.length){const overflow=typed.slice(target.length);inp.val
 refreshHighlights(idx,typed,target,spans);updateStats();
 if(typed.length>0){const tN=normalizeFullwidth(typed),gN=normalizeFullwidth(target);if(tN===gN&&idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);}}}
 
-function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}}
+function refreshHighlights(idx,typed,target,spans){for(let i=0;i<target.length;i++){const sp=spans[i];if(!sp)continue;sp.className='ch';if(i<typed.length){const tn=normalizeFullwidth(target[i]),un=normalizeFullwidth(typed[i]);if(un===tn)sp.className='ch correct';else sp.className=target[i]===' '?'ch space-incorrect':'ch incorrect';}else if(i===typed.length){sp.className='ch current';}}if(unitMode==='paragraph')scrollParaToCurrent(idx);}
 
 function doReset(){
   if(!practicing&&lines.length===0){fullReset();return;}
