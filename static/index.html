@@ -55,6 +55,8 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb}
 :root{--pf:'Iansui','芫荽','D2Coding','Noto Sans KR','Consolas','Malgun Gothic',monospace;--pfs:18px;--plh:2;--pls:0.5px;--ppad:10px 14px}
 .line-practice-wrapper{position:relative}.line-practice-area{margin-bottom:16px}.line-block{margin-bottom:2px;cursor:text}
 .line-original{background:#fffbeb;border:1px solid #e5e7eb;border-bottom:none;border-radius:6px 6px 0 0;padding:var(--ppad);font-size:var(--pfs);line-height:var(--plh);letter-spacing:var(--pls);font-family:var(--pf);white-space:nowrap;overflow:hidden;min-height:28px;color:#6b21a8}
+.line-original.para-wrap{white-space:pre-wrap;word-break:break-all;overflow:visible}
+textarea.line-input{resize:none;overflow:hidden;box-sizing:border-box}
 .line-original .ch{color:#6b21a8;transition:color .05s}.line-original .ch.correct{color:#16a34a}
 .line-original .ch.incorrect{color:#fff;background:#ef4444;border-radius:2px}.line-original .ch.current{border-bottom:2px solid #2563eb;color:#6b21a8}
 .line-original .ch.space-incorrect{background:#fca5a5;border-radius:2px}
@@ -1218,9 +1220,10 @@ function reflowLines(){
 /* FIX#1: Window resize → reflow lines, preserve typed text + stats */
 let _resizeTimer=null;
 window.addEventListener('resize',()=>{
-  if(!practicing||!currentText||unitMode!=='line'||lines.length===0)return;
+  if(!practicing||!currentText||lines.length===0)return;
   clearTimeout(_resizeTimer);
-  _resizeTimer=setTimeout(doReflow,200);
+  if(unitMode==='paragraph'){_resizeTimer=setTimeout(()=>{for(let i=0;i<lines.length;i++)syncParaHeight(i);},100);}
+  else{_resizeTimer=setTimeout(doReflow,200);}
 });
 function doReflow(){
   if(!practicing||!currentText||unitMode!=='line')return;
@@ -1259,18 +1262,33 @@ document.getElementById('prepArea').style.display='';const pr=document.getElemen
 
 /* FIX#6: buildLineUI — NO disabled; class-based active/inactive; single active line */
 function buildLineUI(){const area=document.getElementById('linePracticeArea');area.innerHTML='';lineInputs=[];lineDisplays=[];lineBlocks=[];
-lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original';for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}
-const inp=document.createElement('input');inp.type='text';inp.className='line-input'+(idx===0?' active-line':' inactive-line');inp.autocomplete='off';inp.spellcheck=false;
+const isPara=(unitMode==='paragraph');
+lines.forEach((line,idx)=>{const block=document.createElement('div');block.className='line-block';const origDiv=document.createElement('div');origDiv.className='line-original'+(isPara?' para-wrap':'');for(let i=0;i<line.length;i++){const sp=document.createElement('span');sp.className='ch'+(idx===0&&i===0?' current':'');sp.textContent=line[i];origDiv.appendChild(sp);}
+let inp;
+if(isPara){inp=document.createElement('textarea');inp.rows=1;inp.className='line-input'+(idx===0?' active-line':' inactive-line');}
+else{inp=document.createElement('input');inp.type='text';inp.className='line-input'+(idx===0?' active-line':' inactive-line');}
+inp.autocomplete='off';inp.spellcheck=false;
 block.appendChild(origDiv);block.appendChild(inp);area.appendChild(block);lineInputs.push(inp);lineDisplays.push(origDiv);lineBlocks.push(block);
 inp.addEventListener('compositionstart',()=>{inp._composing=true;});
 inp.addEventListener('compositionend',()=>{inp._composing=false;handleLineInput(idx);});
-inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);});
+inp.addEventListener('input',()=>{if(!inp._composing)handleLineInput(idx);if(isPara)syncParaHeight(idx);});
 inp.addEventListener('keydown',e=>handleLineKeydown(e,idx));
 /* FIX#6: click on input → switch to this line */
 inp.addEventListener('mousedown',e=>{if(!practicing)return;if(paused){e.preventDefault();doResume();return;}if(idx!==currentLineIdx){e.preventDefault();switchToLine(idx);}});
 /* FIX#6: click on original text area → also switch */
 origDiv.addEventListener('mousedown',e=>{if(!practicing)return;e.preventDefault();if(paused){doResume();return;}if(idx!==currentLineIdx)switchToLine(idx);else inp.focus();});
-});}
+});
+if(isPara){requestAnimationFrame(()=>{for(let i=0;i<lines.length;i++)syncParaHeight(i);});}
+}
+function syncParaHeight(idx){
+  if(unitMode!=='paragraph')return;
+  const orig=lineDisplays[idx],inp=lineInputs[idx];if(!orig||!inp)return;
+  const oh=orig.scrollHeight;
+  inp.style.height='auto';
+  const ih=inp.scrollHeight;
+  const h=Math.max(oh,ih,36)+'px';
+  inp.style.height=h;
+}
 
 /* FIX#6: activate exactly one line, deactivate all others */
 function activateLine(idx){
@@ -1306,6 +1324,7 @@ function handleLineInput(idx){if(!practicing||paused)return;
 /* FIX#6: ignore input in non-active line */
 if(idx!==currentLineIdx){lineInputs[idx].value='';return;}
 const inp=lineInputs[idx];if(inp._composing)return;let typed=inp.value;
+if(unitMode==='paragraph'&&typed.includes('\n')){typed=typed.replace(/\n/g,'');inp.value=typed;}
 if(typed.length>0&&/^[\s\u3000\u00A0]/.test(typed)){typed=stripLeadingBlanks(typed);inp.value=typed;}
 const target=lines[idx],spans=lineDisplays[idx].children;
 if(typed.length>target.length){const overflow=typed.slice(target.length);inp.value=typed.slice(0,target.length);typed=inp.value;refreshHighlights(idx,typed,target,spans);updateStats();if(idx<lines.length-1){lineBlocks[idx].classList.add('completed');moveToLine(idx+1,idx,false);const next=overflow.replace(/^ /,'');if(next){lineInputs[idx+1].value=next;handleLineInput(idx+1);}}else{stopPractice();}return;}
