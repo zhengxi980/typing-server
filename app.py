@@ -295,6 +295,7 @@ def init_db():
         "ALTER TABLE downloads ADD COLUMN lo_oid OID",
         "ALTER TABLE downloads ADD COLUMN filepath TEXT",
         "ALTER TABLE downloads ALTER COLUMN data DROP NOT NULL",
+        "ALTER TABLE downloads ADD COLUMN external_url TEXT",
     ]:
         try:
             cur.execute(f"DO $$ BEGIN {col_sql}; EXCEPTION WHEN OTHERS THEN NULL; END $$;")
@@ -1357,7 +1358,7 @@ def list_downloads():
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
-        SELECT id, filename, filesize, version, description, uploaded_by, created_at
+        SELECT id, filename, filesize, version, description, uploaded_by, created_at, external_url
         FROM downloads ORDER BY created_at DESC
     """)
     rows = cur.fetchall()
@@ -1367,6 +1368,7 @@ def list_downloads():
     for r in rows:
         d = dict(r)
         d["created_at"] = str(d["created_at"])
+        d["external_url"] = d.get("external_url") or ""
         result.append(d)
     return jsonify({"ok": True, "files": result})
 
@@ -1488,24 +1490,66 @@ def finalize_upload():
 
 
 # ============================================================
+# API: 외부 URL 링크 등록 (대용량 파일용)
+# ============================================================
+@app.route("/api/downloads/link", methods=["POST"])
+def register_external_link():
+    user, err = require_login()
+    if err:
+        return err
+    if user["user_id"] != ADMIN_ID:
+        return jsonify({"ok": False, "msg": "관리자만 등록할 수 있습니다.", "msg_code": "svr_admin_only"}), 403
+
+    data = request.get_json(force=True, silent=True) or {}
+    filename     = str(data.get("filename", "") or "").strip()
+    external_url = str(data.get("external_url", "") or "").strip()
+    version      = str(data.get("version", "") or "").strip()
+    description  = str(data.get("description", "") or "").strip()
+    filesize     = int(data.get("filesize", 0) or 0)
+
+    if not filename or not external_url:
+        return jsonify({"ok": False, "msg": "파일명과 URL은 필수입니다."}), 400
+
+    if not external_url.startswith("https://"):
+        return jsonify({"ok": False, "msg": "https:// 로 시작하는 URL만 허용됩니다."}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO downloads (filename, filesize, mime_type, version, description, external_url, uploaded_by)
+        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+    """, (filename, filesize, "application/octet-stream", version, description, external_url, user["user_id"]))
+    new_id = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+
+    return jsonify({"ok": True, "id": new_id, "msg": "외부 링크 등록 완료.", "msg_code": "svr_link_registered"})
+
+
+# ============================================================
 # API: 프로그램 파일 다운로드 — 파일시스템 스트리밍
 # ============================================================
 # API: 프로그램 파일 다운로드 — 파일시스템 스트리밍
 # ============================================================
 @app.route("/api/downloads/<int:file_id>", methods=["GET"])
 def download_file(file_id):
-    from flask import Response, stream_with_context
+    from flask import Response, stream_with_context, redirect
     import urllib.parse
 
     conn = get_db()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT filename, mime_type, filesize, filepath, lo_oid, data FROM downloads WHERE id = %s", (file_id,))
+    cur.execute("SELECT filename, mime_type, filesize, filepath, lo_oid, data, external_url FROM downloads WHERE id = %s", (file_id,))
     row = cur.fetchone()
     cur.close()
     conn.close()
 
     if not row:
         return jsonify({"ok": False, "msg": "파일을 찾을 수 없습니다.", "msg_code": "svr_file_not_found"}), 404
+
+    # 외부 URL이 있으면 바로 리다이렉트
+    ext_url = (row.get("external_url") or "").strip()
+    if ext_url:
+        return redirect(ext_url)
 
     filename  = row["filename"]
     mime_type = row.get("mime_type") or "application/octet-stream"
